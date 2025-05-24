@@ -1,0 +1,165 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #1e222d;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #2e3241;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #d9d9d9;
+  font-size: 18px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-button:hover {
+  color: #d9d9d9;
+}
+
+.modal-body {
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #d9d9d9;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: #2a2e39;
+  border: 1px solid #3a3f50;
+  border-radius: 4px;
+  color: #d9d9d9;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  appearance: auto;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4b5066;
+  box-shadow: 0 0 0 2px rgba(75, 80, 102, 0.3);
+}
+
+/* 日期输入框样式 */
+.date-input-wrapper {
+  position: relative;
+}
+
+input[type="date"].form-control {
+  padding-right: 30px;
+}
+
+input[type="date"].form-control::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  filter: invert(0.7);
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+input[type="date"].form-control::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* 下拉框样式 */
+select.form-control {
+  cursor: pointer;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+
+.response-message {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #2a2e39;
+  border: 1px solid #3a3f50;
+  border-radius: 4px;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.response-message pre {
+  margin: 0;
+  color: #d9d9d9;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #2e3241;
+  text-align: right;
+}
+
+.load-button {
+  background-color: #ff5555;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.load-button:hover {
+  background-color: #ff3333;
+}
+
+.load-button:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+} 

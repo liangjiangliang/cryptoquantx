@@ -1,0 +1,104 @@
+.order-book {
+  background-color: #1e222d;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.order-book-header {
+  padding: 15px;
+  border-bottom: 1px solid #2e3241;
+}
+
+.order-book-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #d9d9d9;
+}
+
+.order-book-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.order-book-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 10px 15px;
+  font-size: 12px;
+  color: #6c7284;
+  border-bottom: 1px solid #2e3241;
+  text-align: right;
+}
+
+.order-book-labels span:first-child {
+  text-align: left;
+}
+
+.order-book-asks,
+.order-book-bids {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.order-book-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 6px 15px;
+  position: relative;
+  text-align: right;
+  font-size: 14px;
+}
+
+.order-book-row span:first-child {
+  text-align: left;
+}
+
+.order-book-row.ask .price {
+  color: #ef5350;
+}
+
+.order-book-row.bid .price {
+  color: #26a69a;
+}
+
+.order-book-row .amount,
+.order-book-row .accumulated {
+  color: #d9d9d9;
+}
+
+.depth-visualization {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  opacity: 0.1;
+}
+
+.ask-depth {
+  right: 0;
+  background-color: #ef5350;
+}
+
+.bid-depth {
+  right: 0;
+  background-color: #26a69a;
+}
+
+.order-book-middle {
+  padding: 8px 15px;
+  background-color: #2e3241;
+  text-align: center;
+}
+
+.middle-price {
+  font-weight: 500;
+  font-size: 14px;
+  color: #d9d9d9;
+} 

@@ -1,0 +1,135 @@
+/* 全局样式 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #171b26;
+  color: #d9d9d9;
+}
+
+/* 应用布局 */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 头部 */
+.app-header {
+  background-color: #1e222d;
+  padding: 15px 20px;
+  border-bottom: 1px solid #2e3241;
+}
+
+.app-header h1 {
+  font-size: 20px;
+  font-weight: 500;
+  color: #d9d9d9;
+}
+
+/* 主内容区域 */
+.app-content {
+  display: grid;
+  grid-template-columns: 250px 1fr 300px;
+  gap: 15px;
+  flex: 1;
+  padding: 15px;
+}
+
+/* 简化的主内容区域 */
+.app-content-simplified {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 15px;
+}
+
+/* 左侧边栏 */
+.left-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 主要内容 */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.panels-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.panel {
+  height: 500px;
+}
+
+/* 右侧边栏 */
+.right-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.sidebar-panel {
+  flex: 1;
+}
+
+/* 页脚 */
+.app-footer {
+  background-color: #1e222d;
+  padding: 15px 20px;
+  border-top: 1px solid #2e3241;
+  text-align: center;
+  font-size: 12px;
+  color: #6c7284;
+}
+
+/* 响应式布局 */
+@media (max-width: 1200px) {
+  .app-content {
+    grid-template-columns: 200px 1fr 250px;
+  }
+}
+
+@media (max-width: 992px) {
+  .app-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .panels-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .right-sidebar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .right-sidebar {
+    grid-template-columns: 1fr;
+  }
+  
+  .panels-container {
+    grid-template-columns: 1fr;
+  }
+}

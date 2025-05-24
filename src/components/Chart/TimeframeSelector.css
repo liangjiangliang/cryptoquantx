@@ -1,0 +1,84 @@
+.timeframe-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background-color: #1e222d;
+  border-bottom: 1px solid #2e3241;
+}
+
+.timeframe-selector {
+  display: flex;
+  gap: 8px;
+}
+
+.timeframe-button {
+  padding: 6px 12px;
+  background-color: #2a2e39;
+  color: #d9d9d9;
+  border: 1px solid #3a3f50;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.timeframe-button:hover {
+  background-color: #323846;
+}
+
+.timeframe-button.active {
+  background-color: #2962ff;
+  border-color: #2962ff;
+  color: white;
+}
+
+.date-range-selector {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.date-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.date-input-group label {
+  font-size: 12px;
+  color: #a0a0a0;
+}
+
+.date-input-group input {
+  background-color: #2a2e39;
+  border: 1px solid #3a3f50;
+  color: #d9d9d9;
+  padding: 5px 8px;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+.date-input-group input:focus {
+  outline: none;
+  border-color: #2962ff;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .timeframe-container {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .timeframe-selector {
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 8px;
+  }
+  
+  .date-range-selector {
+    width: 100%;
+  }
+} 

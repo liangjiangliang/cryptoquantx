@@ -1,0 +1,234 @@
+.trading-panel {
+  background-color: #1e222d;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.trading-panel-header {
+  padding: 15px;
+  border-bottom: 1px solid #2e3241;
+}
+
+.trading-panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #d9d9d9;
+}
+
+.trading-panel-content {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+/* 订单类型选择器 */
+.order-type-selector {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.order-type-button {
+  flex: 1;
+  padding: 10px;
+  background-color: #2e3241;
+  border: none;
+  color: #d9d9d9;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.order-type-button:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.order-type-button:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.order-type-button.active {
+  background-color: #2962ff;
+  color: white;
+}
+
+/* 买卖方向选择器 */
+.order-side-selector {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.order-side-button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.order-side-button.buy {
+  background-color: rgba(38, 166, 154, 0.1);
+  color: #26a69a;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.order-side-button.sell {
+  background-color: rgba(239, 83, 80, 0.1);
+  color: #ef5350;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.order-side-button.buy.active {
+  background-color: #26a69a;
+  color: white;
+}
+
+.order-side-button.sell.active {
+  background-color: #ef5350;
+  color: white;
+}
+
+/* 输入组 */
+.input-group {
+  margin-bottom: 15px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #6c7284;
+  font-size: 12px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  background-color: #2e3241;
+  border: none;
+  border-radius: 4px;
+  color: #d9d9d9;
+  font-size: 14px;
+  outline: none;
+}
+
+/* 带按钮的输入 */
+.input-with-buttons {
+  display: flex;
+}
+
+.input-with-buttons button {
+  padding: 10px;
+  background-color: #2e3241;
+  border: none;
+  color: #2962ff;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.input-with-buttons button:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+  border-right: 1px solid #1e222d;
+}
+
+.input-with-buttons button:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-left: 1px solid #1e222d;
+}
+
+.input-with-buttons input {
+  flex: 1;
+  border-radius: 0;
+}
+
+/* 滑块组 */
+.slider-group {
+  margin-bottom: 15px;
+}
+
+.percentage-slider {
+  width: 100%;
+  margin-bottom: 5px;
+  -webkit-appearance: none;
+  height: 4px;
+  background: #2e3241;
+  border-radius: 2px;
+  outline: none;
+}
+
+.percentage-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2962ff;
+  cursor: pointer;
+}
+
+.percentage-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2962ff;
+  cursor: pointer;
+  border: none;
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #6c7284;
+}
+
+/* 余额信息 */
+.balance-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  font-size: 12px;
+  color: #d9d9d9;
+}
+
+/* 下单按钮 */
+.place-order-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.place-order-button.buy {
+  background-color: #26a69a;
+  color: white;
+}
+
+.place-order-button.sell {
+  background-color: #ef5350;
+  color: white;
+}
+
+.place-order-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.place-order-button:not(:disabled):hover {
+  opacity: 0.9;
+} 
