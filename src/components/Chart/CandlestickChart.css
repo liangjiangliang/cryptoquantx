@@ -1,145 +1,205 @@
 .candlestick-chart-container {
-  width: 100%;
   background-color: #1e222d;
   border-radius: 8px;
-  overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .chart-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid #2e3241;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
 }
 
 .chart-header h2 {
-  margin: 0;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 500;
   color: #d9d9d9;
+  margin: 0;
 }
 
 .chart-buttons {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+}
+
+.query-button, .load-data-button, .toggle-panels-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s ease;
 }
 
 .query-button {
   background-color: #3a7bd5;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
-.query-button:hover {
-  background-color: #2d62b3;
-}
-
-.query-button:disabled {
-  background-color: #666;
-  cursor: not-allowed;
+.query-button:hover:not(:disabled) {
+  background-color: #2c5aa0;
 }
 
 .load-data-button {
   background-color: #ff5555;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
-.load-data-button:hover {
-  background-color: #ff3333;
+.load-data-button:hover:not(:disabled) {
+  background-color: #e04444;
+}
+
+.toggle-panels-button {
+  background-color: #9c27b0;
+}
+
+.toggle-panels-button:hover {
+  background-color: #7b1fa2;
+}
+
+.query-button:disabled, .load-data-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 多指标选择器 */
+.sub-indicators-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #2e3241;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #555;
+}
+
+.sub-indicators-selector label {
+  color: #d9d9d9;
+  font-size: 12px;
+}
+
+.checkbox-group {
+  display: flex;
+  gap: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #d9d9d9;
+  cursor: pointer;
+}
+
+.checkbox-label input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.checkbox-label input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* 图表容器 */
+.chart-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 600px;
+  height: 100%;
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .chart-wrapper {
   position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 }
 
 .chart-content {
   position: relative;
-  height: 500px;
+  width: 100%;
+  flex-shrink: 0;
 }
 
-/* 加载状态样式 */
+.main-chart {
+  min-height: 400px;
+  flex: 2;
+}
+
+.sub-chart {
+  position: relative;
+  height: 150px;
+  min-height: 150px;
+  margin-top: 1px;
+  border-top: 1px solid #2e3241;
+  flex: 1;
+}
+
+.indicator-label {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  color: #d9d9d9;
+  font-size: 12px;
+  background-color: rgba(30, 34, 45, 0.7);
+  padding: 2px 5px;
+  border-radius: 2px;
+  z-index: 2;
+}
+
+/* 空数据提示 */
+.empty-data-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #8e8e8e;
+}
+
+.empty-data-message p {
+  margin: 4px 0;
+}
+
+/* 加载指示器 */
 .loading-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+  background-color: rgba(30, 34, 45, 0.7);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: rgba(30, 34, 45, 0.8);
   z-index: 10;
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
   border: 4px solid rgba(255, 255, 255, 0.1);
   border-radius: 50%;
-  border-top: 4px solid #ff5555;
+  border-top: 4px solid #3a7bd5;
+  width: 40px;
+  height: 40px;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
-}
-
-.loading-overlay p {
-  color: #d9d9d9;
-  font-size: 14px;
-}
-
-/* K线详细信息浮层样式 */
-.chart-tooltip {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background-color: rgba(30, 34, 45, 0.9);
-  border: 1px solid #3a3f50;
-  border-radius: 4px;
-  padding: 10px;
-  z-index: 5;
-  min-width: 180px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  font-size: 12px;
-  color: #d9d9d9;
-}
-
-.tooltip-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.tooltip-row:last-child {
-  margin-bottom: 0;
-}
-
-.tooltip-label {
-  color: #a0a0a0;
-  margin-right: 10px;
-}
-
-.tooltip-value {
-  font-weight: 500;
-}
-
-.tooltip-value.positive {
-  color: #ff5555;
-}
-
-.tooltip-value.negative {
-  color: #32a852;
 }
 
 @keyframes spin {
@@ -147,29 +207,60 @@
   100% { transform: rotate(360deg); }
 }
 
-.empty-data-message {
+/* K线详细信息浮层 */
+.chart-tooltip {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 20px;
+  left: 20px;
+  background-color: rgba(30, 34, 45, 0.9);
+  border: 1px solid #2e3241;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #d9d9d9;
+  font-size: 12px;
+  z-index: 5;
+  width: auto;
+  min-width: 180px;
+  max-width: 280px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tooltip-row {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: #1e222d;
-  color: #a0a0a0;
+  justify-content: space-between;
+  margin: 4px 0;
+}
+
+.tooltip-label {
+  color: #8e8e8e;
+  margin-right: 12px;
+}
+
+.tooltip-value {
+  font-weight: 500;
+}
+
+.tooltip-value.positive {
+  color: #ff5555; /* 红涨 */
+}
+
+.tooltip-value.negative {
+  color: #32a852; /* 绿跌 */
+}
+
+/* 技术指标部分样式 */
+.tooltip-divider {
+  height: 1px;
+  background-color: #2e3241;
+  margin: 8px 0;
+}
+
+.tooltip-section-title {
+  color: #90caf9;
+  font-weight: 500;
+  margin: 4px 0;
   text-align: center;
-  padding: 20px;
-}
-
-.empty-data-message p {
-  margin: 5px 0;
-  font-size: 16px;
-}
-
-.empty-data-message p:last-child {
-  font-size: 14px;
-  margin-top: 10px;
-  color: #ff5555;
+  font-size: 13px;
 } 

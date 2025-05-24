@@ -47,9 +47,10 @@ body {
 /* 简化的主内容区域 */
 .app-content-simplified {
   display: flex;
-  flex-direction: column;
   flex: 1;
   padding: 15px;
+  gap: 15px;
+  height: calc(100vh - 130px); /* 减去头部和底部高度 */
 }
 
 /* 左侧边栏 */
@@ -63,26 +64,21 @@ body {
   display: flex;
   flex-direction: column;
   gap: 15px;
-  width: 100%;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
 }
 
 .chart-container {
   display: flex;
   flex-direction: column;
-}
-
-.panels-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-}
-
-.panel {
-  height: 500px;
+  width: 100%;
+  height: 100%;
 }
 
 /* 右侧边栏 */
 .right-sidebar {
+  width: 300px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -90,6 +86,7 @@ body {
 
 .sidebar-panel {
   flex: 1;
+  min-height: 500px;
 }
 
 /* 页脚 */
@@ -107,6 +104,10 @@ body {
   .app-content {
     grid-template-columns: 200px 1fr 250px;
   }
+  
+  .right-sidebar {
+    width: 250px;
+  }
 }
 
 @media (max-width: 992px) {
@@ -114,22 +115,17 @@ body {
     grid-template-columns: 1fr;
   }
   
-  .panels-container {
-    grid-template-columns: 1fr;
+  .app-content-simplified {
+    flex-direction: column;
   }
   
   .right-sidebar {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    width: 100%;
   }
 }
 
 @media (max-width: 768px) {
   .right-sidebar {
-    grid-template-columns: 1fr;
-  }
-  
-  .panels-container {
-    grid-template-columns: 1fr;
+    width: 100%;
   }
 }
