@@ -8,6 +8,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  transition: height 0.3s ease, width 0.3s ease;
 }
 
 .chart-header {
@@ -119,6 +120,7 @@
   height: 100%;
   border-radius: 4px;
   overflow: hidden;
+  transition: height 0.3s ease;
 }
 
 .chart-wrapper {
@@ -129,6 +131,7 @@
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .chart-content {
@@ -140,6 +143,13 @@
 .main-chart {
   min-height: 400px;
   flex: 2;
+  transition: flex 0.3s ease, height 0.3s ease;
+}
+
+/* 面板隐藏时，主图表可以占据更多空间 */
+.panels-hidden .main-chart {
+  flex: 3;
+  min-height: 600px;
 }
 
 .sub-chart {

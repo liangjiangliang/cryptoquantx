@@ -51,6 +51,7 @@ body {
   padding: 15px;
   gap: 15px;
   height: calc(100vh - 130px); /* 减去头部和底部高度 */
+  transition: all 0.3s ease; /* 添加过渡效果 */
 }
 
 /* 左侧边栏 */
@@ -67,6 +68,7 @@ body {
   flex: 1;
   height: 100%;
   overflow: hidden;
+  transition: width 0.3s ease; /* 添加过渡效果 */
 }
 
 .chart-container {
@@ -82,11 +84,17 @@ body {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  transition: width 0.3s ease, opacity 0.3s ease; /* 添加过渡效果 */
 }
 
 .sidebar-panel {
   flex: 1;
   min-height: 500px;
+}
+
+/* 面板隐藏时样式 */
+.panels-hidden .main-content {
+  width: 100%;
 }
 
 /* 页脚 */

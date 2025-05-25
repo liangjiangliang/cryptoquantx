@@ -367,36 +367,46 @@ const CandlestickChart: React.FC = () => {
         const height = chartContainerRef.current.clientHeight || 600;
         const mainHeight = Math.max(400, height * 0.7);
         
-        if (chart.current) {
-          chart.current.applyOptions({ 
-            width,
-            height: mainHeight
-          });
-        }
-        
-        if (macdChart.current) {
-          macdChart.current.applyOptions({ 
-            width,
-            height: subChartHeight
-          });
-        }
-        
-        if (rsiChart.current) {
-          rsiChart.current.applyOptions({ 
-            width,
-            height: subChartHeight
-          });
-        }
-        
-        if (kdjChart.current) {
-          kdjChart.current.applyOptions({ 
-            width,
-            height: subChartHeight
-          });
-        }
+        // 添加延迟，确保DOM已完全更新
+        setTimeout(() => {
+          // 更新主图表尺寸
+          if (chart.current) {
+            chart.current.applyOptions({ 
+              width,
+              height: mainHeight
+            });
+          }
+          
+          // 更新所有副图表尺寸
+          if (macdChart.current) {
+            macdChart.current.applyOptions({ 
+              width,
+              height: subChartHeight
+            });
+          }
+          
+          if (rsiChart.current) {
+            rsiChart.current.applyOptions({ 
+              width,
+              height: subChartHeight
+            });
+          }
+          
+          if (kdjChart.current) {
+            kdjChart.current.applyOptions({ 
+              width,
+              height: subChartHeight
+            });
+          }
 
-        // 同步所有图表的时间轴
-        syncTimeScales();
+          // 同步所有图表的时间轴
+          syncTimeScales();
+          
+          // 使图表内容适应新尺寸
+          if (chart.current && candlestickData.length > 0) {
+            chart.current.timeScale().fitContent();
+          }
+        }, 100);
       };
 
       window.addEventListener('resize', handleResize);
@@ -1500,10 +1510,55 @@ const CandlestickChart: React.FC = () => {
     // 通过自定义事件通知App组件更新面板显示状态
     const event = new CustomEvent('togglePanels', { detail: { show: !showPanels } });
     window.dispatchEvent(event);
+    
+    // 添加短暂延迟，确保DOM更新后重新调整图表大小
+    setTimeout(() => {
+      if (chart.current) {
+        chart.current.applyOptions({
+          width: chartContainerRef.current?.clientWidth
+        });
+        
+        // 同步更新所有副图的大小
+        if (macdChart.current) {
+          macdChart.current.applyOptions({
+            width: chartContainerRef.current?.clientWidth
+          });
+        }
+        
+        if (rsiChart.current) {
+          rsiChart.current.applyOptions({
+            width: chartContainerRef.current?.clientWidth
+          });
+        }
+        
+        if (kdjChart.current) {
+          kdjChart.current.applyOptions({
+            width: chartContainerRef.current?.clientWidth
+          });
+        }
+        
+        // 使时间轴适应新宽度
+        chart.current.timeScale().fitContent();
+        syncTimeScales();
+      }
+    }, 350); // 延迟时间略长于CSS过渡时间
   };
 
+  // 监听面板显示状态变化
+  useEffect(() => {
+    const handleTogglePanels = (event: CustomEvent<{show: boolean}>) => {
+      setShowPanels(event.detail.show);
+    };
+    
+    window.addEventListener('togglePanels', handleTogglePanels as EventListener);
+    
+    return () => {
+      window.removeEventListener('togglePanels', handleTogglePanels as EventListener);
+    };
+  }, []);
+
   return (
-    <div className="candlestick-chart-container">
+    <div className={`candlestick-chart-container ${showPanels ? '' : 'panels-hidden'}`}>
       <div className="chart-header">
         <h2>{selectedPair} - {timeframe}</h2>
         <div className="chart-buttons">
@@ -1556,9 +1611,9 @@ const CandlestickChart: React.FC = () => {
           </button>
         </div>
       </div>
-      <div className="chart-container">
+      <div className={`chart-container ${showPanels ? '' : 'panels-hidden'}`}>
         <div className="chart-wrapper">
-          <div ref={chartContainerRef} className="chart-content main-chart">
+          <div ref={chartContainerRef} className={`chart-content main-chart ${showPanels ? '' : 'panels-hidden'}`}>
             {candlestickData.length === 0 && (
               <div className="empty-data-message">
                 <p>没有可显示的数据</p>
@@ -1569,21 +1624,21 @@ const CandlestickChart: React.FC = () => {
           
           {/* MACD副图 */}
           {subIndicators.includes('macd') && (
-            <div ref={macdChartRef} className="chart-content sub-chart macd-chart">
+            <div ref={macdChartRef} className={`chart-content sub-chart macd-chart ${showPanels ? '' : 'panels-hidden'}`}>
               <div className="indicator-label">MACD</div>
             </div>
           )}
           
           {/* RSI副图 */}
           {subIndicators.includes('rsi') && (
-            <div ref={rsiChartRef} className="chart-content sub-chart rsi-chart">
+            <div ref={rsiChartRef} className={`chart-content sub-chart rsi-chart ${showPanels ? '' : 'panels-hidden'}`}>
               <div className="indicator-label">RSI</div>
             </div>
           )}
           
           {/* KDJ副图 */}
           {subIndicators.includes('kdj') && (
-            <div ref={kdjChartRef} className="chart-content sub-chart kdj-chart">
+            <div ref={kdjChartRef} className={`chart-content sub-chart kdj-chart ${showPanels ? '' : 'panels-hidden'}`}>
               <div className="indicator-label">KDJ</div>
             </div>
           )}

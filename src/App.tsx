@@ -4,7 +4,6 @@ import store from './store';
 import CandlestickChart from './components/Chart/CandlestickChart';
 import TimeframeSelector from './components/Chart/TimeframeSelector';
 import BacktestPanel from './components/Backtest/BacktestPanel';
-import StagewiseToolbarWrapper from './components/DevTools/StagewiseToolbarWrapper';
 import DataLoader from './components/DataLoader';
 import './App.css';
 
@@ -32,7 +31,7 @@ function App() {
           <h1>OKX 加密货币交易平台</h1>
         </header>
         
-        <main className="app-content-simplified">
+        <main className={`app-content-simplified ${showPanels ? '' : 'panels-hidden'}`}>
           <div className="main-content">
             <div className="chart-container">
               <TimeframeSelector />
@@ -55,8 +54,6 @@ function App() {
       </div>
       {/* 数据加载器 */}
       <DataLoader />
-      {/* 只在开发环境中加载Stagewise工具栏，使用错误边界处理可能的错误 */}
-      {process.env.NODE_ENV === 'development' && <StagewiseToolbarWrapper />}
     </Provider>
   );
 }
