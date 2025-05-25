@@ -1,0 +1,59 @@
+/* 交易标记样式 */
+.trade-marker {
+  z-index: 10;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.trade-marker-buy {
+  filter: drop-shadow(0 0 4px rgba(38, 166, 154, 0.7));
+}
+
+.trade-marker-sell {
+  filter: drop-shadow(0 0 4px rgba(239, 83, 80, 0.7));
+}
+
+/* 交易标记提示框 */
+.trade-tooltip {
+  position: absolute;
+  background-color: rgba(30, 34, 45, 0.9);
+  color: #d9d9d9;
+  border: 1px solid #2e3241;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  max-width: 250px;
+}
+
+.trade-tooltip .tooltip-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.trade-tooltip .tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+}
+
+.trade-tooltip .tooltip-label {
+  color: #8e8e8e;
+  margin-right: 12px;
+}
+
+.trade-tooltip .tooltip-value {
+  font-weight: 500;
+}
+
+.trade-tooltip .tooltip-value.positive {
+  color: #26a69a;
+}
+
+.trade-tooltip .tooltip-value.negative {
+  color: #ef5350;
+} 

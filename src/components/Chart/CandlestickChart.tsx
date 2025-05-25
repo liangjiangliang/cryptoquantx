@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createChart, CrosshairMode, Time, LineWidth, ISeriesApi, IChartApi } from 'lightweight-charts';
+import { createChart, CrosshairMode, Time, LineWidth, ISeriesApi, IChartApi, SeriesMarkerPosition, SeriesMarker, LineStyle } from 'lightweight-charts';
 import { useSelector, useDispatch } from 'react-redux';
-import { AppState, CandlestickData } from '../../store/types';
+import { AppState, CandlestickData, BacktestTrade } from '../../store/types';
 import { updateCandlestickData } from '../../store/actions';
 import { fetchHistoryWithIntegrityCheck } from '../../services/api';
 import DataLoadModal from '../DataLoadModal/DataLoadModal';
@@ -18,6 +18,7 @@ import {
   extractLowPrices 
 } from '../../utils/indicators';
 import './CandlestickChart.css';
+import TradeMarkers from './TradeMarkers';
 
 // K线宽度本地存储键名
 const CHART_BAR_SPACING_KEY = 'cryptoquantx_chart_bar_spacing';
@@ -57,9 +58,10 @@ const formatDate = (timestamp: number): string => {
   });
 };
 
-// 格式化价格
-const formatPrice = (price: number): string => {
-  return price.toFixed(2);
+// 格式化价格（增强版，处理undefined）
+const formatPrice = (price: number | undefined): string => {
+  if (price === undefined) return '0.00';
+  return price.toFixed(price < 10 ? 6 : price < 100 ? 4 : 2);
 };
 
 // 格式化成交量
@@ -72,7 +74,8 @@ const formatVolume = (volume: number): string => {
   return volume.toFixed(2);
 };
 
-const CandlestickChart: React.FC = () => {
+// 修改CandlestickChart组件的返回类型
+const CandlestickChart = (): React.ReactElement => {
   // 主图表容器
   const chartContainerRef = useRef<HTMLDivElement>(null);
   // 副图表容器
@@ -87,6 +90,8 @@ const CandlestickChart: React.FC = () => {
   const chart = useRef<IChartApi | null>(null);
   const candleSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeries = useRef<ISeriesApi<'Histogram'> | null>(null);
+  // 交易标记系列
+  const tradeMarkers = useRef<ISeriesApi<'Candlestick'> | null>(null);
   
   // 副图表
   const macdChart = useRef<IChartApi | null>(null);
@@ -151,6 +156,7 @@ const CandlestickChart: React.FC = () => {
   const candlestickData = useSelector((state: AppState) => state.candlestickData);
   const selectedPair = useSelector((state: AppState) => state.selectedPair);
   const timeframe = useSelector((state: AppState) => state.timeframe);
+  const backtestResults = useSelector((state: AppState) => state.backtestResults);
   
   // 检查副图指标是否被选中
   const isSubIndicatorSelected = (indicator: IndicatorType): boolean => {
@@ -728,6 +734,11 @@ const CandlestickChart: React.FC = () => {
         // 更新指标
         setTimeout(() => {
           updateIndicators();
+          
+          // 如果有回测结果，重新绘制交易标记
+          if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
+            drawTradeMarkers();
+          }
         }, 0);
       }
     } catch (error) {
@@ -791,6 +802,11 @@ const CandlestickChart: React.FC = () => {
   useEffect(() => {
     try {
       updateIndicators();
+      
+      // 如果有回测结果，绘制交易标记
+      if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
+        drawTradeMarkers();
+      }
     } catch (error) {
       console.error('更新指标错误:', error);
     }
@@ -855,6 +871,11 @@ const CandlestickChart: React.FC = () => {
                     syncTimeScales();
                     // 为副图表添加时间轴变化事件，确保双向联动
                     setupSubChartTimeScaleEvents();
+                    
+                    // 如果有回测结果，重新绘制交易标记
+                    if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
+                      drawTradeMarkers();
+                    }
                   }
                 } catch (error) {
                   console.error('同步时间轴失败:', error);
@@ -877,6 +898,11 @@ const CandlestickChart: React.FC = () => {
             // 如果没有选择任何副图指标，清除所有副图
             try {
               clearSubIndicators();
+              
+              // 如果有回测结果，重新绘制交易标记
+              if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
+                drawTradeMarkers();
+              }
             } catch (error) {
               console.error('清除副图指标错误:', error);
             }
@@ -892,91 +918,6 @@ const CandlestickChart: React.FC = () => {
       });
     } catch (error) {
       console.error('更新指标错误:', error);
-    }
-  };
-  
-  // 清除所有指标
-  const clearIndicators = () => {
-    try {
-      // 清除主图指标
-      if (mainIndicatorSeries.current) {
-        mainIndicatorSeries.current.forEach((series) => {
-          if (series && chart.current) {
-            chart.current.removeSeries(series);
-          }
-        });
-      }
-      mainIndicatorSeries.current = [];
-      
-      // 清除副图指标
-      clearSubChartSeries();
-    } catch (error) {
-      console.error('清除指标错误:', error);
-    }
-  };
-  
-  // 清除副图上的所有系列数据
-  const clearSubChartSeries = () => {
-    try {
-      // 清除MACD系列
-      if (macdSeries.current) {
-        macdSeries.current.forEach((series) => {
-          if (series && macdChart.current) {
-            macdChart.current.removeSeries(series);
-          }
-        });
-      }
-      macdSeries.current = [];
-      
-      // 清除RSI系列
-      if (rsiSeries.current) {
-        rsiSeries.current.forEach((series) => {
-          if (series && rsiChart.current) {
-            rsiChart.current.removeSeries(series);
-          }
-        });
-      }
-      rsiSeries.current = [];
-      
-      // 清除KDJ系列
-      if (kdjSeries.current) {
-        kdjSeries.current.forEach((series) => {
-          if (series && kdjChart.current) {
-            kdjChart.current.removeSeries(series);
-          }
-        });
-      }
-      kdjSeries.current = [];
-    } catch (error) {
-      console.error('清除副图系列错误:', error);
-    }
-  };
-  
-  // 清除所有副图和系列
-  const clearSubIndicators = () => {
-    try {
-      // 先清除系列数据
-      clearSubChartSeries();
-      
-      // 清除MACD图表
-      if (macdChart.current) {
-        macdChart.current.remove();
-        macdChart.current = null;
-      }
-      
-      // 清除RSI图表
-      if (rsiChart.current) {
-        rsiChart.current.remove();
-        rsiChart.current = null;
-      }
-      
-      // 清除KDJ图表
-      if (kdjChart.current) {
-        kdjChart.current.remove();
-        kdjChart.current = null;
-      }
-    } catch (error) {
-      console.error('清除副图指标错误:', error);
     }
   };
   
@@ -2058,6 +1999,165 @@ const CandlestickChart: React.FC = () => {
     };
   }, []);
 
+  // 绘制回测交易标记
+  const drawTradeMarkers = () => {
+    if (!chart.current || !candleSeries.current || !backtestResults || !backtestResults.trades || backtestResults.trades.length === 0) {
+      return;
+    }
+
+    try {
+      // 准备买入和卖出标记
+      const markers = backtestResults.trades.flatMap((trade: BacktestTrade) => {
+        const markers: SeriesMarker<Time>[] = [];
+        
+        // 添加买入标记
+        if (trade.side === 'buy') {
+          markers.push({
+            time: trade.entryTime as Time,
+            position: 'belowBar' as SeriesMarkerPosition,
+            color: '#26a69a',
+            shape: 'arrowUp',
+            text: `买入 ${formatPrice(trade.entryPrice)}`,
+            size: 3, // 增大标记尺寸
+            id: `entry-${trade.id || Math.random().toString(36).substring(2, 9)}`,
+          });
+        } else {
+          // 卖出标记
+          markers.push({
+            time: trade.entryTime as Time,
+            position: 'aboveBar' as SeriesMarkerPosition,
+            color: '#ef5350',
+            shape: 'arrowDown',
+            text: `卖出 ${formatPrice(trade.entryPrice)}`,
+            size: 3, // 增大标记尺寸
+            id: `entry-${trade.id || Math.random().toString(36).substring(2, 9)}`,
+          });
+        }
+        
+        // 添加平仓标记
+        if (trade.exitTime) {
+          markers.push({
+            time: trade.exitTime as Time,
+            position: (trade.side === 'buy' ? 'aboveBar' : 'belowBar') as SeriesMarkerPosition,
+            color: trade.side === 'buy' ? '#ef5350' : '#26a69a',
+            shape: trade.side === 'buy' ? 'arrowDown' : 'arrowUp',
+            text: `平仓 ${formatPrice(trade.exitPrice)} (${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})`,
+            size: 3, // 增大标记尺寸
+            id: `exit-${trade.id || Math.random().toString(36).substring(2, 9)}`,
+          });
+        }
+        
+        return markers;
+      });
+      
+      // 设置标记
+      candleSeries.current.setMarkers(markers);
+      
+      console.log(`已绘制 ${markers.length} 个交易标记`);
+    } catch (error) {
+      console.error('绘制交易标记错误:', error);
+    }
+  };
+
+  // 监听回测结果变化
+  useEffect(() => {
+    if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
+      console.log(`检测到回测结果更新: ${backtestResults.trades.length} 个交易记录`);
+      // 延迟一下，确保图表已经准备好
+      setTimeout(() => {
+        drawTradeMarkers();
+      }, 100);
+    } else if (candleSeries.current) {
+      // 如果没有回测结果，清除所有标记
+      candleSeries.current.setMarkers([]);
+    }
+  }, [backtestResults]);
+
+  // 清除所有指标
+  const clearIndicators = () => {
+    try {
+      // 清除主图指标
+      if (mainIndicatorSeries.current) {
+        mainIndicatorSeries.current.forEach((series) => {
+          if (series && chart.current) {
+            chart.current.removeSeries(series);
+          }
+        });
+      }
+      mainIndicatorSeries.current = [];
+      
+      // 清除副图指标
+      clearSubChartSeries();
+    } catch (error) {
+      console.error('清除指标错误:', error);
+    }
+  };
+
+  // 清除副图上的所有系列数据
+  const clearSubChartSeries = () => {
+    try {
+      // 清除MACD系列
+      if (macdSeries.current) {
+        macdSeries.current.forEach((series) => {
+          if (series && macdChart.current) {
+            macdChart.current.removeSeries(series);
+          }
+        });
+      }
+      macdSeries.current = [];
+      
+      // 清除RSI系列
+      if (rsiSeries.current) {
+        rsiSeries.current.forEach((series) => {
+          if (series && rsiChart.current) {
+            rsiChart.current.removeSeries(series);
+          }
+        });
+      }
+      rsiSeries.current = [];
+      
+      // 清除KDJ系列
+      if (kdjSeries.current) {
+        kdjSeries.current.forEach((series) => {
+          if (series && kdjChart.current) {
+            kdjChart.current.removeSeries(series);
+          }
+        });
+      }
+      kdjSeries.current = [];
+    } catch (error) {
+      console.error('清除副图系列错误:', error);
+    }
+  };
+
+  // 清除所有副图和系列
+  const clearSubIndicators = () => {
+    try {
+      // 先清除系列数据
+      clearSubChartSeries();
+      
+      // 清除MACD图表
+      if (macdChart.current) {
+        macdChart.current.remove();
+        macdChart.current = null;
+      }
+      
+      // 清除RSI图表
+      if (rsiChart.current) {
+        rsiChart.current.remove();
+        rsiChart.current = null;
+      }
+      
+      // 清除KDJ图表
+      if (kdjChart.current) {
+        kdjChart.current.remove();
+        kdjChart.current = null;
+      }
+    } catch (error) {
+      console.error('清除副图指标错误:', error);
+    }
+  };
+
   return (
     <div className={`candlestick-chart-container ${showPanels ? '' : 'panels-hidden'}`}>
       <div className="chart-header">
@@ -2288,6 +2388,23 @@ const CandlestickChart: React.FC = () => {
           onLoadData={handleLoadHistoryData}
         />
       </div>
+      
+      {/* 加载历史数据模态框 */}
+      {isModalOpen && (
+        <DataLoadModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onLoadData={handleLoadHistoryData}
+        />
+      )}
+      
+      {/* 显示错误信息 */}
+      {isHistoryLoading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+          <p>正在加载历史数据...</p>
+        </div>
+      )}
     </div>
   );
 };

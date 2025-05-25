@@ -273,4 +273,65 @@
   margin: 4px 0;
   text-align: center;
   font-size: 13px;
+}
+
+/* 添加交易标记样式 */
+.trade-marker {
+  z-index: 10;
+  pointer-events: auto;
+  cursor: pointer;
+  transform: scale(1.5); /* 放大标记 */
+  transition: transform 0.2s ease;
+}
+
+/* 买入标记样式 */
+.trade-marker-buy {
+  filter: drop-shadow(0 0 5px rgba(38, 166, 154, 0.8));
+}
+
+/* 卖出标记样式 */
+.trade-marker-sell {
+  filter: drop-shadow(0 0 5px rgba(239, 83, 80, 0.8));
+}
+
+/* 鼠标悬停效果 */
+.trade-marker:hover {
+  transform: scale(2);
+  z-index: 100;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
+}
+
+/* 交易标记提示框 */
+.trade-tooltip {
+  position: absolute;
+  display: none;
+  padding: 8px;
+  background-color: rgba(30, 34, 45, 0.9);
+  color: #d9d9d9;
+  border: 1px solid #2e3241;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.trade-tooltip.visible {
+  display: block;
+}
+
+/* 增强交易标记样式 */
+.tv-lightweight-charts .trade-marker-buy {
+  filter: drop-shadow(0 0 4px rgba(38, 166, 154, 0.7));
+}
+
+.tv-lightweight-charts .trade-marker-sell {
+  filter: drop-shadow(0 0 4px rgba(239, 83, 80, 0.7));
+}
+
+/* 使标记在鼠标悬停时更明显 */
+.tv-lightweight-charts .trade-marker:hover {
+  transform: scale(1.2);
+  z-index: 100;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.7));
 } 
