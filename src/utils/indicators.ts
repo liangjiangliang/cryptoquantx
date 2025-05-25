@@ -594,4 +594,162 @@ export const extractHighPrices = (data: CandlestickData[]): number[] => {
  */
 export const extractLowPrices = (data: CandlestickData[]): number[] => {
   return data.map(item => item.low);
+};
+
+/**
+ * 计算库存相对强弱指标 (StockRSI)
+ */
+export const calculateStockRSI = (closePrices: number[], period: number = 14, stochPeriod: number = 14): number[] => {
+  if (!hasValidData(closePrices)) {
+    console.warn('calculateStockRSI: 无效的输入数据');
+    return Array(closePrices.length).fill(NaN);
+  }
+  
+  try {
+    // 首先计算RSI
+    const rsi = calculateRSI(closePrices, period);
+    
+    // 如果RSI计算失败，返回NaN数组
+    if (!hasValidData(rsi)) {
+      console.warn('calculateStockRSI: RSI计算失败');
+      return Array(closePrices.length).fill(NaN);
+    }
+    
+    const stockRSI: number[] = [];
+    
+    // 前 period + stochPeriod - 1 个点没有足够数据，填充NaN
+    for (let i = 0; i < period + stochPeriod - 1; i++) {
+      stockRSI.push(NaN);
+    }
+    
+    // 计算StockRSI
+    for (let i = period + stochPeriod - 1; i < closePrices.length; i++) {
+      // 找出stochPeriod周期内的最高和最低RSI
+      let highest = -Infinity;
+      let lowest = Infinity;
+      let validCount = 0;
+      
+      for (let j = i - stochPeriod + 1; j <= i; j++) {
+        if (!isNaN(rsi[j])) {
+          highest = Math.max(highest, rsi[j]);
+          lowest = Math.min(lowest, rsi[j]);
+          validCount++;
+        }
+      }
+      
+      if (validCount === 0 || highest === -Infinity || lowest === Infinity || Math.abs(highest - lowest) < 0.000001) {
+        // 如果没有有效数据或最高值等于最低值，使用前一个值或填充0
+        stockRSI.push(stockRSI.length > 0 ? stockRSI[stockRSI.length - 1] : 0);
+      } else {
+        // 计算当前RSI在区间内的位置 (0-100%)
+        const currentRSI = rsi[i];
+        const value = ((currentRSI - lowest) / (highest - lowest)) * 100;
+        stockRSI.push(value);
+      }
+    }
+    
+    return stockRSI;
+  } catch (error) {
+    console.error('calculateStockRSI错误:', error);
+    return Array(closePrices.length).fill(NaN);
+  }
+};
+
+/**
+ * 计算抛物线转向指标 (SAR)
+ */
+export const calculateSAR = (
+  highPrices: number[], 
+  lowPrices: number[],
+  closePrices: number[],
+  initialAF: number = 0.02, 
+  maxAF: number = 0.2, 
+  afStep: number = 0.02
+): number[] => {
+  if (!hasValidData(highPrices) || !hasValidData(lowPrices)) {
+    console.warn('calculateSAR: 无效的输入数据');
+    return Array(Math.max(highPrices.length, lowPrices.length)).fill(NaN);
+  }
+  
+  try {
+    // 确保所有数组长度一致
+    const length = Math.min(highPrices.length, lowPrices.length, closePrices.length);
+    if (length < 2) {
+      console.warn('calculateSAR: 数据点不足');
+      return Array(length).fill(NaN);
+    }
+    
+    // 清理数据，替换无效值
+    const cleanHighs = highPrices.slice(0, length).map(price => 
+      price === undefined || isNaN(price) ? null : price
+    );
+    
+    const cleanLows = lowPrices.slice(0, length).map(price => 
+      price === undefined || isNaN(price) ? null : price
+    );
+    
+    const cleanCloses = closePrices.slice(0, length).map(price => 
+      price === undefined || isNaN(price) ? null : price
+    );
+    
+    // 填充null值
+    const filledHighs = fillNullValues(cleanHighs);
+    const filledLows = fillNullValues(cleanLows);
+    const filledCloses = fillNullValues(cleanCloses);
+    
+    const sar: number[] = [];
+    
+    // 初始SAR值使用第一个收盘价
+    sar.push(filledCloses[0]);
+    
+    let isUptrend = filledCloses[1] > filledCloses[0]; // 初始趋势
+    let extremePoint = isUptrend ? filledHighs[0] : filledLows[0]; // 初始极值点
+    let af = initialAF; // 加速因子
+    
+    for (let i = 1; i < length; i++) {
+      // 计算当前SAR值
+      let currentSAR = sar[i - 1] + af * (extremePoint - sar[i - 1]);
+      
+      // 限制SAR值不能超出前两个周期的价格范围
+      if (i >= 2) {
+        if (isUptrend) {
+          // 上升趋势，SAR不能高于前两个周期的最低点
+          currentSAR = Math.min(currentSAR, Math.min(filledLows[i - 1], filledLows[i - 2]));
+        } else {
+          // 下降趋势，SAR不能低于前两个周期的最高点
+          currentSAR = Math.max(currentSAR, Math.max(filledHighs[i - 1], filledHighs[i - 2]));
+        }
+      }
+      
+      // 检查是否转向
+      const high = filledHighs[i];
+      const low = filledLows[i];
+      
+      if ((isUptrend && low < currentSAR) || (!isUptrend && high > currentSAR)) {
+        // 趋势反转
+        isUptrend = !isUptrend;
+        currentSAR = extremePoint; // 反转时，SAR值为前一个极值点
+        extremePoint = isUptrend ? high : low; // 重置极值点
+        af = initialAF; // 重置加速因子
+      } else {
+        // 趋势继续
+        if (isUptrend && high > extremePoint) {
+          // 上升趋势创新高
+          extremePoint = high;
+          af = Math.min(af + afStep, maxAF); // 增加加速因子
+        } else if (!isUptrend && low < extremePoint) {
+          // 下降趋势创新低
+          extremePoint = low;
+          af = Math.min(af + afStep, maxAF); // 增加加速因子
+        }
+      }
+      
+      sar.push(currentSAR);
+    }
+    
+    return sar;
+  } catch (error) {
+    console.error('calculateSAR错误:', error);
+    return Array(Math.max(highPrices.length, lowPrices.length)).fill(NaN);
+  }
 }; 

@@ -9,13 +9,41 @@ import IndicatorSelector, { IndicatorType } from './IndicatorSelector';
 import { 
   calculateMACD, 
   calculateRSI, 
+  calculateStockRSI,
   calculateKDJ, 
   calculateBollingerBands, 
+  calculateSAR,
   extractClosePrices, 
   extractHighPrices, 
   extractLowPrices 
 } from '../../utils/indicators';
 import './CandlestickChart.css';
+
+// K线宽度本地存储键名
+const CHART_BAR_SPACING_KEY = 'cryptoquantx_chart_bar_spacing';
+
+// 默认K线宽度
+const DEFAULT_BAR_SPACING = 6;
+
+// 从localStorage获取保存的K线宽度
+const getSavedBarSpacing = (): number => {
+  try {
+    const savedValue = localStorage.getItem(CHART_BAR_SPACING_KEY);
+    return savedValue ? parseFloat(savedValue) : DEFAULT_BAR_SPACING;
+  } catch (error) {
+    console.error('读取K线宽度设置失败:', error);
+    return DEFAULT_BAR_SPACING;
+  }
+};
+
+// 保存K线宽度到localStorage
+const saveBarSpacing = (spacing: number): void => {
+  try {
+    localStorage.setItem(CHART_BAR_SPACING_KEY, spacing.toString());
+  } catch (error) {
+    console.error('保存K线宽度设置失败:', error);
+  }
+};
 
 // 格式化日期
 const formatDate = (timestamp: number): string => {
@@ -90,12 +118,14 @@ const CandlestickChart: React.FC = () => {
         middle: string;
         lower: string;
       };
+      sar?: string;
       macd?: {
         macd: string;
         signal: string;
         histogram: string;
       };
       rsi?: string;
+      stockrsi?: string;
       kdj?: {
         k: string;
         d: string;
@@ -105,8 +135,8 @@ const CandlestickChart: React.FC = () => {
   } | null>(null);
   
   // 指标选择状态 - 修改为支持多选
-  const [mainIndicator, setMainIndicator] = useState<IndicatorType>('none');
-  const [subIndicators, setSubIndicators] = useState<IndicatorType[]>([]);
+  const [mainIndicator, setMainIndicator] = useState<IndicatorType>('boll');
+  const [subIndicators, setSubIndicators] = useState<IndicatorType[]>(['macd', 'rsi', 'stockrsi', 'kdj']);
   
   // 数据加载弹窗状态
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -197,6 +227,23 @@ const CandlestickChart: React.FC = () => {
               }
             }
             
+            if (mainIndicator === 'sar') {
+              try {
+                const highPrices = extractHighPrices(candlestickData);
+                const lowPrices = extractLowPrices(candlestickData);
+                const closePrices = extractClosePrices(candlestickData);
+                const sarValues = calculateSAR(highPrices, lowPrices, closePrices);
+                
+                const sarValue = safeGetDataPoint(sarValues, dataIndex);
+                
+                if (sarValue !== null) {
+                  indicators.sar = formatPrice(sarValue);
+                }
+              } catch (error) {
+                console.error('获取SAR指标数据错误:', error);
+              }
+            }
+            
             if (isSubIndicatorSelected('macd')) {
               try {
                 const closePrices = extractClosePrices(candlestickData);
@@ -232,6 +279,21 @@ const CandlestickChart: React.FC = () => {
                 console.error('获取RSI指标数据错误:', error);
               }
             } 
+            
+            if (isSubIndicatorSelected('stockrsi')) {
+              try {
+                const closePrices = extractClosePrices(candlestickData);
+                const stockRsiData = calculateStockRSI(closePrices);
+                
+                const stockRsiValue = safeGetDataPoint(stockRsiData, dataIndex);
+                
+                if (stockRsiValue !== null) {
+                  indicators.stockrsi = stockRsiValue.toFixed(2);
+                }
+              } catch (error) {
+                console.error('获取StockRSI指标数据错误:', error);
+              }
+            }
             
             if (isSubIndicatorSelected('kdj')) {
               try {
@@ -280,6 +342,9 @@ const CandlestickChart: React.FC = () => {
     if (!chartContainerRef.current) return;
     
     try {
+      // 获取保存的K线宽度
+      const savedBarSpacing = getSavedBarSpacing();
+      
       // 获取容器高度
       const containerHeight = chartContainerRef.current.clientHeight || 600;
       const mainChartHeight = Math.max(400, containerHeight * 0.7); // 主图占70%或至少400px
@@ -318,6 +383,7 @@ const CandlestickChart: React.FC = () => {
             borderColor: '#2e3241',
             timeVisible: true,
             secondsVisible: false,
+            barSpacing: savedBarSpacing, // 使用保存的K线宽度
           },
         };
 
@@ -357,6 +423,34 @@ const CandlestickChart: React.FC = () => {
 
         // 设置十字线移动事件
         setupCrosshairMoveHandler();
+        
+        // 监听K线宽度变化
+        chart.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+          if (!chart.current) return;
+          
+          try {
+            // 获取当前K线宽度
+            const currentBarSpacing = chart.current.timeScale().options().barSpacing;
+            
+            // 如果宽度发生变化，保存到localStorage
+            if (currentBarSpacing !== undefined && currentBarSpacing !== getSavedBarSpacing()) {
+              saveBarSpacing(currentBarSpacing);
+              
+              // 同步更新所有副图表的K线宽度
+              if (macdChart.current && macdChart.current.timeScale()) {
+                macdChart.current.timeScale().applyOptions({ barSpacing: currentBarSpacing });
+              }
+              if (rsiChart.current && rsiChart.current.timeScale()) {
+                rsiChart.current.timeScale().applyOptions({ barSpacing: currentBarSpacing });
+              }
+              if (kdjChart.current && kdjChart.current.timeScale()) {
+                kdjChart.current.timeScale().applyOptions({ barSpacing: currentBarSpacing });
+              }
+            }
+          } catch (error) {
+            console.error('保存K线宽度错误:', error);
+          }
+        });
       }
       
       // 响应窗口大小变化
@@ -463,63 +557,145 @@ const CandlestickChart: React.FC = () => {
   const syncTimeScales = () => {
     if (!chart.current) return;
     
-    const mainTimeScale = chart.current.timeScale();
-    const visibleRange = mainTimeScale.getVisibleRange();
-    
-    if (!visibleRange) return;
-    
-    // 同步MACD图表
-    if (macdChart.current) {
-      macdChart.current.timeScale().setVisibleRange(visibleRange);
-    }
-    
-    // 同步RSI图表
-    if (rsiChart.current) {
-      rsiChart.current.timeScale().setVisibleRange(visibleRange);
-    }
-    
-    // 同步KDJ图表
-    if (kdjChart.current) {
-      kdjChart.current.timeScale().setVisibleRange(visibleRange);
+    try {
+      const mainTimeScale = chart.current.timeScale();
+      if (!mainTimeScale) return;
+      
+      const visibleRange = mainTimeScale.getVisibleRange();
+      
+      if (!visibleRange) return;
+      
+      // 同步MACD图表
+      if (macdChart.current && macdChart.current.timeScale()) {
+        try {
+          macdChart.current.timeScale().setVisibleRange(visibleRange);
+        } catch (error) {
+          console.error('同步MACD时间轴错误:', error);
+        }
+      }
+      
+      // 同步RSI图表
+      if (rsiChart.current && rsiChart.current.timeScale()) {
+        try {
+          rsiChart.current.timeScale().setVisibleRange(visibleRange);
+        } catch (error) {
+          console.error('同步RSI时间轴错误:', error);
+        }
+      }
+      
+      // 同步KDJ图表
+      if (kdjChart.current && kdjChart.current.timeScale()) {
+        try {
+          kdjChart.current.timeScale().setVisibleRange(visibleRange);
+        } catch (error) {
+          console.error('同步KDJ时间轴错误:', error);
+        }
+      }
+    } catch (error) {
+      console.error('同步时间轴错误:', error);
     }
   };
 
   // 为所有副图表添加时间轴变化事件
   const setupSubChartTimeScaleEvents = () => {
-    // 为MACD图表添加时间轴变化事件
-    if (macdChart.current) {
-      macdChart.current.timeScale().subscribeVisibleTimeRangeChange((range) => {
-        if (range && chart.current) {
-          chart.current.timeScale().setVisibleRange(range);
-          // 同步其他副图
-          if (rsiChart.current) rsiChart.current.timeScale().setVisibleRange(range);
-          if (kdjChart.current) kdjChart.current.timeScale().setVisibleRange(range);
+    try {
+      // 为MACD图表添加时间轴变化事件
+      if (macdChart.current && macdChart.current.timeScale()) {
+        try {
+          macdChart.current.timeScale().subscribeVisibleTimeRangeChange((range) => {
+            if (!range || !chart.current || !chart.current.timeScale()) return;
+            
+            try {
+              chart.current.timeScale().setVisibleRange(range);
+              // 同步其他副图
+              if (rsiChart.current && rsiChart.current.timeScale()) {
+                try {
+                  rsiChart.current.timeScale().setVisibleRange(range);
+                } catch (error) {
+                  console.error('MACD同步RSI时间轴错误:', error);
+                }
+              }
+              if (kdjChart.current && kdjChart.current.timeScale()) {
+                try {
+                  kdjChart.current.timeScale().setVisibleRange(range);
+                } catch (error) {
+                  console.error('MACD同步KDJ时间轴错误:', error);
+                }
+              }
+            } catch (error) {
+              console.error('MACD同步时间轴错误:', error);
+            }
+          });
+        } catch (error) {
+          console.error('添加MACD时间轴事件错误:', error);
         }
-      });
-    }
-    
-    // 为RSI图表添加时间轴变化事件
-    if (rsiChart.current) {
-      rsiChart.current.timeScale().subscribeVisibleTimeRangeChange((range) => {
-        if (range && chart.current) {
-          chart.current.timeScale().setVisibleRange(range);
-          // 同步其他副图
-          if (macdChart.current) macdChart.current.timeScale().setVisibleRange(range);
-          if (kdjChart.current) kdjChart.current.timeScale().setVisibleRange(range);
+      }
+      
+      // 为RSI图表添加时间轴变化事件
+      if (rsiChart.current && rsiChart.current.timeScale()) {
+        try {
+          rsiChart.current.timeScale().subscribeVisibleTimeRangeChange((range) => {
+            if (!range || !chart.current || !chart.current.timeScale()) return;
+            
+            try {
+              chart.current.timeScale().setVisibleRange(range);
+              // 同步其他副图
+              if (macdChart.current && macdChart.current.timeScale()) {
+                try {
+                  macdChart.current.timeScale().setVisibleRange(range);
+                } catch (error) {
+                  console.error('RSI同步MACD时间轴错误:', error);
+                }
+              }
+              if (kdjChart.current && kdjChart.current.timeScale()) {
+                try {
+                  kdjChart.current.timeScale().setVisibleRange(range);
+                } catch (error) {
+                  console.error('RSI同步KDJ时间轴错误:', error);
+                }
+              }
+            } catch (error) {
+              console.error('RSI同步时间轴错误:', error);
+            }
+          });
+        } catch (error) {
+          console.error('添加RSI时间轴事件错误:', error);
         }
-      });
-    }
-    
-    // 为KDJ图表添加时间轴变化事件
-    if (kdjChart.current) {
-      kdjChart.current.timeScale().subscribeVisibleTimeRangeChange((range) => {
-        if (range && chart.current) {
-          chart.current.timeScale().setVisibleRange(range);
-          // 同步其他副图
-          if (macdChart.current) macdChart.current.timeScale().setVisibleRange(range);
-          if (rsiChart.current) rsiChart.current.timeScale().setVisibleRange(range);
+      }
+      
+      // 为KDJ图表添加时间轴变化事件
+      if (kdjChart.current && kdjChart.current.timeScale()) {
+        try {
+          kdjChart.current.timeScale().subscribeVisibleTimeRangeChange((range) => {
+            if (!range || !chart.current || !chart.current.timeScale()) return;
+            
+            try {
+              chart.current.timeScale().setVisibleRange(range);
+              // 同步其他副图
+              if (macdChart.current && macdChart.current.timeScale()) {
+                try {
+                  macdChart.current.timeScale().setVisibleRange(range);
+                } catch (error) {
+                  console.error('KDJ同步MACD时间轴错误:', error);
+                }
+              }
+              if (rsiChart.current && rsiChart.current.timeScale()) {
+                try {
+                  rsiChart.current.timeScale().setVisibleRange(range);
+                } catch (error) {
+                  console.error('KDJ同步RSI时间轴错误:', error);
+                }
+              }
+            } catch (error) {
+              console.error('KDJ同步时间轴错误:', error);
+            }
+          });
+        } catch (error) {
+          console.error('添加KDJ时间轴事件错误:', error);
         }
-      });
+      }
+    } catch (error) {
+      console.error('设置副图表时间轴事件错误:', error);
     }
   };
 
@@ -561,16 +737,24 @@ const CandlestickChart: React.FC = () => {
 
   // 订阅主图表的时间范围变化事件
   useEffect(() => {
-    if (chart.current) {
-      // 添加时间轴变化事件监听
-      chart.current.timeScale().subscribeVisibleTimeRangeChange(syncTimeScales);
-      
-      return () => {
-        // 清除事件监听
-        if (chart.current) {
-          chart.current.timeScale().unsubscribeVisibleTimeRangeChange(syncTimeScales);
-        }
-      };
+    if (chart.current && chart.current.timeScale()) {
+      try {
+        // 添加时间轴变化事件监听
+        chart.current.timeScale().subscribeVisibleTimeRangeChange(syncTimeScales);
+        
+        return () => {
+          // 清除事件监听
+          if (chart.current && chart.current.timeScale()) {
+            try {
+              chart.current.timeScale().unsubscribeVisibleTimeRangeChange(syncTimeScales);
+            } catch (error) {
+              console.error('取消订阅时间轴变化事件错误:', error);
+            }
+          }
+        };
+      } catch (error) {
+        console.error('订阅时间轴变化事件错误:', error);
+      }
     }
   }, [chart.current]);
 
@@ -666,9 +850,12 @@ const CandlestickChart: React.FC = () => {
                 // 同步所有图表的时间轴
                 await new Promise(resolve => setTimeout(resolve, 100));
                 try {
-                  syncTimeScales();
-                  // 为副图表添加时间轴变化事件，确保双向联动
-                  setupSubChartTimeScaleEvents();
+                  // 确保所有图表都存在并且有timeScale
+                  if (chart.current && chart.current.timeScale()) {
+                    syncTimeScales();
+                    // 为副图表添加时间轴变化事件，确保双向联动
+                    setupSubChartTimeScaleEvents();
+                  }
                 } catch (error) {
                   console.error('同步时间轴失败:', error);
                 }
@@ -678,11 +865,21 @@ const CandlestickChart: React.FC = () => {
             } else {
               console.warn('部分副图容器未准备好，将在DOM更新后重试');
               // 使用requestAnimationFrame确保下一帧再次尝试
-              requestAnimationFrame(() => updateIndicators());
+              requestAnimationFrame(() => {
+                try {
+                  updateIndicators();
+                } catch (error) {
+                  console.error('重试更新指标错误:', error);
+                }
+              });
             }
           } else {
             // 如果没有选择任何副图指标，清除所有副图
-            clearSubIndicators();
+            try {
+              clearSubIndicators();
+            } catch (error) {
+              console.error('清除副图指标错误:', error);
+            }
           }
         } catch (error) {
           console.error('指标更新过程中发生错误:', error);
@@ -850,6 +1047,43 @@ const CandlestickChart: React.FC = () => {
           mainIndicatorSeries.current.push(lowerSeries);
           break;
         }
+        case 'sar': {
+          const highPrices = extractHighPrices(candlestickData);
+          const lowPrices = extractLowPrices(candlestickData);
+          const closePrices = extractClosePrices(candlestickData);
+          
+          // 检查是否满足计算SAR的条件（至少需要2个数据点）
+          if (highPrices.length < 2 || lowPrices.length < 2 || closePrices.length < 2) return;
+          
+          // 计算SAR
+          const sarValues = calculateSAR(highPrices, lowPrices, closePrices);
+          
+          // 创建SAR点状图
+          const sarSeries = chart.current.addLineSeries({
+            color: '#00bcd4',
+            lineWidth: 1,
+            crosshairMarkerVisible: true,
+            crosshairMarkerRadius: 4,
+            lastValueVisible: false,
+            priceLineVisible: false,
+          });
+          
+          // 准备数据，过滤掉无效值
+          const sarData = sarValues.map((value, index) => ({
+            time: candlestickData[index].time as Time,
+            value: isNaN(value) ? null : value,
+          })).filter(item => item.value !== null);
+          
+          // 如果没有有效数据，不添加指标
+          if (sarData.length === 0) return;
+          
+          // 设置数据
+          sarSeries.setData(sarData);
+          
+          // 保存引用
+          mainIndicatorSeries.current.push(sarSeries);
+          break;
+        }
         default:
           break;
       }
@@ -905,7 +1139,11 @@ const CandlestickChart: React.FC = () => {
       if (macdSeries.current && macdSeries.current.length > 0) {
         macdSeries.current.forEach(series => {
           if (series && macdChart.current) {
-            macdChart.current.removeSeries(series);
+            try {
+              macdChart.current.removeSeries(series);
+            } catch (error) {
+              console.error('移除MACD系列错误:', error);
+            }
           }
         });
         macdSeries.current = [];
@@ -984,6 +1222,8 @@ const CandlestickChart: React.FC = () => {
       };
       
       try {
+        if (!macdChart.current) return;
+        
         // MACD线
         const macdLine = macdChart.current.addLineSeries({
           color: '#90caf9',
@@ -1009,9 +1249,29 @@ const CandlestickChart: React.FC = () => {
         });
         
         // 设置数据
-        macdLine.setData(macdData);
-        signalLine.setData(signalData);
-        histogramSeries.setData(histogramData);
+        if (macdLine && macdData.length > 0) {
+          try {
+            macdLine.setData(macdData);
+          } catch (error) {
+            console.error('设置MACD线数据错误:', error);
+          }
+        }
+        
+        if (signalLine && signalData.length > 0) {
+          try {
+            signalLine.setData(signalData);
+          } catch (error) {
+            console.error('设置信号线数据错误:', error);
+          }
+        }
+        
+        if (histogramSeries && histogramData.length > 0) {
+          try {
+            histogramSeries.setData(histogramData);
+          } catch (error) {
+            console.error('设置直方图数据错误:', error);
+          }
+        }
         
         // 保存引用
         macdSeries.current.push(macdLine);
@@ -1019,7 +1279,13 @@ const CandlestickChart: React.FC = () => {
         macdSeries.current.push(histogramSeries);
         
         // 适应视图
-        macdChart.current.timeScale().fitContent();
+        if (macdChart.current && macdChart.current.timeScale()) {
+          try {
+            macdChart.current.timeScale().fitContent();
+          } catch (error) {
+            console.error('MACD适应视图错误:', error);
+          }
+        }
       } catch (error) {
         console.error('设置MACD数据错误:', error);
       }
@@ -1037,7 +1303,11 @@ const CandlestickChart: React.FC = () => {
       if (rsiSeries.current && rsiSeries.current.length > 0) {
         rsiSeries.current.forEach(series => {
           if (series && rsiChart.current) {
-            rsiChart.current.removeSeries(series);
+            try {
+              rsiChart.current.removeSeries(series);
+            } catch (error) {
+              console.error('移除RSI系列错误:', error);
+            }
           }
         });
         rsiSeries.current = [];
@@ -1071,56 +1341,78 @@ const CandlestickChart: React.FC = () => {
         return;
       }
       
-      // 创建单独的价格轴
-      const indicatorPriceScale = {
-        scaleMargins: {
-          top: 0.1,
-          bottom: 0.1,
-        },
-        borderVisible: true,
-        borderColor: '#2e3241',
-      };
-      
-      // RSI线
-      const rsiLine = rsiChart.current.addLineSeries({
-        color: '#90caf9',
-        lineWidth: 1,
-        priceLineVisible: false,
-        lastValueVisible: true,
-        ...indicatorPriceScale
-      });
-      
-      // 添加70和30线
-      const upperLine = rsiChart.current.addLineSeries({
-        color: '#ef5350',
-        lineWidth: 1,
-        priceLineVisible: false,
-        lastValueVisible: false,
-      });
-      
-      const lowerLine = rsiChart.current.addLineSeries({
-        color: '#26a69a',
-        lineWidth: 1,
-        priceLineVisible: false,
-        lastValueVisible: false,
-      });
-      
-      // 创建70和30线的数据
-      const upperLineData = formattedData.map(item => ({
-        time: item.time,
-        value: 70,
-      }));
-      
-      const lowerLineData = formattedData.map(item => ({
-        time: item.time,
-        value: 30,
-      }));
-      
       try {
+        if (!rsiChart.current) return;
+        
+        // 创建单独的价格轴
+        const indicatorPriceScale = {
+          scaleMargins: {
+            top: 0.1,
+            bottom: 0.1,
+          },
+          borderVisible: true,
+          borderColor: '#2e3241',
+        };
+        
+        // RSI线
+        const rsiLine = rsiChart.current.addLineSeries({
+          color: '#90caf9',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: true,
+          ...indicatorPriceScale
+        });
+        
+        // 添加70和30线
+        const upperLine = rsiChart.current.addLineSeries({
+          color: '#ef5350',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        
+        const lowerLine = rsiChart.current.addLineSeries({
+          color: '#26a69a',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        
+        // 创建70和30线的数据
+        const upperLineData = formattedData.map(item => ({
+          time: item.time,
+          value: 70,
+        }));
+        
+        const lowerLineData = formattedData.map(item => ({
+          time: item.time,
+          value: 30,
+        }));
+        
         // 设置数据
-        rsiLine.setData(formattedData);
-        upperLine.setData(upperLineData);
-        lowerLine.setData(lowerLineData);
+        if (rsiLine && formattedData.length > 0) {
+          try {
+            rsiLine.setData(formattedData);
+          } catch (error) {
+            console.error('设置RSI线数据错误:', error);
+          }
+        }
+        
+        if (upperLine && upperLineData.length > 0) {
+          try {
+            upperLine.setData(upperLineData);
+          } catch (error) {
+            console.error('设置RSI上限线数据错误:', error);
+          }
+        }
+        
+        if (lowerLine && lowerLineData.length > 0) {
+          try {
+            lowerLine.setData(lowerLineData);
+          } catch (error) {
+            console.error('设置RSI下限线数据错误:', error);
+          }
+        }
         
         // 保存引用
         rsiSeries.current.push(rsiLine);
@@ -1128,7 +1420,13 @@ const CandlestickChart: React.FC = () => {
         rsiSeries.current.push(lowerLine);
         
         // 适应视图
-        rsiChart.current.timeScale().fitContent();
+        if (rsiChart.current && rsiChart.current.timeScale()) {
+          try {
+            rsiChart.current.timeScale().fitContent();
+          } catch (error) {
+            console.error('RSI适应视图错误:', error);
+          }
+        }
       } catch (error) {
         console.error('设置RSI数据错误:', error);
       }
@@ -1136,7 +1434,169 @@ const CandlestickChart: React.FC = () => {
       console.error('绘制RSI指标错误:', error);
     }
   };
-  
+
+  // 绘制StockRSI指标
+  const drawStockRsiIndicator = () => {
+    if (!rsiChart.current || !rsiChartRef.current || !candlestickData.length) return;
+    
+    try {
+      // 清除旧的RSI系列
+      if (rsiSeries.current && rsiSeries.current.length > 0) {
+        rsiSeries.current.forEach(series => {
+          if (series && rsiChart.current) {
+            try {
+              rsiChart.current.removeSeries(series);
+            } catch (error) {
+              console.error('移除StockRSI系列错误:', error);
+            }
+          }
+        });
+        rsiSeries.current = [];
+      }
+      
+      const closePrices = extractClosePrices(candlestickData);
+      
+      // 检查是否满足计算StockRSI的条件（至少需要28个数据点，14+14）
+      if (closePrices.length < 28) {
+        console.warn('数据点不足，无法计算StockRSI');
+        return;
+      }
+      
+      // 创建StockRSI指标
+      const stockRsiData = calculateStockRSI(closePrices);
+      
+      if (!stockRsiData || stockRsiData.length === 0 || stockRsiData.every(v => isNaN(v))) {
+        console.warn('StockRSI数据全为NaN，跳过绘制');
+        return;
+      }
+      
+      // 创建时间序列
+      const times = candlestickData.map(item => item.time as Time);
+      
+      // 准备数据，过滤掉无效值
+      const formattedData = prepareTimeSeriesData(stockRsiData, times);
+      
+      // 如果没有有效数据，不添加指标
+      if (formattedData.length === 0) {
+        console.warn('StockRSI处理后数据为空，跳过绘制');
+        return;
+      }
+      
+      try {
+        if (!rsiChart.current) return;
+        
+        // 创建单独的价格轴
+        const indicatorPriceScale = {
+          scaleMargins: {
+            top: 0.1,
+            bottom: 0.1,
+          },
+          borderVisible: true,
+          borderColor: '#2e3241',
+        };
+        
+        // StockRSI线
+        const stockRsiLine = rsiChart.current.addLineSeries({
+          color: '#f48fb1',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: true,
+          ...indicatorPriceScale
+        });
+        
+        // 添加80、50和20线
+        const upperLine = rsiChart.current.addLineSeries({
+          color: '#ef5350',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        
+        const middleLine = rsiChart.current.addLineSeries({
+          color: '#90caf9',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        
+        const lowerLine = rsiChart.current.addLineSeries({
+          color: '#26a69a',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        
+        // 创建80、50和20线的数据
+        const upperLineData = formattedData.map(item => ({
+          time: item.time,
+          value: 80,
+        }));
+        
+        const middleLineData = formattedData.map(item => ({
+          time: item.time,
+          value: 50,
+        }));
+        
+        const lowerLineData = formattedData.map(item => ({
+          time: item.time,
+          value: 20,
+        }));
+        
+        // 设置数据
+        if (stockRsiLine && formattedData.length > 0) {
+          try {
+            stockRsiLine.setData(formattedData);
+          } catch (error) {
+            console.error('设置StockRSI线数据错误:', error);
+          }
+        }
+        
+        if (upperLine && upperLineData.length > 0) {
+          try {
+            upperLine.setData(upperLineData);
+          } catch (error) {
+            console.error('设置StockRSI上限线数据错误:', error);
+          }
+        }
+        
+        if (middleLine && middleLineData.length > 0) {
+          try {
+            middleLine.setData(middleLineData);
+          } catch (error) {
+            console.error('设置StockRSI中线数据错误:', error);
+          }
+        }
+        
+        if (lowerLine && lowerLineData.length > 0) {
+          try {
+            lowerLine.setData(lowerLineData);
+          } catch (error) {
+            console.error('设置StockRSI下限线数据错误:', error);
+          }
+        }
+        
+        // 保存引用
+        rsiSeries.current.push(stockRsiLine);
+        rsiSeries.current.push(upperLine);
+        rsiSeries.current.push(middleLine);
+        rsiSeries.current.push(lowerLine);
+        
+        // 适应视图
+        if (rsiChart.current && rsiChart.current.timeScale()) {
+          try {
+            rsiChart.current.timeScale().fitContent();
+          } catch (error) {
+            console.error('StockRSI适应视图错误:', error);
+          }
+        }
+      } catch (error) {
+        console.error('设置StockRSI数据错误:', error);
+      }
+    } catch (error) {
+      console.error('绘制StockRSI指标错误:', error);
+    }
+  };
+
   // 绘制KDJ指标
   const drawKdjIndicator = () => {
     if (!kdjChart.current || !kdjChartRef.current || !candlestickData.length) return;
@@ -1146,7 +1606,11 @@ const CandlestickChart: React.FC = () => {
       if (kdjSeries.current && kdjSeries.current.length > 0) {
         kdjSeries.current.forEach(series => {
           if (series && kdjChart.current) {
-            kdjChart.current.removeSeries(series);
+            try {
+              kdjChart.current.removeSeries(series);
+            } catch (error) {
+              console.error('移除KDJ系列错误:', error);
+            }
           }
         });
         kdjSeries.current = [];
@@ -1188,46 +1652,68 @@ const CandlestickChart: React.FC = () => {
         return;
       }
       
-      // 创建单独的价格轴
-      const indicatorPriceScale = {
-        scaleMargins: {
-          top: 0.1,
-          bottom: 0.1,
-        },
-        borderVisible: true,
-        borderColor: '#2e3241',
-      };
-      
-      // K线
-      const kLine = kdjChart.current.addLineSeries({
-        color: '#90caf9',
-        lineWidth: 1,
-        priceLineVisible: false,
-        lastValueVisible: true,
-        ...indicatorPriceScale
-      });
-      
-      // D线
-      const dLine = kdjChart.current.addLineSeries({
-        color: '#f48fb1',
-        lineWidth: 1,
-        priceLineVisible: false,
-        lastValueVisible: true,
-      });
-      
-      // J线
-      const jLine = kdjChart.current.addLineSeries({
-        color: '#80deea',
-        lineWidth: 1,
-        priceLineVisible: false,
-        lastValueVisible: true,
-      });
-      
       try {
+        if (!kdjChart.current) return;
+        
+        // 创建单独的价格轴
+        const indicatorPriceScale = {
+          scaleMargins: {
+            top: 0.1,
+            bottom: 0.1,
+          },
+          borderVisible: true,
+          borderColor: '#2e3241',
+        };
+        
+        // K线
+        const kLine = kdjChart.current.addLineSeries({
+          color: '#90caf9',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: true,
+          ...indicatorPriceScale
+        });
+        
+        // D线
+        const dLine = kdjChart.current.addLineSeries({
+          color: '#f48fb1',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: true,
+        });
+        
+        // J线
+        const jLine = kdjChart.current.addLineSeries({
+          color: '#80deea',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: true,
+        });
+        
         // 设置数据
-        kLine.setData(kData);
-        dLine.setData(dData);
-        jLine.setData(jData);
+        if (kLine && kData.length > 0) {
+          try {
+            kLine.setData(kData);
+          } catch (error) {
+            console.error('设置KDJ K线数据错误:', error);
+          }
+        }
+        
+        if (dLine && dData.length > 0) {
+          try {
+            dLine.setData(dData);
+          } catch (error) {
+            console.error('设置KDJ D线数据错误:', error);
+          }
+        }
+        
+        if (jLine && jData.length > 0) {
+          try {
+            jLine.setData(jData);
+          } catch (error) {
+            console.error('设置KDJ J线数据错误:', error);
+          }
+        }
         
         // 保存引用
         kdjSeries.current.push(kLine);
@@ -1235,7 +1721,13 @@ const CandlestickChart: React.FC = () => {
         kdjSeries.current.push(jLine);
         
         // 适应视图
-        kdjChart.current.timeScale().fitContent();
+        if (kdjChart.current && kdjChart.current.timeScale()) {
+          try {
+            kdjChart.current.timeScale().fitContent();
+          } catch (error) {
+            console.error('KDJ适应视图错误:', error);
+          }
+        }
       } catch (error) {
         console.error('设置KDJ数据错误:', error);
       }
@@ -1260,7 +1752,7 @@ const CandlestickChart: React.FC = () => {
       
       // 确保图表容器已经创建，检查DOM节点是否存在
       const macdReady = subIndicators.includes('macd') ? !!macdChartRef.current : true;
-      const rsiReady = subIndicators.includes('rsi') ? !!rsiChartRef.current : true;
+      const rsiReady = (subIndicators.includes('rsi') || subIndicators.includes('stockrsi')) ? !!rsiChartRef.current : true;
       const kdjReady = subIndicators.includes('kdj') ? !!kdjChartRef.current : true;
       
       if (!macdReady || !rsiReady || !kdjReady) {
@@ -1269,6 +1761,9 @@ const CandlestickChart: React.FC = () => {
         requestAnimationFrame(() => drawSubIndicator());
         return;
       }
+      
+      // 获取保存的K线宽度
+      const savedBarSpacing = getSavedBarSpacing();
       
       // 通用图表选项
       const commonOptions = {
@@ -1286,7 +1781,7 @@ const CandlestickChart: React.FC = () => {
           borderColor: '#2e3241',
           timeVisible: false,
           secondsVisible: false,
-          barSpacing: chart.current ? chart.current.timeScale().options().barSpacing : 6,
+          barSpacing: savedBarSpacing, // 使用保存的K线宽度
         },
         rightPriceScale: {
           borderColor: '#2e3241',
@@ -1301,7 +1796,7 @@ const CandlestickChart: React.FC = () => {
           macdChart.current = null;
         }
         
-        if (!subIndicators.includes('rsi') && rsiChart.current) {
+        if (!subIndicators.includes('rsi') && !subIndicators.includes('stockrsi') && rsiChart.current) {
           rsiChart.current.remove();
           rsiChart.current = null;
         }
@@ -1321,6 +1816,7 @@ const CandlestickChart: React.FC = () => {
                 }
                 break;
               case 'rsi':
+              case 'stockrsi':
                 if (!rsiChart.current && rsiChartRef.current) {
                   rsiChart.current = createChart(rsiChartRef.current, commonOptions);
                 }
@@ -1350,6 +1846,11 @@ const CandlestickChart: React.FC = () => {
               case 'rsi':
                 if (rsiChart.current && rsiChartRef.current) {
                   drawRsiIndicator();
+                }
+                break;
+              case 'stockrsi':
+                if (rsiChart.current && rsiChartRef.current) {
+                  drawStockRsiIndicator();
                 }
                 break;
               case 'kdj':
@@ -1705,6 +2206,17 @@ const CandlestickChart: React.FC = () => {
               </>
             )}
             
+            {hoveredData.indicators && hoveredData.indicators.sar && (
+              <>
+                <div className="tooltip-divider"></div>
+                <div className="tooltip-section-title">抛物线(SAR)</div>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">SAR:</span>
+                  <span className="tooltip-value">{hoveredData.indicators.sar}</span>
+                </div>
+              </>
+            )}
+            
             {hoveredData.indicators && hoveredData.indicators.macd && (
               <>
                 <div className="tooltip-divider"></div>
@@ -1733,6 +2245,17 @@ const CandlestickChart: React.FC = () => {
                 <div className="tooltip-row">
                   <span className="tooltip-label">RSI:</span>
                   <span className="tooltip-value">{hoveredData.indicators.rsi}</span>
+                </div>
+              </>
+            )}
+            
+            {hoveredData.indicators && hoveredData.indicators.stockrsi && (
+              <>
+                <div className="tooltip-divider"></div>
+                <div className="tooltip-section-title">StockRSI</div>
+                <div className="tooltip-row">
+                  <span className="tooltip-label">StockRSI:</span>
+                  <span className="tooltip-value">{hoveredData.indicators.stockrsi}</span>
                 </div>
               </>
             )}
