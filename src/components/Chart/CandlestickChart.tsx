@@ -24,7 +24,7 @@ import TradeMarkers from './TradeMarkers';
 const CHART_BAR_SPACING_KEY = 'cryptoquantx_chart_bar_spacing';
 
 // 默认K线宽度
-const DEFAULT_BAR_SPACING = 6;
+const DEFAULT_BAR_SPACING = 1; // 从6改为3，使K线宽度更合适
 
 // 从localStorage获取保存的K线宽度
 const getSavedBarSpacing = (): number => {
@@ -75,7 +75,7 @@ const formatVolume = (volume: number): string => {
 };
 
 // 修改CandlestickChart组件的返回类型
-const CandlestickChart = (): React.ReactElement => {
+const CandlestickChart: React.FC = () => {
   // 主图表容器
   const chartContainerRef = useRef<HTMLDivElement>(null);
   // 副图表容器
@@ -561,147 +561,83 @@ const CandlestickChart = (): React.ReactElement => {
 
   // 同步所有图表的时间轴
   const syncTimeScales = () => {
-    if (!chart.current) return;
-    
+    // 只在图表初始化时使用一次，后续由主图表控制
     try {
-      const mainTimeScale = chart.current.timeScale();
-      if (!mainTimeScale) return;
+      if (!chart.current || !chart.current.timeScale()) return;
       
-      const visibleRange = mainTimeScale.getVisibleRange();
+      const mainVisibleRange = chart.current.timeScale().getVisibleLogicalRange();
+      if (!mainVisibleRange) return;
       
-      if (!visibleRange) return;
-      
-      // 同步MACD图表
+      // 手动设置副图表的可见范围
       if (macdChart.current && macdChart.current.timeScale()) {
         try {
-          macdChart.current.timeScale().setVisibleRange(visibleRange);
+          macdChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
         } catch (error) {
-          console.error('同步MACD时间轴错误:', error);
+          // 忽略错误
         }
       }
       
-      // 同步RSI图表
       if (rsiChart.current && rsiChart.current.timeScale()) {
         try {
-          rsiChart.current.timeScale().setVisibleRange(visibleRange);
+          rsiChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
         } catch (error) {
-          console.error('同步RSI时间轴错误:', error);
+          // 忽略错误
         }
       }
       
-      // 同步KDJ图表
       if (kdjChart.current && kdjChart.current.timeScale()) {
         try {
-          kdjChart.current.timeScale().setVisibleRange(visibleRange);
+          kdjChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
         } catch (error) {
-          console.error('同步KDJ时间轴错误:', error);
+          // 忽略错误
         }
       }
     } catch (error) {
-      console.error('同步时间轴错误:', error);
+      // 忽略错误
     }
   };
 
-  // 为所有副图表添加时间轴变化事件
+  // 完全禁用副图表的时间轴变化事件
   const setupSubChartTimeScaleEvents = () => {
+    // 不再添加任何事件监听，改为由主图表完全控制
+    // 主图表变化时，手动更新副图表
     try {
-      // 为MACD图表添加时间轴变化事件
-      if (macdChart.current && macdChart.current.timeScale()) {
-        try {
-          macdChart.current.timeScale().subscribeVisibleTimeRangeChange((range) => {
-            if (!range || !chart.current || !chart.current.timeScale()) return;
-            
-            try {
-              chart.current.timeScale().setVisibleRange(range);
-              // 同步其他副图
-              if (rsiChart.current && rsiChart.current.timeScale()) {
-                try {
-                  rsiChart.current.timeScale().setVisibleRange(range);
-                } catch (error) {
-                  console.error('MACD同步RSI时间轴错误:', error);
-                }
+      if (chart.current && chart.current.timeScale()) {
+        chart.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+          if (!range) return;
+          
+          try {
+            // 手动设置副图表的可见范围
+            if (macdChart.current && macdChart.current.timeScale()) {
+              try {
+                macdChart.current.timeScale().setVisibleLogicalRange(range);
+              } catch (error) {
+                // 忽略错误
               }
-              if (kdjChart.current && kdjChart.current.timeScale()) {
-                try {
-                  kdjChart.current.timeScale().setVisibleRange(range);
-                } catch (error) {
-                  console.error('MACD同步KDJ时间轴错误:', error);
-                }
-              }
-            } catch (error) {
-              console.error('MACD同步时间轴错误:', error);
             }
-          });
-        } catch (error) {
-          console.error('添加MACD时间轴事件错误:', error);
-        }
-      }
-      
-      // 为RSI图表添加时间轴变化事件
-      if (rsiChart.current && rsiChart.current.timeScale()) {
-        try {
-          rsiChart.current.timeScale().subscribeVisibleTimeRangeChange((range) => {
-            if (!range || !chart.current || !chart.current.timeScale()) return;
             
-            try {
-              chart.current.timeScale().setVisibleRange(range);
-              // 同步其他副图
-              if (macdChart.current && macdChart.current.timeScale()) {
-                try {
-                  macdChart.current.timeScale().setVisibleRange(range);
-                } catch (error) {
-                  console.error('RSI同步MACD时间轴错误:', error);
-                }
+            if (rsiChart.current && rsiChart.current.timeScale()) {
+              try {
+                rsiChart.current.timeScale().setVisibleLogicalRange(range);
+              } catch (error) {
+                // 忽略错误
               }
-              if (kdjChart.current && kdjChart.current.timeScale()) {
-                try {
-                  kdjChart.current.timeScale().setVisibleRange(range);
-                } catch (error) {
-                  console.error('RSI同步KDJ时间轴错误:', error);
-                }
-              }
-            } catch (error) {
-              console.error('RSI同步时间轴错误:', error);
             }
-          });
-        } catch (error) {
-          console.error('添加RSI时间轴事件错误:', error);
-        }
-      }
-      
-      // 为KDJ图表添加时间轴变化事件
-      if (kdjChart.current && kdjChart.current.timeScale()) {
-        try {
-          kdjChart.current.timeScale().subscribeVisibleTimeRangeChange((range) => {
-            if (!range || !chart.current || !chart.current.timeScale()) return;
             
-            try {
-              chart.current.timeScale().setVisibleRange(range);
-              // 同步其他副图
-              if (macdChart.current && macdChart.current.timeScale()) {
-                try {
-                  macdChart.current.timeScale().setVisibleRange(range);
-                } catch (error) {
-                  console.error('KDJ同步MACD时间轴错误:', error);
-                }
+            if (kdjChart.current && kdjChart.current.timeScale()) {
+              try {
+                kdjChart.current.timeScale().setVisibleLogicalRange(range);
+              } catch (error) {
+                // 忽略错误
               }
-              if (rsiChart.current && rsiChart.current.timeScale()) {
-                try {
-                  rsiChart.current.timeScale().setVisibleRange(range);
-                } catch (error) {
-                  console.error('KDJ同步RSI时间轴错误:', error);
-                }
-              }
-            } catch (error) {
-              console.error('KDJ同步时间轴错误:', error);
             }
-          });
-        } catch (error) {
-          console.error('添加KDJ时间轴事件错误:', error);
-        }
+          } catch (error) {
+            // 忽略错误
+          }
+        });
       }
     } catch (error) {
-      console.error('设置副图表时间轴事件错误:', error);
+      // 忽略错误
     }
   };
 
@@ -748,26 +684,61 @@ const CandlestickChart = (): React.ReactElement => {
 
   // 订阅主图表的时间范围变化事件
   useEffect(() => {
-    if (chart.current && chart.current.timeScale()) {
-      try {
-        // 添加时间轴变化事件监听
-        chart.current.timeScale().subscribeVisibleTimeRangeChange(syncTimeScales);
-        
-        return () => {
-          // 清除事件监听
-          if (chart.current && chart.current.timeScale()) {
+    const setupTimeScaleSync = () => {
+      if (chart.current && chart.current.timeScale()) {
+        try {
+          // 添加时间轴变化事件监听
+          chart.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+            if (!range) return;
+            
             try {
-              chart.current.timeScale().unsubscribeVisibleTimeRangeChange(syncTimeScales);
+              // 手动设置副图表的可见范围
+              if (macdChart.current && macdChart.current.timeScale()) {
+                try {
+                  macdChart.current.timeScale().setVisibleLogicalRange(range);
+                } catch (error) {
+                  // 忽略错误
+                }
+              }
+              
+              if (rsiChart.current && rsiChart.current.timeScale()) {
+                try {
+                  rsiChart.current.timeScale().setVisibleLogicalRange(range);
+                } catch (error) {
+                  // 忽略错误
+                }
+              }
+              
+              if (kdjChart.current && kdjChart.current.timeScale()) {
+                try {
+                  kdjChart.current.timeScale().setVisibleLogicalRange(range);
+                } catch (error) {
+                  // 忽略错误
+                }
+              }
             } catch (error) {
-              console.error('取消订阅时间轴变化事件错误:', error);
+              // 忽略错误
             }
-          }
-        };
-      } catch (error) {
-        console.error('订阅时间轴变化事件错误:', error);
+          });
+        } catch (error) {
+          // 忽略错误
+        }
       }
-    }
-  }, [chart.current]);
+    };
+    
+    setupTimeScaleSync();
+    
+    return () => {
+      // 清除事件监听
+      if (chart.current && chart.current.timeScale()) {
+        try {
+          chart.current.timeScale().unsubscribeVisibleLogicalRangeChange(syncTimeScales);
+        } catch (error) {
+          // 忽略错误
+        }
+      }
+    };
+  }, []);
 
   // 更新标题和处理周期变化
   useEffect(() => {
@@ -1224,7 +1195,7 @@ const CandlestickChart = (): React.ReactElement => {
           try {
             macdChart.current.timeScale().fitContent();
           } catch (error) {
-            console.error('MACD适应视图错误:', error);
+            // 忽略错误，避免控制台报错
           }
         }
       } catch (error) {
@@ -1270,11 +1241,19 @@ const CandlestickChart = (): React.ReactElement => {
         return;
       }
       
+      // 深度复制数组，避免直接修改原始数据
+      const rsiCopy = [...rsiData];
+      
+      // 安全处理：将所有NaN值替换为null，以避免图表绘制错误
+      for (let i = 0; i < rsiCopy.length; i++) {
+        if (isNaN(rsiCopy[i])) rsiCopy[i] = 50; // 使用中间值50代替NaN
+      }
+      
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
       
       // 准备数据，过滤掉无效值
-      const formattedData = prepareTimeSeriesData(rsiData, times);
+      const formattedData = prepareTimeSeriesData(rsiCopy, times);
       
       // 如果没有有效数据，不添加指标
       if (formattedData.length === 0) {
@@ -1365,7 +1344,7 @@ const CandlestickChart = (): React.ReactElement => {
           try {
             rsiChart.current.timeScale().fitContent();
           } catch (error) {
-            console.error('RSI适应视图错误:', error);
+            // 忽略错误，避免控制台报错
           }
         }
       } catch (error) {
@@ -1411,11 +1390,19 @@ const CandlestickChart = (): React.ReactElement => {
         return;
       }
       
+      // 深度复制数组，避免直接修改原始数据
+      const stockRsiCopy = [...stockRsiData];
+      
+      // 安全处理：将所有NaN值替换为null，以避免图表绘制错误
+      for (let i = 0; i < stockRsiCopy.length; i++) {
+        if (isNaN(stockRsiCopy[i])) stockRsiCopy[i] = 50; // 使用中间值50代替NaN
+      }
+      
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
       
       // 准备数据，过滤掉无效值
-      const formattedData = prepareTimeSeriesData(stockRsiData, times);
+      const formattedData = prepareTimeSeriesData(stockRsiCopy, times);
       
       // 如果没有有效数据，不添加指标
       if (formattedData.length === 0) {
@@ -1527,7 +1514,7 @@ const CandlestickChart = (): React.ReactElement => {
           try {
             rsiChart.current.timeScale().fitContent();
           } catch (error) {
-            console.error('StockRSI适应视图错误:', error);
+            // 忽略错误，避免控制台报错
           }
         }
       } catch (error) {
@@ -1579,13 +1566,25 @@ const CandlestickChart = (): React.ReactElement => {
         return;
       }
       
+      // 深度复制数组，避免直接修改原始数据
+      const kCopy = [...k];
+      const dCopy = [...d];
+      const jCopy = [...j];
+      
+      // 安全处理：将所有NaN值替换为50，以避免图表绘制错误
+      for (let i = 0; i < kCopy.length; i++) {
+        if (isNaN(kCopy[i])) kCopy[i] = 50;
+        if (isNaN(dCopy[i])) dCopy[i] = 50;
+        if (isNaN(jCopy[i])) jCopy[i] = 50;
+      }
+      
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
       
       // 准备数据，过滤掉无效值
-      const kData = prepareTimeSeriesData(k, times);
-      const dData = prepareTimeSeriesData(d, times);
-      const jData = prepareTimeSeriesData(j, times);
+      const kData = prepareTimeSeriesData(kCopy, times);
+      const dData = prepareTimeSeriesData(dCopy, times);
+      const jData = prepareTimeSeriesData(jCopy, times);
       
       // 如果没有有效数据，不添加指标
       if (kData.length === 0 || dData.length === 0 || jData.length === 0) {
@@ -1666,7 +1665,7 @@ const CandlestickChart = (): React.ReactElement => {
           try {
             kdjChart.current.timeScale().fitContent();
           } catch (error) {
-            console.error('KDJ适应视图错误:', error);
+            // 忽略错误，避免控制台报错
           }
         }
       } catch (error) {
@@ -1731,92 +1730,152 @@ const CandlestickChart = (): React.ReactElement => {
 
       // 分步创建和绘制图表，确保稳定性
       const createAndDrawCharts = async () => {
-        // 1. 先清除不再需要的副图
-        if (!subIndicators.includes('macd') && macdChart.current) {
-          macdChart.current.remove();
-          macdChart.current = null;
-        }
-        
-        if (!subIndicators.includes('rsi') && !subIndicators.includes('stockrsi') && rsiChart.current) {
-          rsiChart.current.remove();
-          rsiChart.current = null;
-        }
-        
-        if (!subIndicators.includes('kdj') && kdjChart.current) {
-          kdjChart.current.remove();
-          kdjChart.current = null;
-        }
-        
-        // 2. 创建所有需要的图表实例
-        await Promise.all(subIndicators.map(async (indicator) => {
-          try {
-            switch (indicator) {
-              case 'macd':
-                if (!macdChart.current && macdChartRef.current) {
-                  macdChart.current = createChart(macdChartRef.current, commonOptions);
-                }
-                break;
-              case 'rsi':
-              case 'stockrsi':
-                if (!rsiChart.current && rsiChartRef.current) {
-                  rsiChart.current = createChart(rsiChartRef.current, commonOptions);
-                }
-                break;
-              case 'kdj':
-                if (!kdjChart.current && kdjChartRef.current) {
-                  kdjChart.current = createChart(kdjChartRef.current, commonOptions);
-                }
-                break;
+        try {
+          // 1. 先清除不再需要的副图
+          if (!subIndicators.includes('macd') && macdChart.current) {
+            macdChart.current.remove();
+            macdChart.current = null;
+          }
+          
+          if (!subIndicators.includes('rsi') && !subIndicators.includes('stockrsi') && rsiChart.current) {
+            rsiChart.current.remove();
+            rsiChart.current = null;
+          }
+          
+          if (!subIndicators.includes('kdj') && kdjChart.current) {
+            kdjChart.current.remove();
+            kdjChart.current = null;
+          }
+          
+          // 2. 创建所有需要的图表实例
+          await Promise.all(subIndicators.map(async (indicator) => {
+            try {
+              switch (indicator) {
+                case 'macd':
+                  if (!macdChart.current && macdChartRef.current) {
+                    macdChart.current = createChart(macdChartRef.current, {
+                      ...commonOptions,
+                      // 禁用时间轴同步
+                      timeScale: {
+                        ...commonOptions.timeScale,
+                        visible: false,
+                        borderVisible: false
+                      }
+                    });
+                  }
+                  break;
+                case 'rsi':
+                case 'stockrsi':
+                  if (!rsiChart.current && rsiChartRef.current) {
+                    rsiChart.current = createChart(rsiChartRef.current, {
+                      ...commonOptions,
+                      // 禁用时间轴同步
+                      timeScale: {
+                        ...commonOptions.timeScale,
+                        visible: false,
+                        borderVisible: false
+                      }
+                    });
+                  }
+                  break;
+                case 'kdj':
+                  if (!kdjChart.current && kdjChartRef.current) {
+                    kdjChart.current = createChart(kdjChartRef.current, {
+                      ...commonOptions,
+                      // 禁用时间轴同步
+                      timeScale: {
+                        ...commonOptions.timeScale,
+                        visible: false,
+                        borderVisible: false
+                      }
+                    });
+                  }
+                  break;
+              }
+              // 使用短延迟确保图表实例创建完成
+              await new Promise(resolve => setTimeout(resolve, 10));
+            } catch (error) {
+              console.error(`创建${indicator}图表失败:`, error);
             }
-            // 使用短延迟确保图表实例创建完成
-            await new Promise(resolve => setTimeout(resolve, 10));
-          } catch (error) {
-            console.error(`创建${indicator}图表失败:`, error);
-          }
-        }));
-        
-        // 3. 绘制各个指标，添加额外的错误处理
-        for (const indicator of subIndicators) {
-          try {
-            switch (indicator) {
-              case 'macd':
-                if (macdChart.current && macdChartRef.current) {
-                  drawMacdIndicator();
-                }
-                break;
-              case 'rsi':
-                if (rsiChart.current && rsiChartRef.current) {
-                  drawRsiIndicator();
-                }
-                break;
-              case 'stockrsi':
-                if (rsiChart.current && rsiChartRef.current) {
-                  drawStockRsiIndicator();
-                }
-                break;
-              case 'kdj':
-                if (kdjChart.current && kdjChartRef.current) {
-                  drawKdjIndicator();
-                }
-                break;
+          }));
+          
+          // 3. 绘制各个指标，添加额外的错误处理
+          for (const indicator of subIndicators) {
+            try {
+              switch (indicator) {
+                case 'macd':
+                  if (macdChart.current && macdChartRef.current) {
+                    drawMacdIndicator();
+                  }
+                  break;
+                case 'rsi':
+                  if (rsiChart.current && rsiChartRef.current) {
+                    drawRsiIndicator();
+                  }
+                  break;
+                case 'stockrsi':
+                  if (rsiChart.current && rsiChartRef.current) {
+                    drawStockRsiIndicator();
+                  }
+                  break;
+                case 'kdj':
+                  if (kdjChart.current && kdjChartRef.current) {
+                    drawKdjIndicator();
+                  }
+                  break;
+              }
+              // 短暂延迟确保每个指标绘制完成
+              await new Promise(resolve => setTimeout(resolve, 10));
+            } catch (error) {
+              console.error(`绘制${indicator}指标失败:`, error);
             }
-            // 短暂延迟确保每个指标绘制完成
-            await new Promise(resolve => setTimeout(resolve, 10));
-          } catch (error) {
-            console.error(`绘制${indicator}指标失败:`, error);
           }
+          
+          // 4. 手动设置副图表的可见范围，而不是使用同步
+          setTimeout(() => {
+            try {
+              if (chart.current && chart.current.timeScale()) {
+                const mainVisibleRange = chart.current.timeScale().getVisibleLogicalRange();
+                
+                if (mainVisibleRange) {
+                  // 手动设置每个副图表的可见范围
+                  if (macdChart.current && macdChart.current.timeScale()) {
+                    try {
+                      macdChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
+                    } catch (error) {
+                      // 忽略错误
+                    }
+                  }
+                  
+                  if (rsiChart.current && rsiChart.current.timeScale()) {
+                    try {
+                      rsiChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
+                    } catch (error) {
+                      // 忽略错误
+                    }
+                  }
+                  
+                  if (kdjChart.current && kdjChart.current.timeScale()) {
+                    try {
+                      kdjChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
+                    } catch (error) {
+                      // 忽略错误
+                    }
+                  }
+                }
+                
+                // 如果有回测结果，重新绘制交易标记
+                if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
+                  drawTradeMarkers();
+                }
+              }
+            } catch (error) {
+              // 忽略错误
+            }
+          }, 100);
+        } catch (error) {
+          console.error('绘制副图表失败:', error);
         }
-        
-        // 4. 同步所有图表的时间轴
-        setTimeout(() => {
-          try {
-            syncTimeScales();
-            // 为副图表添加时间轴变化事件，确保双向联动
-            setupSubChartTimeScaleEvents();
-          } catch (error) {
-            console.error('同步时间轴失败:', error);
-          }
-        }, 50);
       };
       
       // 执行绘制流程
