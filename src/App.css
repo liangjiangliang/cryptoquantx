@@ -24,15 +24,47 @@ body {
 
 /* 头部 */
 .app-header {
-  background-color: #1e222d;
-  padding: 15px 20px;
-  border-bottom: 1px solid #2e3241;
+  background-color: #16213e;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #2a2a3a;
 }
 
 .app-header h1 {
   font-size: 20px;
   font-weight: 500;
   color: #d9d9d9;
+}
+
+.header-tabs {
+  display: flex;
+  gap: 10px;
+}
+
+.tab-button {
+  background-color: transparent;
+  color: #8d8d8d;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.tab-button:hover {
+  background-color: #1e1e30;
+  color: #e6e6e6;
+}
+
+.tab-button.active {
+  background-color: #3a506b;
+  color: white;
 }
 
 /* 主内容区域 */

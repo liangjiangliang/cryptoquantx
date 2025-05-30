@@ -21,6 +21,7 @@ const initialState: AppState = {
   cryptoPairs: mockCryptoPairs,
   userOrders: [],
   backtestResults: null,
+  backtestSummaries: [],
   isBacktesting: false,
   balance: {
     USDT: 10000,
@@ -121,6 +122,12 @@ const reducer = (state = initialState, action: any): AppState => {
           ...state.balance,
           ...action.payload
         }
+      };
+    
+    case ActionType.SET_BACKTEST_SUMMARIES:
+      return {
+        ...state,
+        backtestSummaries: action.payload
       };
     
     default:

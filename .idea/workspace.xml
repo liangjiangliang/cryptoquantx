@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="bb5d9f0e-4a97-4d41-b5ae-2556d98c4cfb" name="Changes" comment="refactor.Chart: 重构 K线图时间轴同步逻辑- 修改默认 K 线宽度为 1，从 6改为 3&#10;- 优化时间轴同步逻辑，改为主图表单向控制副图表&#10;-完全禁用副图表的时间轴变化事件&#10;- 修复 RSI、KDJ 等指标的 NaN 值问题&#10;-优化图表创建和绘制流程，提高稳定性">
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/Chart/CandlestickChart.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Chart/CandlestickChart.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/Chart/CandlestickChart.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/Chart/CandlestickChart.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/api.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/store/actions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/store/actions.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/store/reducer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/store/reducer.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/store/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/store/types.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="2" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="2xXiQYCG6uExNKCKAx6LaCo9DNM" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="abbreviatePackageNames" value="true" />
+    <option name="compactDirectories" value="true" />
+    <option name="showLibraryContents" value="true" />
+    <option name="showVisibilityIcons" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/ralph/IdeaProject/cryptoquantx&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;terminal&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\ralph\\IdeaProject\\cryptoquantx\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="okx-chart" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="okx-chart" />
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <module name="okx-chart" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="Tox" factoryName="Tox">
+      <module name="okx-chart" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.25410.129" />
+        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-IU-251.25410.129" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="bb5d9f0e-4a97-4d41-b5ae-2556d98c4cfb" name="Changes" comment="" />
+      <created>1748090803717</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1748090803717</updated>
+      <workItem from="1748090804864" duration="2062000" />
+      <workItem from="1748105887992" duration="13683000" />
+      <workItem from="1748634079903" duration="68000" />
+      <workItem from="1748634153541" duration="42000" />
+    </task>
+    <task id="LOCAL-00001" summary="feat: 初始化项目结构并添加基本功能&#10;&#10;- 创建项目基本目录结构和文件&#10;- 实现 Redux store 和动作&#10;- 添加 API 服务&#10;- 创建主应用组件和布局&#10;- 实现回测面板和 K 线图组件&#10;- 添加样式和响应式布局">
+      <option name="closed" value="true" />
+      <created>1748106437165</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1748106437165</updated>
+    </task>
+    <task id="LOCAL-00002" summary="feat(chart): 优化 K线图样式和功能&#10;&#10;-重构了 K 线图容器样式，增加头部和按钮区域- 添加了多指标选择器和相应的样式&#10;- 优化了图表容器和子图表的样式&#10;- 增加了空数据提示和加载指示器的样式&#10;- 优化了 K 线详细信息浮层的样式和布局- 调整了右侧边栏的样式和响应式布局">
+      <option name="closed" value="true" />
+      <created>1748111282731</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1748111282731</updated>
+    </task>
+    <task id="LOCAL-00003" summary="refactor(layout): 优化面板显示逻辑和图表动画&#10;&#10;- 添加 CSS 过渡效果，使面板和图表动画更流畅&#10;- 改进图表尺寸调整逻辑，确保在面板隐藏时正确更新图表大小- 优化 Stagewise 工具栏加载方式，避免在生产环境显示&#10;- 调整页面结构，提高用户体验">
+      <option name="closed" value="true" />
+      <created>1748152166971</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1748152166971</updated>
+    </task>
+    <task id="LOCAL-00004" summary="feat(indicators): 添加 StockRSI 和 SAR 指标&#10;&#10;- 新增 StockRSI (股票相对强弱指数) 指标计算和图表绘制功能&#10;- 新增 SAR (抛物线转向) 指标计算和图表绘制功能&#10;- 优化指标数据处理和错误处理逻辑&#10;-调整图表绘制流程，提高代码复用性&#10;- 优化时间轴同步和 K 线宽度保存功能">
+      <option name="closed" value="true" />
+      <created>1748186098156</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1748186098156</updated>
+    </task>
+    <task id="LOCAL-00005" summary="feat(chart): 添加回测交易标记功能&#10;&#10;- 在图表中绘制买入和卖出标记&#10;- 添加平仓标记和利润显示&#10;- 实现标记的动态更新&#10;- 新增标记样式和提示框">
+      <option name="closed" value="true" />
+      <created>1748187693374</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1748187693374</updated>
+    </task>
+    <task id="LOCAL-00006" summary="refactor.Chart: 重构 K线图时间轴同步逻辑- 修改默认 K 线宽度为 1，从 6改为 3&#10;- 优化时间轴同步逻辑，改为主图表单向控制副图表&#10;-完全禁用副图表的时间轴变化事件&#10;- 修复 RSI、KDJ 等指标的 NaN 值问题&#10;-优化图表创建和绘制流程，提高稳定性">
+      <option name="closed" value="true" />
+      <created>1748268957042</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1748268957042</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <option name="CHECK_NEW_TODO" value="false" />
+    <MESSAGE value="first commit" />
+    <MESSAGE value="feat: 初始化项目结构并添加基本功能&#10;&#10;- 创建项目基本目录结构和文件&#10;- 实现 Redux store 和动作&#10;- 添加 API 服务&#10;- 创建主应用组件和布局&#10;- 实现回测面板和 K 线图组件&#10;- 添加样式和响应式布局" />
+    <MESSAGE value="feat(chart): 优化 K线图样式和功能&#10;&#10;-重构了 K 线图容器样式，增加头部和按钮区域- 添加了多指标选择器和相应的样式&#10;- 优化了图表容器和子图表的样式&#10;- 增加了空数据提示和加载指示器的样式&#10;- 优化了 K 线详细信息浮层的样式和布局- 调整了右侧边栏的样式和响应式布局" />
+    <MESSAGE value="refactor(layout): 优化面板显示逻辑和图表动画&#10;&#10;- 添加 CSS 过渡效果，使面板和图表动画更流畅&#10;- 改进图表尺寸调整逻辑，确保在面板隐藏时正确更新图表大小- 优化 Stagewise 工具栏加载方式，避免在生产环境显示&#10;- 调整页面结构，提高用户体验" />
+    <MESSAGE value="feat(indicators): 添加 StockRSI 和 SAR 指标&#10;&#10;- 新增 StockRSI (股票相对强弱指数) 指标计算和图表绘制功能&#10;- 新增 SAR (抛物线转向) 指标计算和图表绘制功能&#10;- 优化指标数据处理和错误处理逻辑&#10;-调整图表绘制流程，提高代码复用性&#10;- 优化时间轴同步和 K 线宽度保存功能" />
+    <MESSAGE value="feat(chart): 添加回测交易标记功能&#10;&#10;- 在图表中绘制买入和卖出标记&#10;- 添加平仓标记和利润显示&#10;- 实现标记的动态更新&#10;- 新增标记样式和提示框" />
+    <MESSAGE value="refactor.Chart: 重构 K线图时间轴同步逻辑- 修改默认 K 线宽度为 1，从 6改为 3&#10;- 优化时间轴同步逻辑，改为主图表单向控制副图表&#10;-完全禁用副图表的时间轴变化事件&#10;- 修复 RSI、KDJ 等指标的 NaN 值问题&#10;-优化图表创建和绘制流程，提高稳定性" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor.Chart: 重构 K线图时间轴同步逻辑- 修改默认 K 线宽度为 1，从 6改为 3&#10;- 优化时间轴同步逻辑，改为主图表单向控制副图表&#10;-完全禁用副图表的时间轴变化事件&#10;- 修复 RSI、KDJ 等指标的 NaN 值问题&#10;-优化图表创建和绘制流程，提高稳定性" />
+  </component>
+</project>

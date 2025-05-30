@@ -4,7 +4,8 @@ import {
   TradeHistoryEntry, 
   CryptoPair, 
   UserOrder,
-  BacktestResults
+  BacktestResults,
+  BacktestSummary
 } from './types';
 
 // Action 类型
@@ -22,6 +23,8 @@ export enum ActionType {
   START_BACKTEST = 'START_BACKTEST',
   FINISH_BACKTEST = 'FINISH_BACKTEST',
   UPDATE_BALANCE = 'UPDATE_BALANCE',
+  FETCH_BACKTEST_SUMMARIES = 'FETCH_BACKTEST_SUMMARIES',
+  SET_BACKTEST_SUMMARIES = 'SET_BACKTEST_SUMMARIES',
 }
 
 // Action 创建函数
@@ -87,4 +90,13 @@ export const finishBacktest = (results: BacktestResults) => ({
 export const updateBalance = (balance: { [key: string]: number }) => ({
   type: ActionType.UPDATE_BALANCE,
   payload: balance
+});
+
+export const fetchBacktestSummaries = () => ({
+  type: ActionType.FETCH_BACKTEST_SUMMARIES
+});
+
+export const setBacktestSummaries = (summaries: BacktestSummary[]) => ({
+  type: ActionType.SET_BACKTEST_SUMMARIES,
+  payload: summaries
 }); 

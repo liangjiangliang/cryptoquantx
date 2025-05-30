@@ -1,0 +1,142 @@
+.backtest-summary-page {
+  padding: 20px;
+  background-color: #171b26;
+  min-height: 100vh;
+  color: #e6e6e6;
+}
+
+.backtest-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.backtest-summary-header h2 {
+  color: #e6e6e6;
+  margin: 0;
+  font-size: 24px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.refresh-button, .back-button {
+  background-color: #3a506b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refresh-button:hover, .back-button:hover {
+  background-color: #4a618b;
+}
+
+.refresh-button:disabled {
+  background-color: #2a3a4b;
+  cursor: not-allowed;
+}
+
+.back-button {
+  background-color: #2a3a4b;
+}
+
+.back-button:hover {
+  background-color: #3a4a5b;
+}
+
+.error-message {
+  color: #ff6b6b;
+  background-color: rgba(255, 107, 107, 0.1);
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  color: #e6e6e6;
+  font-size: 18px;
+}
+
+.no-data-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  color: #8d8d8d;
+  font-size: 18px;
+}
+
+.summary-table-container {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #e6e6e6;
+  font-size: 14px;
+}
+
+.summary-table th,
+.summary-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.summary-table th {
+  background-color: #16213e;
+  color: #8d8d8d;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.summary-table tbody tr:hover {
+  background-color: #1e1e30;
+}
+
+.positive {
+  color: #4caf50;
+}
+
+.negative {
+  color: #ff6b6b;
+}
+
+.detail-button {
+  background-color: #3a506b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.3s;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.detail-button:hover {
+  background-color: #4a618b;
+} 

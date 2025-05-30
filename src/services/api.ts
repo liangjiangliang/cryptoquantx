@@ -1,4 +1,5 @@
 import { CandlestickData } from '../store/types';
+import { BacktestSummary } from '../store/types';
 
 interface ApiResponse {
   code: number;
@@ -196,5 +197,67 @@ export const fetchHistoryWithIntegrityCheck = async (
   } catch (error: any) {
     console.error('加载历史数据失败:', error);
     throw error;
+  }
+};
+
+// 获取回测汇总列表
+export const fetchBacktestSummaries = async (): Promise<BacktestSummary[]> => {
+  try {
+    const url = `/api/api/backtest/ta4j/summaries`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.warn(`获取回测汇总失败: ${response.status}`);
+      return [];
+    }
+    
+    const data = await response.json();
+    
+    if (data.code !== 200) {
+      console.warn(`API错误: ${data.message}`);
+      return [];
+    }
+    
+    if (!data.data || data.data.length === 0) {
+      console.warn('API返回的回测汇总数据为空');
+      return [];
+    }
+    
+    return data.data;
+  } catch (error) {
+    console.error('获取回测汇总数据失败:', error);
+    return [];
+  }
+};
+
+// 获取回测详情
+export const fetchBacktestDetail = async (backtestId: string): Promise<any[]> => {
+  try {
+    const url = `/api/api/backtest/ta4j/detail/${backtestId}`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.warn(`获取回测详情失败: ${response.status}`);
+      return [];
+    }
+    
+    const data = await response.json();
+    
+    if (data.code !== 200) {
+      console.warn(`API错误: ${data.message}`);
+      return [];
+    }
+    
+    if (!data.data || data.data.length === 0) {
+      console.warn('API返回的回测详情数据为空');
+      return [];
+    }
+    
+    return data.data;
+  } catch (error) {
+    console.error('获取回测详情数据失败:', error);
+    return [];
   }
 }; 

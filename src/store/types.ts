@@ -8,6 +8,30 @@ export interface CandlestickData {
   volume: number;
 }
 
+// 回测汇总数据类型
+export interface BacktestSummary {
+  averageProfit: number;
+  backtestId: string;
+  createTime: string;
+  endTime: string;
+  finalAmount: number;
+  id: number;
+  initialAmount: number;
+  intervalVal: string;
+  maxDrawdown: number;
+  numberOfTrades: number;
+  profitableTrades: number;
+  sharpeRatio: number;
+  startTime: string;
+  strategyName: string;
+  strategyParams: string;
+  symbol: string;
+  totalProfit: number;
+  totalReturn: number;
+  unprofitableTrades: number;
+  winRate: number;
+}
+
 // 订单簿数据类型
 export interface OrderBookEntry {
   price: number;
@@ -95,10 +119,38 @@ export interface AppState {
   cryptoPairs: CryptoPair[];
   userOrders: UserOrder[];
   backtestResults: BacktestResults | null;
+  backtestSummaries: BacktestSummary[];
   isBacktesting: boolean;
   balance: {
     USDT: number;
     BTC: number;
     ETH: number;
   };
+}
+
+// 回测交易详情类型
+export interface BacktestTradeDetail {
+  backtestId: string;
+  closed: boolean;
+  createTime: string;
+  entryAmount: number;
+  entryPositionPercentage: number | null;
+  entryPrice: number;
+  entryTime: string;
+  exitAmount: number;
+  exitPrice: number;
+  exitTime: string;
+  fee: number | null;
+  id: number;
+  index: number;
+  maxDrawdown: number;
+  profit: number;
+  profitPercentage: number;
+  remark: string | null;
+  strategyName: string;
+  strategyParams: string;
+  symbol: string;
+  totalAssets: number;
+  type: string;
+  volume: number | null;
 } 
