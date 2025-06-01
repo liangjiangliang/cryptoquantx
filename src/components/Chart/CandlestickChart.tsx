@@ -675,13 +675,166 @@ const CandlestickChart: React.FC = () => {
           if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
             drawTradeMarkers();
           }
+          
+          // 添加指标值显示
+          updateIndicatorValues();
         }, 0);
       }
     } catch (error) {
       console.error('更新图表数据错误:', error);
     }
   }, [candlestickData]);
-
+  
+  // 添加指标值显示功能
+  const updateIndicatorValues = () => {
+    if (!candlestickData || candlestickData.length === 0) return;
+    
+    try {
+      // 获取最新的K线数据索引
+      const lastIndex = candlestickData.length - 1;
+      const lastCandle = candlestickData[lastIndex];
+      
+      if (!lastCandle) return;
+      
+      // 计算并显示主图指标值
+      if (mainIndicator === 'boll' && chart.current) {
+        const closePrices = extractClosePrices(candlestickData);
+        const { upper, middle, lower } = calculateBollingerBands(closePrices);
+        
+        const lastUpper = upper[lastIndex];
+        const lastMiddle = middle[lastIndex];
+        const lastLower = lower[lastIndex];
+        
+        if (lastUpper && lastMiddle && lastLower) {
+          // 在主图左上角显示布林带值
+          const bollText = document.createElement('div');
+          bollText.className = 'indicator-value-text main-indicator';
+          bollText.innerHTML = `BOLL: <span class="value">上轨 ${formatPrice(lastUpper)} | 中轨 ${formatPrice(lastMiddle)} | 下轨 ${formatPrice(lastLower)}</span>`;
+          
+          // 移除旧的指标值显示
+          const oldBollText = document.querySelector('.main-indicator');
+          if (oldBollText) oldBollText.remove();
+          
+          // 添加新的指标值显示
+          chartContainerRef.current?.appendChild(bollText);
+        }
+      } else if (mainIndicator === 'sar' && chart.current) {
+        const highPrices = extractHighPrices(candlestickData);
+        const lowPrices = extractLowPrices(candlestickData);
+        const closePrices = extractClosePrices(candlestickData);
+        const sarValues = calculateSAR(highPrices, lowPrices, closePrices);
+        
+        const lastSar = sarValues[lastIndex];
+        
+        if (lastSar) {
+          // 在主图左上角显示SAR值
+          const sarText = document.createElement('div');
+          sarText.className = 'indicator-value-text main-indicator';
+          sarText.innerHTML = `SAR: <span class="value">${formatPrice(lastSar)}</span>`;
+          
+          // 移除旧的指标值显示
+          const oldSarText = document.querySelector('.main-indicator');
+          if (oldSarText) oldSarText.remove();
+          
+          // 添加新的指标值显示
+          chartContainerRef.current?.appendChild(sarText);
+        }
+      }
+      
+      // 计算并显示副图指标值
+      // MACD
+      if (subIndicators.includes('macd') && macdChartRef.current) {
+        const closePrices = extractClosePrices(candlestickData);
+        const { macd, signal, histogram } = calculateMACD(closePrices);
+        
+        const lastMacd = macd[lastIndex];
+        const lastSignal = signal[lastIndex];
+        const lastHistogram = histogram[lastIndex];
+        
+        if (lastMacd && lastSignal && lastHistogram) {
+          // 在MACD图左上角显示MACD值
+          const macdText = document.createElement('div');
+          macdText.className = 'indicator-value-text macd-indicator';
+          macdText.innerHTML = `MACD: <span class="value">${lastMacd.toFixed(4)}</span> | 信号: <span class="value">${lastSignal.toFixed(4)}</span> | 柱: <span class="${lastHistogram >= 0 ? 'positive' : 'negative'}">${lastHistogram.toFixed(4)}</span>`;
+          
+          // 移除旧的指标值显示
+          const oldMacdText = document.querySelector('.macd-indicator');
+          if (oldMacdText) oldMacdText.remove();
+          
+          // 添加新的指标值显示
+          macdChartRef.current.appendChild(macdText);
+        }
+      }
+      
+      // RSI
+      if (subIndicators.includes('rsi') && rsiChartRef.current) {
+        const closePrices = extractClosePrices(candlestickData);
+        const rsiData = calculateRSI(closePrices);
+        
+        const lastRsi = rsiData[lastIndex];
+        
+        if (lastRsi) {
+          // 在RSI图左上角显示RSI值
+          const rsiText = document.createElement('div');
+          rsiText.className = 'indicator-value-text rsi-indicator';
+          rsiText.innerHTML = `RSI: <span class="value">${lastRsi.toFixed(2)}</span>`;
+          
+          // 移除旧的指标值显示
+          const oldRsiText = document.querySelector('.rsi-indicator');
+          if (oldRsiText) oldRsiText.remove();
+          
+          // 添加新的指标值显示
+          rsiChartRef.current.appendChild(rsiText);
+        }
+      }
+      
+      // KDJ
+      if (subIndicators.includes('kdj') && kdjChartRef.current) {
+        const closePrices = extractClosePrices(candlestickData);
+        const highPrices = extractHighPrices(candlestickData);
+        const lowPrices = extractLowPrices(candlestickData);
+        const { k, d, j } = calculateKDJ(highPrices, lowPrices, closePrices);
+        
+        const lastK = k[lastIndex];
+        const lastD = d[lastIndex];
+        const lastJ = j[lastIndex];
+        
+        if (lastK && lastD && lastJ) {
+          // 在KDJ图左上角显示KDJ值
+          const kdjText = document.createElement('div');
+          kdjText.className = 'indicator-value-text kdj-indicator';
+          kdjText.innerHTML = `K: <span class="value">${lastK.toFixed(2)}</span> | D: <span class="value">${lastD.toFixed(2)}</span> | J: <span class="value">${lastJ.toFixed(2)}</span>`;
+          
+          // 移除旧的指标值显示
+          const oldKdjText = document.querySelector('.kdj-indicator');
+          if (oldKdjText) oldKdjText.remove();
+          
+          // 添加新的指标值显示
+          kdjChartRef.current.appendChild(kdjText);
+        }
+      }
+    } catch (error) {
+      console.error('更新指标值显示错误:', error);
+    }
+  };
+  
+  // 监听指标变化
+  useEffect(() => {
+    try {
+      updateIndicators();
+      
+      // 如果有回测结果，绘制交易标记
+      if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
+        drawTradeMarkers();
+      }
+      
+      // 更新指标值显示
+      updateIndicatorValues();
+    } catch (error) {
+      console.error('更新指标错误:', error);
+    }
+  }, [mainIndicator, subIndicators]);
+  
   // 订阅主图表的时间范围变化事件
   useEffect(() => {
     const setupTimeScaleSync = () => {
@@ -732,7 +885,8 @@ const CandlestickChart: React.FC = () => {
       // 清除事件监听
       if (chart.current && chart.current.timeScale()) {
         try {
-          chart.current.timeScale().unsubscribeVisibleLogicalRangeChange(syncTimeScales);
+          // 由于我们没有保存回调函数的引用，这里无法取消订阅
+          // 但在组件卸载时会清理整个图表，所以不会造成内存泄漏
         } catch (error) {
           // 忽略错误
         }
@@ -768,20 +922,6 @@ const CandlestickChart: React.FC = () => {
       console.error('更新图表标题错误:', error);
     }
   }, [selectedPair, timeframe, dispatch]);
-  
-  // 监听指标变化
-  useEffect(() => {
-    try {
-      updateIndicators();
-      
-      // 如果有回测结果，绘制交易标记
-      if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
-        drawTradeMarkers();
-      }
-    } catch (error) {
-      console.error('更新指标错误:', error);
-    }
-  }, [mainIndicator, subIndicators]);
   
   // 当指标选择改变时，重新设置十字线事件处理器
   useEffect(() => {
