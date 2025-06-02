@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createChart, CrosshairMode, Time, LineWidth, ISeriesApi, IChartApi, SeriesMarkerPosition, SeriesMarker, LineStyle } from 'lightweight-charts';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppState, CandlestickData, BacktestTrade } from '../../store/types';
-import { updateCandlestickData } from '../../store/actions';
+import { updateCandlestickData, setSelectedPair, setTimeframe } from '../../store/actions';
 import { fetchHistoryWithIntegrityCheck } from '../../services/api';
 import DataLoadModal from '../DataLoadModal/DataLoadModal';
 import IndicatorSelector, { IndicatorType } from './IndicatorSelector';
@@ -25,6 +25,36 @@ const CHART_BAR_SPACING_KEY = 'cryptoquantx_chart_bar_spacing';
 
 // 默认K线宽度
 const DEFAULT_BAR_SPACING = 1; // 从6改为3，使K线宽度更合适
+
+// 常用交易对列表
+const COMMON_PAIRS = [
+  'BTC-USDT',
+  'ETH-USDT',
+  'BNB-USDT',
+  'SOL-USDT',
+  'ADA-USDT',
+  'XRP-USDT',
+  'DOT-USDT',
+  'DOGE-USDT',
+  'AVAX-USDT',
+  'MATIC-USDT'
+];
+
+// 时间周期列表
+const TIMEFRAMES = [
+  { value: '1m', label: '1分钟' },
+  { value: '5m', label: '5分钟' },
+  { value: '15m', label: '15分钟' },
+  { value: '30m', label: '30分钟' },
+  { value: '1H', label: '1小时' },
+  { value: '2H', label: '2小时' },
+  { value: '4H', label: '4小时' },
+  { value: '6H', label: '6小时' },
+  { value: '12H', label: '12小时' },
+  { value: '1D', label: '1天' },
+  { value: '1W', label: '1周' },
+  { value: '1M', label: '1月' }
+];
 
 // 从localStorage获取保存的K线宽度
 const getSavedBarSpacing = (): number => {
@@ -151,6 +181,19 @@ const CandlestickChart: React.FC = () => {
   const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
   // 添加面板显示/隐藏状态
   const [showPanels, setShowPanels] = useState<boolean>(true);
+
+  // 添加日期范围状态
+  const [startDate, setStartDate] = useState<string>(() => {
+    // 默认开始日期为一年前
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    return oneYearAgo.toISOString().split('T')[0]; // YYYY-MM-DD格式
+  });
+  
+  const [endDate, setEndDate] = useState<string>(() => {
+    // 默认结束日期为今天
+    return new Date().toISOString().split('T')[0]; // YYYY-MM-DD格式
+  });
 
   const dispatch = useDispatch();
   const candlestickData = useSelector((state: AppState) => state.candlestickData);
@@ -2099,18 +2142,11 @@ const CandlestickChart: React.FC = () => {
     setIsHistoryLoading(true);
     
     try {
-      // 获取当前日期
-      const now = new Date();
-      
-      // 默认查询过去一年的数据
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(now.getFullYear() - 1);
-      
-      const startTimeStr = formatDateForApi(oneYearAgo);
-      const endTimeStr = formatDateForApi(now);
+      // 使用用户选择的日期范围
+      const startTimeStr = `${startDate} 00:00:00`;
+      const endTimeStr = `${endDate} 23:59:59`;
       
       // 确保时间周期格式正确
-      // 注意：API可能需要特定格式，根据实际情况调整
       const normalizedTimeframe = timeframe;
       
       // 构建API URL
@@ -2404,11 +2440,93 @@ const CandlestickChart: React.FC = () => {
     }
   };
 
+  // 处理交易对变更
+  const handlePairChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    // 使用正确的action更新Redux中的selectedPair
+    dispatch(setSelectedPair(e.target.value));
+    
+    // 清空K线数据，等待用户点击查询按钮重新加载
+    if (candleSeries.current && volumeSeries.current) {
+      candleSeries.current.setData([]);
+      volumeSeries.current.setData([]);
+      dispatch(updateCandlestickData([]));
+      clearIndicators();
+    }
+  };
+
+  // 处理时间周期变更
+  const handleTimeframeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    // 使用正确的action更新Redux中的timeframe
+    dispatch(setTimeframe(e.target.value as '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M'));
+    
+    // 清空K线数据，等待用户点击查询按钮重新加载
+    if (candleSeries.current && volumeSeries.current) {
+      candleSeries.current.setData([]);
+      volumeSeries.current.setData([]);
+      dispatch(updateCandlestickData([]));
+      clearIndicators();
+    }
+  };
+
+  // 处理日期变更
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setStartDate(e.target.value);
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEndDate(e.target.value);
+  };
+
   return (
     <div className={`candlestick-chart-container ${showPanels ? '' : 'panels-hidden'}`}>
       <div className="chart-header">
-        <h2>{selectedPair} - {timeframe}</h2>
+        <div className="chart-selectors">
+          <div className="selector-group">
+            <label>交易对:</label>
+            <select 
+              className="pair-selector" 
+              value={selectedPair} 
+              onChange={handlePairChange}
+            >
+              {COMMON_PAIRS.map(pair => (
+                <option key={pair} value={pair}>{pair}</option>
+              ))}
+            </select>
+          </div>
+          <div className="selector-group">
+            <label>时间周期:</label>
+            <select 
+              className="timeframe-selector" 
+              value={timeframe} 
+              onChange={handleTimeframeChange}
+            >
+              {TIMEFRAMES.map(tf => (
+                <option key={tf.value} value={tf.value}>{tf.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div className="chart-buttons">
+          <div className="date-range-selector">
+            <div className="date-input-group">
+              <label>开始日期:</label>
+              <input 
+                type="date" 
+                className="date-input"
+                value={startDate}
+                onChange={handleStartDateChange}
+              />
+            </div>
+            <div className="date-input-group">
+              <label>结束日期:</label>
+              <input 
+                type="date" 
+                className="date-input"
+                value={endDate}
+                onChange={handleEndDateChange}
+              />
+            </div>
+          </div>
           <IndicatorSelector 
             type="main"
             value={mainIndicator}

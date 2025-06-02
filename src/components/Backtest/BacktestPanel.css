@@ -202,4 +202,36 @@
 
 .reset-backtest-button:hover {
   background-color: #3a4052;
+}
+
+.strategy-description {
+  margin-top: 10px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.strategy-description p {
+  margin: 5px 0;
+  color: #d9d9d9;
+}
+
+.params-hint {
+  font-style: italic;
+  color: #aaa !important;
+  margin-top: 8px !important;
+}
+
+.loading-strategies {
+  padding: 8px;
+  color: #d9d9d9;
+  font-style: italic;
+}
+
+.error-message {
+  padding: 8px;
+  color: #ff5555;
+  font-style: italic;
 } 

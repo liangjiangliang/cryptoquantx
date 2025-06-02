@@ -3,7 +3,6 @@ import { Provider } from 'react-redux';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import store from './store';
 import CandlestickChart from './components/Chart/CandlestickChart';
-import TimeframeSelector from './components/Chart/TimeframeSelector';
 import BacktestPanel from './components/Backtest/BacktestPanel';
 import BacktestSummaries from './components/Backtest/BacktestSummaries';
 import BacktestSummaryPage from './pages/BacktestSummaryPage';
@@ -59,7 +58,6 @@ function App() {
               <main className={`app-content-simplified ${showPanels ? '' : 'panels-hidden'}`}>
                 <div className="main-content">
                   <div className="chart-container">
-                    <TimeframeSelector />
                     <CandlestickChart />
                   </div>
                 </div>

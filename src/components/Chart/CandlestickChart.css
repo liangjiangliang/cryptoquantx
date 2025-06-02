@@ -15,7 +15,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  padding: 10px;
+  background-color: #1e222d;
+  border-bottom: 1px solid #2e3241;
 }
 
 .chart-title {
@@ -56,6 +58,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .query-button, .load-data-button, .toggle-panels-button {
@@ -417,4 +420,86 @@
 .kdj-indicator {
   top: 10px;
   left: 10px;
+}
+
+.chart-selectors {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.selector-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selector-group label {
+  color: #d9d9d9;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pair-selector,
+.timeframe-selector {
+  background-color: #2e3241;
+  color: #d9d9d9;
+  border: 1px solid #3a3f52;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 14px;
+  min-width: 120px;
+  cursor: pointer;
+}
+
+.pair-selector:hover,
+.timeframe-selector:hover {
+  border-color: #4a5169;
+}
+
+.pair-selector:focus,
+.timeframe-selector:focus {
+  outline: none;
+  border-color: #5a6181;
+  box-shadow: 0 0 0 2px rgba(90, 97, 129, 0.2);
+}
+
+.date-range-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 10px;
+}
+
+.date-input-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.date-input-group label {
+  color: #d9d9d9;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.date-input {
+  background-color: #2e3241;
+  color: #d9d9d9;
+  border: 1px solid #3a3f52;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  width: 130px;
+  cursor: pointer;
+}
+
+.date-input:hover {
+  border-color: #4a5169;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #5a6181;
+  box-shadow: 0 0 0 2px rgba(90, 97, 129, 0.2);
 } 

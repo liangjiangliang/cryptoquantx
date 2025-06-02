@@ -18,6 +18,21 @@ const getCurrentDate = () => {
   return new Date().toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
 };
 
+// 策略接口定义
+interface Strategy {
+  name: string;
+  description: string;
+  params: string;
+}
+
+interface StrategiesResponse {
+  code: number;
+  data: {
+    [key: string]: Strategy;
+  };
+  message: string;
+}
+
 const BacktestPanel: React.FC = () => {
   const dispatch = useDispatch();
   const selectedPair = useSelector((state: AppState) => state.selectedPair);
@@ -28,15 +43,70 @@ const BacktestPanel: React.FC = () => {
   const [startDate, setStartDate] = useState(getOneYearAgo());
   const [endDate, setEndDate] = useState(getCurrentDate());
   const [initialCapital, setInitialCapital] = useState('10000');
-  const [strategy, setStrategy] = useState('ma_crossover');
+  const [strategy, setStrategy] = useState('');
+  const [strategies, setStrategies] = useState<{[key: string]: Strategy}>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // 策略选项
-  const strategies = [
-    { value: 'ma_crossover', label: '均线交叉策略' },
-    { value: 'rsi_oversold', label: 'RSI超卖策略' },
-    { value: 'bollinger_bands', label: '布林带策略' },
-    { value: 'macd', label: 'MACD策略' },
-  ];
+  // 获取可用策略列表
+  useEffect(() => {
+    const fetchStrategies = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // 使用相对路径，通过React开发服务器的代理转发请求
+        const response = await fetch('/api/api/backtest/ta4j/strategies');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data: StrategiesResponse = await response.json();
+        if (data.code === 200 && data.data) {
+          setStrategies(data.data);
+          // 设置默认策略为列表中的第一个
+          if (Object.keys(data.data).length > 0 && !strategy) {
+            setStrategy(Object.keys(data.data)[0]);
+          }
+        } else {
+          throw new Error(data.message || '获取策略列表失败');
+        }
+      } catch (err) {
+        console.error('获取策略列表失败:', err);
+        setError(err instanceof Error ? err.message : '获取策略列表失败');
+        
+        // 添加模拟数据，以防API不可用
+        const mockStrategies = {
+          "SMA": {
+            "name": "简单移动平均线策略",
+            "description": "基于短期和长期移动平均线的交叉信号产生买卖信号",
+            "params": "短期均线周期,长期均线周期 (例如：5,20)"
+          },
+          "MACD": {
+            "name": "MACD策略",
+            "description": "基于MACD线与信号线的交叉以及柱状图的变化产生买卖信号",
+            "params": "短周期,长周期,信号周期 (例如：12,26,9)"
+          },
+          "RSI": {
+            "name": "RSI相对强弱指标策略",
+            "description": "基于RSI指标的超买超卖区域产生买卖信号",
+            "params": "RSI周期,超卖阈值,超买阈值 (例如：14,30,70)"
+          },
+          "BOLLINGER": {
+            "name": "布林带策略",
+            "description": "基于价格突破布林带上下轨或回归中轨产生买卖信号",
+            "params": "周期,标准差倍数 (例如：20,2.0)"
+          }
+        };
+        setStrategies(mockStrategies);
+        if (!strategy) {
+          setStrategy(Object.keys(mockStrategies)[0]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStrategies();
+  }, []);
 
   // 运行回测
   const runBacktest = () => {
@@ -88,17 +158,30 @@ const BacktestPanel: React.FC = () => {
             
             <div className="input-group">
               <label>交易策略</label>
-              <select
-                value={strategy}
-                onChange={(e) => setStrategy(e.target.value)}
-              >
-                {strategies.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
+              {loading ? (
+                <div className="loading-strategies">加载策略中...</div>
+              ) : error ? (
+                <div className="error-message">{error}</div>
+              ) : (
+                <select
+                  value={strategy}
+                  onChange={(e) => setStrategy(e.target.value)}
+                >
+                  {Object.entries(strategies).map(([key, strategyData]) => (
+                    <option key={key} value={key}>
+                      {strategyData.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
+            
+            {strategy && strategies[strategy] && (
+              <div className="strategy-description">
+                <p>{strategies[strategy].description}</p>
+                <p className="params-hint">参数: {strategies[strategy].params}</p>
+              </div>
+            )}
             
             <div className="input-group">
               <label>交易对</label>
@@ -113,7 +196,7 @@ const BacktestPanel: React.FC = () => {
             <button
               className="run-backtest-button"
               onClick={runBacktest}
-              disabled={isBacktesting}
+              disabled={isBacktesting || loading || !strategy}
             >
               {isBacktesting ? '运行中...' : '运行回测'}
             </button>
@@ -177,11 +260,11 @@ const BacktestPanel: React.FC = () => {
                       <td>{formatDate(trade.entryTime)}</td>
                       <td className={trade.side}>{trade.side === 'buy' ? '买入' : '卖出'}</td>
                       <td>{formatPrice(trade.entryPrice)}</td>
-                      <td>{trade.amount.toFixed(4)}</td>
+                      <td>{trade.amount?.toFixed(4) || '0.0000'}</td>
                       <td className={trade.profit >= 0 ? 'positive' : 'negative'}>
-                        {trade.profit >= 0 ? '+' : ''}{trade.profit.toFixed(2)} USDT
+                        {trade.profit >= 0 ? '+' : ''}{trade.profit?.toFixed(2) || '0.00'} USDT
                         <span className="percentage">
-                          ({formatPercentage(trade.profitPercentage)})
+                          ({formatPercentage(trade.profitPercentage || 0)})
                         </span>
                       </td>
                     </tr>
