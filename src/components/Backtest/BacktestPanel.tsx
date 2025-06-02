@@ -62,7 +62,7 @@ const BacktestPanel: React.FC = () => {
       } catch (err) {
         console.error('获取策略列表失败:', err);
         setError(err instanceof Error ? err.message : '获取策略列表失败');
-        
+
         // 添加模拟数据，以防API不可用
         const mockStrategies = {
           "SMA": {
@@ -101,27 +101,27 @@ const BacktestPanel: React.FC = () => {
   // 运行回测
   const runBacktest = async () => {
     dispatch(startBacktest());
-    
+
     try {
       // 格式化开始和结束时间
       const formattedStartTime = `${dateRange.startDate} 00:00:00`;
       const formattedEndTime = `${dateRange.endDate} 23:59:59`;
-      
+
       // 构建API URL
       const url = `/api/api/backtest/ta4j/run?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialCapital}&strategyType=${strategy}&symbol=${selectedPair}&interval=${timeframe}&saveResult=True`;
-      
+
       console.log('发送回测请求:', url);
-      
+
       // 发送请求
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log('回测API返回数据:', data);
-      
+
       if (data.code === 200 && data.data && data.data.success) {
         // 转换API返回的数据为应用所需的格式
         const results: BacktestResults = {
@@ -147,7 +147,7 @@ const BacktestPanel: React.FC = () => {
             profitPercentage: trade.profitPercentage * 100 || 0 // 转换为百分比
           }))
         };
-        
+
         dispatch(finishBacktest(results));
       } else {
         throw new Error(data.data?.errorMessage || data.message || '回测失败');
@@ -178,7 +178,7 @@ const BacktestPanel: React.FC = () => {
       <div className="backtest-panel-header">
         <h3>回测 - {selectedPair}</h3>
       </div>
-      
+
       <div className="backtest-panel-content">
         {!backtestResults ? (
           <div className="backtest-form">
@@ -190,7 +190,7 @@ const BacktestPanel: React.FC = () => {
                 onChange={handleStartDateChange}
               />
             </div>
-            
+
             <div className="input-group">
               <label>结束日期</label>
               <input
@@ -199,7 +199,7 @@ const BacktestPanel: React.FC = () => {
                 onChange={handleEndDateChange}
               />
             </div>
-            
+
             <div className="input-group">
               <label>初始资金 (USDT)</label>
               <input
@@ -210,7 +210,7 @@ const BacktestPanel: React.FC = () => {
                 step="100"
               />
             </div>
-            
+
             <div className="input-group">
               <label>交易策略</label>
               {loading ? (
@@ -230,14 +230,14 @@ const BacktestPanel: React.FC = () => {
                 </select>
               )}
             </div>
-            
+
             {strategy && strategies[strategy] && (
               <div className="strategy-description">
                 <p>{strategies[strategy].description}</p>
                 <p className="params-hint">参数: {strategies[strategy].params}</p>
               </div>
             )}
-            
+
             <div className="input-group">
               <label>交易对</label>
               <select
@@ -250,7 +250,7 @@ const BacktestPanel: React.FC = () => {
                 ))}
               </select>
             </div>
-            
+
             <div className="input-group">
               <label>时间周期</label>
               <select
@@ -263,7 +263,7 @@ const BacktestPanel: React.FC = () => {
                 ))}
               </select>
             </div>
-            
+
             <button
               className="run-backtest-button"
               onClick={runBacktest}
@@ -301,7 +301,7 @@ const BacktestPanel: React.FC = () => {
               </div>
               <div className="summary-item">
                 <span className="label">胜率</span>
-                <span className="value">{backtestResults.winRate}%</span>
+                <span className="value">{backtestResults.winRate.toFixed(2)}%</span>
               </div>
               <div className="summary-item">
                 <span className="label">最大回撤</span>
@@ -312,7 +312,7 @@ const BacktestPanel: React.FC = () => {
                 <span className="value">{backtestResults.sharpeRatio}</span>
               </div>
             </div>
-            
+
             <div className="trades-table">
               <h4>交易记录</h4>
               <table>
@@ -343,7 +343,7 @@ const BacktestPanel: React.FC = () => {
                 </tbody>
               </table>
             </div>
-            
+
             <button
               className="reset-backtest-button"
               onClick={handleClearResults}
