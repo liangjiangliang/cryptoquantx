@@ -26,7 +26,7 @@ const TradeMarkers: React.FC<TradeMarkersProps> = ({ chart, candleSeries, backte
       // 准备买入和卖出标记
       const markers = backtestResults.trades.flatMap((trade: BacktestTrade) => {
         const markers: SeriesMarker<Time>[] = [];
-        
+
         // 添加买入标记
         if (trade.side === 'buy') {
           markers.push({
@@ -35,7 +35,7 @@ const TradeMarkers: React.FC<TradeMarkersProps> = ({ chart, candleSeries, backte
             color: '#26a69a',
             shape: 'arrowUp',
             text: `买入 ${formatPrice(trade.entryPrice)}`,
-            size: 3,
+            size: 2,
             id: `entry-${trade.id || ''}`,
           });
         } else {
@@ -46,33 +46,33 @@ const TradeMarkers: React.FC<TradeMarkersProps> = ({ chart, candleSeries, backte
             color: '#ef5350',
             shape: 'arrowDown',
             text: `卖出 ${formatPrice(trade.entryPrice)}`,
-            size: 3,
+            size: 2,
             id: `entry-${trade.id || ''}`,
           });
         }
-        
+
         // 添加平仓标记
         if (trade.exitTime && trade.exitPrice !== undefined) {
-          const profitText = trade.profit !== undefined ? 
+          const profitText = trade.profit !== undefined ?
             `(${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})` : '';
-          
+
           markers.push({
             time: trade.exitTime as Time,
             position: (trade.side === 'buy' ? 'aboveBar' : 'belowBar') as SeriesMarkerPosition,
             color: trade.side === 'buy' ? '#ef5350' : '#26a69a',
             shape: trade.side === 'buy' ? 'arrowDown' : 'arrowUp',
             text: `平仓 ${formatPrice(trade.exitPrice)} ${profitText}`,
-            size: 3,
+            size: 2,
             id: `exit-${trade.id || ''}`,
           });
         }
-        
+
         return markers;
       });
-      
+
       // 设置标记
       candleSeries.current.setMarkers(markers);
-      
+
       console.log(`已绘制 ${markers.length} 个交易标记`);
     } catch (error) {
       console.error('绘制交易标记错误:', error);
@@ -97,4 +97,4 @@ const TradeMarkers: React.FC<TradeMarkersProps> = ({ chart, candleSeries, backte
   return null;
 };
 
-export default TradeMarkers; 
+export default TradeMarkers;

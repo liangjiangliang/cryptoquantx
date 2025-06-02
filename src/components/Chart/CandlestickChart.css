@@ -383,6 +383,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none; /* 防止鼠标事件干扰图表操作 */
 }
 
 .indicator-value-text .value {
@@ -391,12 +392,12 @@
 }
 
 .indicator-value-text .positive {
-  color: #26a69a;
+  color: #ff5555; /* 红涨 */
   font-weight: 500;
 }
 
 .indicator-value-text .negative {
-  color: #ef5350;
+  color: #32a852; /* 绿跌 */
   font-weight: 500;
 }
 
@@ -408,18 +409,21 @@
 
 /* 副图指标显示位置 */
 .macd-indicator {
-  top: 10px;
+  top: 25px;
   left: 10px;
+  border-left-color: #ff9800;
 }
 
 .rsi-indicator {
-  top: 10px;
+  top: 25px;
   left: 10px;
+  border-left-color: #4caf50;
 }
 
 .kdj-indicator {
-  top: 10px;
+  top: 25px;
   left: 10px;
+  border-left-color: #e91e63;
 }
 
 .chart-selectors {

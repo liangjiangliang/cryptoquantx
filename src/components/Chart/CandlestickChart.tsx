@@ -6,16 +6,16 @@ import { updateCandlestickData, setSelectedPair, setTimeframe, setDateRange } fr
 import { fetchHistoryWithIntegrityCheck } from '../../services/api';
 import DataLoadModal from '../DataLoadModal/DataLoadModal';
 import IndicatorSelector, { IndicatorType } from './IndicatorSelector';
-import { 
-  calculateMACD, 
-  calculateRSI, 
+import {
+  calculateMACD,
+  calculateRSI,
   calculateStockRSI,
-  calculateKDJ, 
-  calculateBollingerBands, 
+  calculateKDJ,
+  calculateBollingerBands,
   calculateSAR,
-  extractClosePrices, 
-  extractHighPrices, 
-  extractLowPrices 
+  extractClosePrices,
+  extractHighPrices,
+  extractLowPrices
 } from '../../utils/indicators';
 import './CandlestickChart.css';
 import TradeMarkers from './TradeMarkers';
@@ -83,31 +83,31 @@ const CandlestickChart: React.FC = () => {
   const macdChartRef = useRef<HTMLDivElement>(null);
   const rsiChartRef = useRef<HTMLDivElement>(null);
   const kdjChartRef = useRef<HTMLDivElement>(null);
-  
+
   // 浮层提示参考
   const tooltipRef = useRef<HTMLDivElement>(null);
-  
+
   // 主图表和系列
   const chart = useRef<IChartApi | null>(null);
   const candleSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeries = useRef<ISeriesApi<'Histogram'> | null>(null);
   // 交易标记系列
   const tradeMarkers = useRef<ISeriesApi<'Candlestick'> | null>(null);
-  
+
   // 副图表
   const macdChart = useRef<IChartApi | null>(null);
   const rsiChart = useRef<IChartApi | null>(null);
   const kdjChart = useRef<IChartApi | null>(null);
-  
+
   // 指标数据系列
   const mainIndicatorSeries = useRef<Array<ISeriesApi<'Line'> | ISeriesApi<'Histogram'> | null>>([]);
   const macdSeries = useRef<Array<ISeriesApi<'Line'> | ISeriesApi<'Histogram'> | null>>([]);
   const rsiSeries = useRef<Array<ISeriesApi<'Line'> | null>>([]);
   const kdjSeries = useRef<Array<ISeriesApi<'Line'> | null>>([]);
-  
+
   // 当前启用的副图表
   const [activeSubCharts, setActiveSubCharts] = useState<IndicatorType[]>([]);
-  
+
   // 当前鼠标悬浮的K线数据
   const [hoveredData, setHoveredData] = useState<{
     time: string;
@@ -139,11 +139,11 @@ const CandlestickChart: React.FC = () => {
       };
     };
   } | null>(null);
-  
+
   // 指标选择状态 - 修改为支持多选
   const [mainIndicator, setMainIndicator] = useState<IndicatorType>('boll');
   const [subIndicators, setSubIndicators] = useState<IndicatorType[]>(['macd', 'rsi', 'stockrsi', 'kdj']);
-  
+
   // 数据加载弹窗状态
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [responseMessage, setResponseMessage] = useState<string>('');
@@ -159,12 +159,12 @@ const CandlestickChart: React.FC = () => {
   const timeframe = useSelector((state: AppState) => state.timeframe);
   const backtestResults = useSelector((state: AppState) => state.backtestResults);
   const dateRange = useSelector((state: AppState) => state.dateRange);
-  
+
   // 检查副图指标是否被选中
   const isSubIndicatorSelected = (indicator: IndicatorType): boolean => {
     return subIndicators.includes(indicator);
   };
-  
+
   // 安全获取数据点的方法，避免undefined或null
   const safeGetDataPoint = (dataArray: any[], index: number, defaultValue: any = null) => {
     if (!dataArray || !Array.isArray(dataArray) || index < 0 || index >= dataArray.length) {
@@ -187,12 +187,20 @@ const CandlestickChart: React.FC = () => {
         param.point.y < 0
       ) {
         setHoveredData(null);
+        // 当鼠标移出图表时，清除指标值显示
+        clearIndicatorValues();
+        return;
+      }
+
+      // 确保有数据可用
+      if (!candlestickData || candlestickData.length === 0) {
+        console.log('没有K线数据可用');
         return;
       }
 
       const candleData = param.seriesPrices.get(candleSeries.current);
       const volumeData = param.seriesPrices.get(volumeSeries.current);
-      
+
       if (candleData && volumeData) {
         const time = formatDate(param.time);
         const open = formatPrice(candleData.open);
@@ -200,136 +208,12 @@ const CandlestickChart: React.FC = () => {
         const low = formatPrice(candleData.low);
         const close = formatPrice(candleData.close);
         const volume = formatVolume(volumeData);
-        
+
         // 计算涨跌幅
         const change = (candleData.close - candleData.open).toFixed(2);
         const changePercent = ((candleData.close - candleData.open) / candleData.open * 100).toFixed(2);
-        
-        // 查找对应时间点的指标值
-        const indicators: any = {};
-        
-        try {
-          // 找到当前时间点对应的数据索引
-          const dataIndex = candlestickData.findIndex(d => d.time === param.time);
-          
-          if (dataIndex !== -1) {
-            // 获取各指标的值
-            if (mainIndicator === 'boll') {
-              try {
-                const closePrices = extractClosePrices(candlestickData);
-                const { upper, middle, lower } = calculateBollingerBands(closePrices);
-                
-                const upperValue = safeGetDataPoint(upper, dataIndex);
-                const middleValue = safeGetDataPoint(middle, dataIndex);
-                const lowerValue = safeGetDataPoint(lower, dataIndex);
-                
-                if (upperValue !== null && middleValue !== null && lowerValue !== null) {
-                  indicators.boll = {
-                    upper: formatPrice(upperValue),
-                    middle: formatPrice(middleValue),
-                    lower: formatPrice(lowerValue)
-                  };
-                }
-              } catch (error) {
-                console.error('获取BOLL指标数据错误:', error);
-              }
-            }
-            
-            if (mainIndicator === 'sar') {
-              try {
-                const highPrices = extractHighPrices(candlestickData);
-                const lowPrices = extractLowPrices(candlestickData);
-                const closePrices = extractClosePrices(candlestickData);
-                const sarValues = calculateSAR(highPrices, lowPrices, closePrices);
-                
-                const sarValue = safeGetDataPoint(sarValues, dataIndex);
-                
-                if (sarValue !== null) {
-                  indicators.sar = formatPrice(sarValue);
-                }
-              } catch (error) {
-                console.error('获取SAR指标数据错误:', error);
-              }
-            }
-            
-            if (isSubIndicatorSelected('macd')) {
-              try {
-                const closePrices = extractClosePrices(candlestickData);
-                const { macd, signal, histogram } = calculateMACD(closePrices);
-                
-                const macdValue = safeGetDataPoint(macd, dataIndex);
-                const signalValue = safeGetDataPoint(signal, dataIndex);
-                const histogramValue = safeGetDataPoint(histogram, dataIndex);
-                
-                if (macdValue !== null && signalValue !== null && histogramValue !== null) {
-                  indicators.macd = {
-                    macd: macdValue.toFixed(4),
-                    signal: signalValue.toFixed(4),
-                    histogram: histogramValue.toFixed(4)
-                  };
-                }
-              } catch (error) {
-                console.error('获取MACD指标数据错误:', error);
-              }
-            } 
-            
-            if (isSubIndicatorSelected('rsi')) {
-              try {
-                const closePrices = extractClosePrices(candlestickData);
-                const rsiData = calculateRSI(closePrices);
-                
-                const rsiValue = safeGetDataPoint(rsiData, dataIndex);
-                
-                if (rsiValue !== null) {
-                  indicators.rsi = rsiValue.toFixed(2);
-                }
-              } catch (error) {
-                console.error('获取RSI指标数据错误:', error);
-              }
-            } 
-            
-            if (isSubIndicatorSelected('stockrsi')) {
-              try {
-                const closePrices = extractClosePrices(candlestickData);
-                const stockRsiData = calculateStockRSI(closePrices);
-                
-                const stockRsiValue = safeGetDataPoint(stockRsiData, dataIndex);
-                
-                if (stockRsiValue !== null) {
-                  indicators.stockrsi = stockRsiValue.toFixed(2);
-                }
-              } catch (error) {
-                console.error('获取StockRSI指标数据错误:', error);
-              }
-            }
-            
-            if (isSubIndicatorSelected('kdj')) {
-              try {
-                const closePrices = extractClosePrices(candlestickData);
-                const highPrices = extractHighPrices(candlestickData);
-                const lowPrices = extractLowPrices(candlestickData);
-                const { k, d, j } = calculateKDJ(highPrices, lowPrices, closePrices);
-                
-                const kValue = safeGetDataPoint(k, dataIndex);
-                const dValue = safeGetDataPoint(d, dataIndex);
-                const jValue = safeGetDataPoint(j, dataIndex);
-                
-                if (kValue !== null && dValue !== null && jValue !== null) {
-                  indicators.kdj = {
-                    k: kValue.toFixed(2),
-                    d: dValue.toFixed(2),
-                    j: jValue.toFixed(2)
-                  };
-                }
-              } catch (error) {
-                console.error('获取KDJ指标数据错误:', error);
-              }
-            }
-          }
-        } catch (error) {
-          console.error('处理指标数据错误:', error);
-        }
-        
+
+        // 设置悬浮数据，但不包含指标值
         setHoveredData({
           time,
           open,
@@ -338,26 +222,180 @@ const CandlestickChart: React.FC = () => {
           close,
           volume,
           change,
-          changePercent,
-          indicators
+          changePercent
         });
+
+        // 打印一些调试信息，查看candlestickData的格式
+        console.log('param.time:', param.time, 'type:', typeof param.time);
+        console.log('candlestickData示例:', candlestickData.length > 0 ? {
+          time: candlestickData[0].time,
+          timeType: typeof candlestickData[0].time
+        } : '无数据');
+        console.log('candlestickData长度:', candlestickData.length);
+
+        // 获取当前显示的K线索引
+        let dataIndex = -1;
+
+        try {
+          // 使用图表的逻辑坐标直接获取索引
+          if (chart.current) {
+            const logical = chart.current.timeScale().coordinateToLogical(param.point.x);
+            if (logical !== null && logical >= 0 && logical < candlestickData.length) {
+              dataIndex = Math.round(logical);
+              console.log('使用坐标估算，找到索引:', dataIndex);
+            }
+          }
+
+          // 如果坐标估算失败，尝试时间匹配
+          if (dataIndex === -1) {
+            if (typeof param.time === 'number') {
+              // 对于时间戳，找到最接近的时间点
+              let minDiff = Infinity;
+              for (let i = 0; i < candlestickData.length; i++) {
+                const item = candlestickData[i];
+                const itemTime = typeof item.time === 'number' ? item.time :
+                              typeof item.time === 'string' ? new Date(item.time).getTime() / 1000 :
+                              Number(item.time);
+
+                const diff = Math.abs(itemTime - param.time);
+                if (diff < minDiff) {
+                  minDiff = diff;
+                  dataIndex = i;
+                }
+              }
+              console.log('使用最接近匹配，找到索引:', dataIndex, '差值:', minDiff);
+            }
+          }
+        } catch (error) {
+          console.error('获取数据索引错误:', error);
+        }
+
+        console.log('最终找到的数据索引:', dataIndex);
+
+        // 如果找到了有效的数据索引，更新指标值
+        if (dataIndex !== -1 && dataIndex < candlestickData.length) {
+          // 更新MACD指标值
+          if (isSubIndicatorSelected('macd') && macdChartRef.current) {
+            const closePrices = extractClosePrices(candlestickData);
+            const { macd, signal, histogram } = calculateMACD(closePrices);
+
+            const macdValue = safeGetDataPoint(macd, dataIndex);
+            const signalValue = safeGetDataPoint(signal, dataIndex);
+            const histogramValue = safeGetDataPoint(histogram, dataIndex);
+
+            if (macdValue !== null && signalValue !== null && histogramValue !== null) {
+              // 创建或更新MACD值显示元素
+              let macdValueElement = document.getElementById('macd-indicator-values');
+              if (!macdValueElement) {
+                macdValueElement = document.createElement('div');
+                macdValueElement.id = 'macd-indicator-values';
+                macdValueElement.className = 'indicator-value-text macd-indicator';
+                macdChartRef.current.appendChild(macdValueElement);
+              }
+
+              macdValueElement.innerHTML = `
+                MACD: <span class="value">${macdValue.toFixed(4)}</span> | 
+                信号: <span class="value">${signalValue.toFixed(4)}</span> | 
+                柱: <span class="${histogramValue >= 0 ? 'positive' : 'negative'}">${histogramValue.toFixed(4)}</span>
+              `;
+              macdValueElement.style.display = 'block';
+            }
+          }
+
+          // 更新RSI指标值
+          if (isSubIndicatorSelected('rsi') && rsiChartRef.current) {
+            const closePrices = extractClosePrices(candlestickData);
+            const rsiData = calculateRSI(closePrices);
+
+            const rsiValue = safeGetDataPoint(rsiData, dataIndex);
+
+            if (rsiValue !== null) {
+              // 创建或更新RSI值显示元素
+              let rsiValueElement = document.getElementById('rsi-indicator-values');
+              if (!rsiValueElement) {
+                rsiValueElement = document.createElement('div');
+                rsiValueElement.id = 'rsi-indicator-values';
+                rsiValueElement.className = 'indicator-value-text rsi-indicator';
+                rsiChartRef.current.appendChild(rsiValueElement);
+              }
+
+              rsiValueElement.innerHTML = `RSI: <span class="value">${rsiValue.toFixed(2)}</span>`;
+              rsiValueElement.style.display = 'block';
+            }
+          }
+
+          // 更新KDJ指标值
+          if (isSubIndicatorSelected('kdj') && kdjChartRef.current) {
+            const closePrices = extractClosePrices(candlestickData);
+            const highPrices = extractHighPrices(candlestickData);
+            const lowPrices = extractLowPrices(candlestickData);
+            const { k, d, j } = calculateKDJ(highPrices, lowPrices, closePrices);
+
+            const kValue = safeGetDataPoint(k, dataIndex);
+            const dValue = safeGetDataPoint(d, dataIndex);
+            const jValue = safeGetDataPoint(j, dataIndex);
+
+            if (kValue !== null && dValue !== null && jValue !== null) {
+              // 创建或更新KDJ值显示元素
+              let kdjValueElement = document.getElementById('kdj-indicator-values');
+              if (!kdjValueElement) {
+                kdjValueElement = document.createElement('div');
+                kdjValueElement.id = 'kdj-indicator-values';
+                kdjValueElement.className = 'indicator-value-text kdj-indicator';
+                kdjChartRef.current.appendChild(kdjValueElement);
+              }
+
+              kdjValueElement.innerHTML = `
+                K: <span class="value">${kValue.toFixed(2)}</span> | 
+                D: <span class="value">${dValue.toFixed(2)}</span> | 
+                J: <span class="value">${jValue.toFixed(2)}</span>
+              `;
+              kdjValueElement.style.display = 'block';
+            }
+          }
+        }
       }
     });
+  };
+
+  // 清除指标值显示
+  const clearIndicatorValues = () => {
+    try {
+      // 清除MACD指标值
+      const macdValueElement = document.getElementById('macd-indicator-values');
+      if (macdValueElement) {
+        macdValueElement.style.display = 'none';
+      }
+
+      // 清除RSI指标值
+      const rsiValueElement = document.getElementById('rsi-indicator-values');
+      if (rsiValueElement) {
+        rsiValueElement.style.display = 'none';
+      }
+
+      // 清除KDJ指标值
+      const kdjValueElement = document.getElementById('kdj-indicator-values');
+      if (kdjValueElement) {
+        kdjValueElement.style.display = 'none';
+      }
+    } catch (error) {
+      console.error('清除指标值显示错误:', error);
+    }
   };
 
   // 创建所有图表
   const createCharts = () => {
     if (!chartContainerRef.current) return;
-    
+
     try {
       // 获取保存的K线宽度
       const savedBarSpacing = getSavedBarSpacing();
-      
+
       // 获取容器高度
       const containerHeight = chartContainerRef.current.clientHeight || 600;
       const mainChartHeight = Math.max(400, containerHeight * 0.7); // 主图占70%或至少400px
       const subChartHeight = 150; // 每个副图的高度
-      
+
       // 通用图表选项
       const commonOptions = {
           width: chartContainerRef.current.clientWidth,
@@ -431,19 +469,19 @@ const CandlestickChart: React.FC = () => {
 
         // 设置十字线移动事件
         setupCrosshairMoveHandler();
-        
+
         // 监听K线宽度变化
         chart.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
           if (!chart.current) return;
-          
+
           try {
             // 获取当前K线宽度
             const currentBarSpacing = chart.current.timeScale().options().barSpacing;
-            
+
             // 如果宽度发生变化，保存到localStorage
             if (currentBarSpacing !== undefined && currentBarSpacing !== getSavedBarSpacing()) {
               saveBarSpacing(currentBarSpacing);
-              
+
               // 同步更新所有副图表的K线宽度
               if (macdChart.current && macdChart.current.timeScale()) {
                 macdChart.current.timeScale().applyOptions({ barSpacing: currentBarSpacing });
@@ -460,42 +498,42 @@ const CandlestickChart: React.FC = () => {
           }
         });
       }
-      
+
       // 响应窗口大小变化
       const handleResize = () => {
         if (!chartContainerRef.current) return;
-        
+
         const width = chartContainerRef.current.clientWidth;
         const height = chartContainerRef.current.clientHeight || 600;
         const mainHeight = Math.max(400, height * 0.7);
-        
+
         // 添加延迟，确保DOM已完全更新
         setTimeout(() => {
           // 更新主图表尺寸
           if (chart.current) {
-            chart.current.applyOptions({ 
+            chart.current.applyOptions({
               width,
               height: mainHeight
             });
           }
-          
+
           // 更新所有副图表尺寸
           if (macdChart.current) {
-            macdChart.current.applyOptions({ 
+            macdChart.current.applyOptions({
               width,
               height: subChartHeight
             });
           }
-          
+
           if (rsiChart.current) {
-            rsiChart.current.applyOptions({ 
+            rsiChart.current.applyOptions({
               width,
               height: subChartHeight
             });
           }
-          
+
           if (kdjChart.current) {
-            kdjChart.current.applyOptions({ 
+            kdjChart.current.applyOptions({
               width,
               height: subChartHeight
             });
@@ -503,7 +541,7 @@ const CandlestickChart: React.FC = () => {
 
           // 同步所有图表的时间轴
           syncTimeScales();
-          
+
           // 使图表内容适应新尺寸
           if (chart.current && candlestickData.length > 0) {
             chart.current.timeScale().fitContent();
@@ -524,26 +562,26 @@ const CandlestickChart: React.FC = () => {
   // 使用useEffect创建和更新图表
   useEffect(() => {
     const cleanup = createCharts();
-    
+
     // 当组件卸载时，清除所有图表
     return () => {
       if (cleanup) cleanup();
-      
+
       if (chart.current) {
         chart.current.remove();
         chart.current = null;
       }
-      
+
       if (macdChart.current) {
         macdChart.current.remove();
         macdChart.current = null;
       }
-      
+
       if (rsiChart.current) {
         rsiChart.current.remove();
         rsiChart.current = null;
       }
-      
+
       if (kdjChart.current) {
         kdjChart.current.remove();
         kdjChart.current = null;
@@ -566,10 +604,10 @@ const CandlestickChart: React.FC = () => {
     // 只在图表初始化时使用一次，后续由主图表控制
     try {
       if (!chart.current || !chart.current.timeScale()) return;
-      
+
       const mainVisibleRange = chart.current.timeScale().getVisibleLogicalRange();
       if (!mainVisibleRange) return;
-      
+
       // 手动设置副图表的可见范围
       if (macdChart.current && macdChart.current.timeScale()) {
         try {
@@ -578,7 +616,7 @@ const CandlestickChart: React.FC = () => {
           // 忽略错误
         }
       }
-      
+
       if (rsiChart.current && rsiChart.current.timeScale()) {
         try {
           rsiChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
@@ -586,7 +624,7 @@ const CandlestickChart: React.FC = () => {
           // 忽略错误
         }
       }
-      
+
       if (kdjChart.current && kdjChart.current.timeScale()) {
         try {
           kdjChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
@@ -607,7 +645,7 @@ const CandlestickChart: React.FC = () => {
       if (chart.current && chart.current.timeScale()) {
         chart.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
           if (!range) return;
-          
+
           try {
             // 手动设置副图表的可见范围
             if (macdChart.current && macdChart.current.timeScale()) {
@@ -617,7 +655,7 @@ const CandlestickChart: React.FC = () => {
                 // 忽略错误
               }
             }
-            
+
             if (rsiChart.current && rsiChart.current.timeScale()) {
               try {
                 rsiChart.current.timeScale().setVisibleLogicalRange(range);
@@ -625,7 +663,7 @@ const CandlestickChart: React.FC = () => {
                 // 忽略错误
               }
             }
-            
+
             if (kdjChart.current && kdjChart.current.timeScale()) {
               try {
                 kdjChart.current.timeScale().setVisibleLogicalRange(range);
@@ -668,175 +706,150 @@ const CandlestickChart: React.FC = () => {
 
         // 适配视图
         chart.current?.timeScale().fitContent();
-        
+
         // 更新指标
         setTimeout(() => {
           updateIndicators();
-          
+
           // 如果有回测结果，重新绘制交易标记
           if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
             drawTradeMarkers();
           }
-          
-          // 添加指标值显示
-          updateIndicatorValues();
+
+          // 重新设置十字线事件处理器，确保使用最新的数据
+          setupCrosshairMoveHandler();
+
+          console.log('数据已更新，重新设置十字线事件处理器');
         }, 0);
       }
     } catch (error) {
       console.error('更新图表数据错误:', error);
     }
-  }, [candlestickData]);
-  
+  }, [candlestickData, backtestResults]);
+
   // 添加指标值显示功能
   const updateIndicatorValues = () => {
-    if (!candlestickData || candlestickData.length === 0) return;
-    
     try {
-      // 获取最新的K线数据索引
-      const lastIndex = candlestickData.length - 1;
-      const lastCandle = candlestickData[lastIndex];
-      
-      if (!lastCandle) return;
-      
-      // 计算并显示主图指标值
-      if (mainIndicator === 'boll' && chart.current) {
-        const closePrices = extractClosePrices(candlestickData);
-        const { upper, middle, lower } = calculateBollingerBands(closePrices);
-        
-        const lastUpper = upper[lastIndex];
-        const lastMiddle = middle[lastIndex];
-        const lastLower = lower[lastIndex];
-        
-        if (lastUpper && lastMiddle && lastLower) {
-          // 在主图左上角显示布林带值
-          const bollText = document.createElement('div');
-          bollText.className = 'indicator-value-text main-indicator';
-          bollText.innerHTML = `BOLL: <span class="value">上轨 ${formatPrice(lastUpper)} | 中轨 ${formatPrice(lastMiddle)} | 下轨 ${formatPrice(lastLower)}</span>`;
-          
-          // 移除旧的指标值显示
-          const oldBollText = document.querySelector('.main-indicator');
-          if (oldBollText) oldBollText.remove();
-          
-          // 添加新的指标值显示
-          chartContainerRef.current?.appendChild(bollText);
+      // 如果没有数据，不进行更新
+      if (candlestickData.length === 0) return;
+
+      // 获取当前鼠标位置对应的数据索引
+      if (!chart.current) return;
+
+      const timeScale = chart.current.timeScale();
+      const currentCoordinate = timeScale.width() / 2;
+      const currentLogical = timeScale.coordinateToLogical(currentCoordinate);
+
+      if (currentLogical === null || currentLogical < 0 || currentLogical >= candlestickData.length) return;
+
+      const dataIndex = Math.round(currentLogical);
+      const currentData = candlestickData[dataIndex];
+      if (!currentData) return;
+
+      // 更新MACD指标值
+      if (isSubIndicatorSelected('macd') && macdChart.current) {
+        const macdContainer = macdChartRef.current;
+        if (!macdContainer) return;
+
+        // 查找或创建MACD指标值显示元素
+        let macdValueElement = macdContainer.querySelector('.macd-indicator-values');
+        if (!macdValueElement) {
+          macdValueElement = document.createElement('div');
+          macdValueElement.className = 'indicator-value-text macd-indicator';
+          macdContainer.appendChild(macdValueElement);
         }
-      } else if (mainIndicator === 'sar' && chart.current) {
-        const highPrices = extractHighPrices(candlestickData);
-        const lowPrices = extractLowPrices(candlestickData);
-        const closePrices = extractClosePrices(candlestickData);
-        const sarValues = calculateSAR(highPrices, lowPrices, closePrices);
-        
-        const lastSar = sarValues[lastIndex];
-        
-        if (lastSar) {
-          // 在主图左上角显示SAR值
-          const sarText = document.createElement('div');
-          sarText.className = 'indicator-value-text main-indicator';
-          sarText.innerHTML = `SAR: <span class="value">${formatPrice(lastSar)}</span>`;
-          
-          // 移除旧的指标值显示
-          const oldSarText = document.querySelector('.main-indicator');
-          if (oldSarText) oldSarText.remove();
-          
-          // 添加新的指标值显示
-          chartContainerRef.current?.appendChild(sarText);
-        }
-      }
-      
-      // 计算并显示副图指标值
-      // MACD
-      if (subIndicators.includes('macd') && macdChartRef.current) {
+
+        // 计算MACD值
         const closePrices = extractClosePrices(candlestickData);
         const { macd, signal, histogram } = calculateMACD(closePrices);
-        
-        const lastMacd = macd[lastIndex];
-        const lastSignal = signal[lastIndex];
-        const lastHistogram = histogram[lastIndex];
-        
-        if (lastMacd && lastSignal && lastHistogram) {
-          // 在MACD图左上角显示MACD值
-          const macdText = document.createElement('div');
-          macdText.className = 'indicator-value-text macd-indicator';
-          macdText.innerHTML = `MACD: <span class="value">${lastMacd.toFixed(4)}</span> | 信号: <span class="value">${lastSignal.toFixed(4)}</span> | 柱: <span class="${lastHistogram >= 0 ? 'positive' : 'negative'}">${lastHistogram.toFixed(4)}</span>`;
-          
-          // 移除旧的指标值显示
-          const oldMacdText = document.querySelector('.macd-indicator');
-          if (oldMacdText) oldMacdText.remove();
-          
-          // 添加新的指标值显示
-          macdChartRef.current.appendChild(macdText);
+
+        const macdValue = safeGetDataPoint(macd, dataIndex);
+        const signalValue = safeGetDataPoint(signal, dataIndex);
+        const histogramValue = safeGetDataPoint(histogram, dataIndex);
+
+        if (macdValue !== null && signalValue !== null && histogramValue !== null) {
+          macdValueElement.innerHTML = `
+            MACD: <span class="value">${macdValue.toFixed(4)}</span> | 
+            信号: <span class="value">${signalValue.toFixed(4)}</span> | 
+            柱: <span class="${histogramValue >= 0 ? 'positive' : 'negative'}">${histogramValue.toFixed(4)}</span>
+          `;
         }
       }
-      
-      // RSI
-      if (subIndicators.includes('rsi') && rsiChartRef.current) {
+
+      // 更新RSI指标值
+      if (isSubIndicatorSelected('rsi') && rsiChart.current) {
+        const rsiContainer = rsiChartRef.current;
+        if (!rsiContainer) return;
+
+        // 查找或创建RSI指标值显示元素
+        let rsiValueElement = rsiContainer.querySelector('.rsi-indicator-values');
+        if (!rsiValueElement) {
+          rsiValueElement = document.createElement('div');
+          rsiValueElement.className = 'indicator-value-text rsi-indicator';
+          rsiContainer.appendChild(rsiValueElement);
+        }
+
+        // 计算RSI值
         const closePrices = extractClosePrices(candlestickData);
         const rsiData = calculateRSI(closePrices);
-        
-        const lastRsi = rsiData[lastIndex];
-        
-        if (lastRsi) {
-          // 在RSI图左上角显示RSI值
-          const rsiText = document.createElement('div');
-          rsiText.className = 'indicator-value-text rsi-indicator';
-          rsiText.innerHTML = `RSI: <span class="value">${lastRsi.toFixed(2)}</span>`;
-          
-          // 移除旧的指标值显示
-          const oldRsiText = document.querySelector('.rsi-indicator');
-          if (oldRsiText) oldRsiText.remove();
-          
-          // 添加新的指标值显示
-          rsiChartRef.current.appendChild(rsiText);
+
+        const rsiValue = safeGetDataPoint(rsiData, dataIndex);
+
+        if (rsiValue !== null) {
+          rsiValueElement.innerHTML = `RSI: <span class="value">${rsiValue.toFixed(2)}</span>`;
         }
       }
-      
-      // KDJ
-      if (subIndicators.includes('kdj') && kdjChartRef.current) {
+
+      // 更新KDJ指标值
+      if (isSubIndicatorSelected('kdj') && kdjChart.current) {
+        const kdjContainer = kdjChartRef.current;
+        if (!kdjContainer) return;
+
+        // 查找或创建KDJ指标值显示元素
+        let kdjValueElement = kdjContainer.querySelector('.kdj-indicator-values');
+        if (!kdjValueElement) {
+          kdjValueElement = document.createElement('div');
+          kdjValueElement.className = 'indicator-value-text kdj-indicator';
+          kdjContainer.appendChild(kdjValueElement);
+        }
+
+        // 计算KDJ值
         const closePrices = extractClosePrices(candlestickData);
         const highPrices = extractHighPrices(candlestickData);
         const lowPrices = extractLowPrices(candlestickData);
         const { k, d, j } = calculateKDJ(highPrices, lowPrices, closePrices);
-        
-        const lastK = k[lastIndex];
-        const lastD = d[lastIndex];
-        const lastJ = j[lastIndex];
-        
-        if (lastK && lastD && lastJ) {
-          // 在KDJ图左上角显示KDJ值
-          const kdjText = document.createElement('div');
-          kdjText.className = 'indicator-value-text kdj-indicator';
-          kdjText.innerHTML = `K: <span class="value">${lastK.toFixed(2)}</span> | D: <span class="value">${lastD.toFixed(2)}</span> | J: <span class="value">${lastJ.toFixed(2)}</span>`;
-          
-          // 移除旧的指标值显示
-          const oldKdjText = document.querySelector('.kdj-indicator');
-          if (oldKdjText) oldKdjText.remove();
-          
-          // 添加新的指标值显示
-          kdjChartRef.current.appendChild(kdjText);
+
+        const kValue = safeGetDataPoint(k, dataIndex);
+        const dValue = safeGetDataPoint(d, dataIndex);
+        const jValue = safeGetDataPoint(j, dataIndex);
+
+        if (kValue !== null && dValue !== null && jValue !== null) {
+          kdjValueElement.innerHTML = `
+            K: <span class="value">${kValue.toFixed(2)}</span> | 
+            D: <span class="value">${dValue.toFixed(2)}</span> | 
+            J: <span class="value">${jValue.toFixed(2)}</span>
+          `;
         }
       }
     } catch (error) {
       console.error('更新指标值显示错误:', error);
     }
   };
-  
+
   // 监听指标变化
   useEffect(() => {
     try {
       updateIndicators();
-      
+
       // 如果有回测结果，绘制交易标记
       if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
         drawTradeMarkers();
       }
-      
-      // 更新指标值显示
-      updateIndicatorValues();
     } catch (error) {
       console.error('更新指标错误:', error);
     }
-  }, [mainIndicator, subIndicators]);
-  
+  }, [mainIndicator, subIndicators, backtestResults]);
+
   // 订阅主图表的时间范围变化事件
   useEffect(() => {
     const setupTimeScaleSync = () => {
@@ -845,7 +858,7 @@ const CandlestickChart: React.FC = () => {
           // 添加时间轴变化事件监听
           chart.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
             if (!range) return;
-            
+
             try {
               // 手动设置副图表的可见范围
               if (macdChart.current && macdChart.current.timeScale()) {
@@ -855,7 +868,7 @@ const CandlestickChart: React.FC = () => {
                   // 忽略错误
                 }
               }
-              
+
               if (rsiChart.current && rsiChart.current.timeScale()) {
                 try {
                   rsiChart.current.timeScale().setVisibleLogicalRange(range);
@@ -863,7 +876,7 @@ const CandlestickChart: React.FC = () => {
                   // 忽略错误
                 }
               }
-              
+
               if (kdjChart.current && kdjChart.current.timeScale()) {
                 try {
                   kdjChart.current.timeScale().setVisibleLogicalRange(range);
@@ -880,9 +893,9 @@ const CandlestickChart: React.FC = () => {
         }
       }
     };
-    
+
     setupTimeScaleSync();
-    
+
     return () => {
       // 清除事件监听
       if (chart.current && chart.current.timeScale()) {
@@ -906,16 +919,16 @@ const CandlestickChart: React.FC = () => {
             background: { color: '#1e222d' },
           }
         });
-        
+
         // 周期变化时清空K线数据
         if (candleSeries.current && volumeSeries.current) {
           // 清空图表数据
           candleSeries.current.setData([]);
           volumeSeries.current.setData([]);
-          
+
           // 清空Redux中的数据
           dispatch(updateCandlestickData([]));
-          
+
           // 清空指标
           clearIndicators();
         }
@@ -924,12 +937,12 @@ const CandlestickChart: React.FC = () => {
       console.error('更新图表标题错误:', error);
     }
   }, [selectedPair, timeframe, dispatch]);
-  
+
   // 当指标选择改变时，重新设置十字线事件处理器
   useEffect(() => {
     setupCrosshairMoveHandler();
   }, [mainIndicator, subIndicators]);
-  
+
   // 更新指标
   const updateIndicators = () => {
     try {
@@ -937,10 +950,10 @@ const CandlestickChart: React.FC = () => {
         console.warn('无法更新指标：图表或数据不存在');
         return;
       }
-      
+
       // 清除旧指标
       clearIndicators();
-      
+
       // 创建一个安全的更新流程
       const safeUpdateProcess = async () => {
         try {
@@ -952,12 +965,12 @@ const CandlestickChart: React.FC = () => {
               console.error('更新主图指标失败:', error);
             }
           }
-          
+
           // 更新副图指标
           if (subIndicators && subIndicators.length > 0) {
             // 更新活跃的副图表列表
             setActiveSubCharts(subIndicators);
-            
+
             // 确保所有必要的副图容器已准备好
             const allContainersReady = subIndicators.every(indicator => {
               switch (indicator) {
@@ -967,15 +980,15 @@ const CandlestickChart: React.FC = () => {
                 default: return true;
               }
             });
-            
+
             if (allContainersReady) {
               try {
                 // 使用延迟确保DOM已完全更新
                 await new Promise(resolve => setTimeout(resolve, 50));
-                
+
                 // 绘制副图指标
                 drawSubIndicator();
-                
+
                 // 同步所有图表的时间轴
                 await new Promise(resolve => setTimeout(resolve, 100));
                 try {
@@ -984,7 +997,7 @@ const CandlestickChart: React.FC = () => {
                     syncTimeScales();
                     // 为副图表添加时间轴变化事件，确保双向联动
                     setupSubChartTimeScaleEvents();
-                    
+
                     // 如果有回测结果，重新绘制交易标记
                     if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0 && candleSeries.current) {
                       drawTradeMarkers();
@@ -1011,7 +1024,7 @@ const CandlestickChart: React.FC = () => {
             // 如果没有选择任何副图指标，清除所有副图
             try {
               clearSubIndicators();
-              
+
               // 如果有回测结果，重新绘制交易标记
               if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0 && candleSeries.current) {
                 drawTradeMarkers();
@@ -1024,7 +1037,7 @@ const CandlestickChart: React.FC = () => {
           console.error('指标更新过程中发生错误:', error);
         }
       };
-      
+
       // 执行更新流程
       safeUpdateProcess().catch(error => {
         console.error('更新指标流程失败:', error);
@@ -1033,20 +1046,20 @@ const CandlestickChart: React.FC = () => {
       console.error('更新指标错误:', error);
     }
   };
-  
+
   // 绘制主图指标
   const drawMainIndicator = () => {
     try {
       if (!chart.current || !candlestickData || !candlestickData.length || mainIndicator === 'none') return;
-      
+
       switch (mainIndicator) {
         case 'boll': {
           const closePrices = extractClosePrices(candlestickData);
           // 检查是否满足计算布林带的条件（至少需要20个数据点）
           if (closePrices.length < 20) return;
-          
+
           const { upper, middle, lower } = calculateBollingerBands(closePrices);
-          
+
           // 上轨
           const upperSeries = chart.current.addLineSeries({
             color: '#f48fb1',
@@ -1054,7 +1067,7 @@ const CandlestickChart: React.FC = () => {
             priceLineVisible: false,
             lastValueVisible: false,
           });
-          
+
           // 中轨
           const middleSeries = chart.current.addLineSeries({
             color: '#90caf9',
@@ -1062,7 +1075,7 @@ const CandlestickChart: React.FC = () => {
             priceLineVisible: false,
             lastValueVisible: false,
           });
-          
+
           // 下轨
           const lowerSeries = chart.current.addLineSeries({
             color: '#80deea',
@@ -1070,31 +1083,31 @@ const CandlestickChart: React.FC = () => {
             priceLineVisible: false,
             lastValueVisible: false,
           });
-          
+
           // 准备数据，过滤掉无效值
           const upperData = upper.map((value, index) => ({
             time: candlestickData[index].time as Time,
             value: isNaN(value) ? null : value,
           })).filter(item => item.value !== null);
-          
+
           const middleData = middle.map((value, index) => ({
             time: candlestickData[index].time as Time,
             value: isNaN(value) ? null : value,
           })).filter(item => item.value !== null);
-          
+
           const lowerData = lower.map((value, index) => ({
             time: candlestickData[index].time as Time,
             value: isNaN(value) ? null : value,
           })).filter(item => item.value !== null);
-          
+
           // 如果没有有效数据，不添加指标
           if (upperData.length === 0 || middleData.length === 0 || lowerData.length === 0) return;
-          
+
           // 设置数据
           upperSeries.setData(upperData);
           middleSeries.setData(middleData);
           lowerSeries.setData(lowerData);
-          
+
           // 保存引用
           mainIndicatorSeries.current.push(upperSeries);
           mainIndicatorSeries.current.push(middleSeries);
@@ -1105,13 +1118,13 @@ const CandlestickChart: React.FC = () => {
           const highPrices = extractHighPrices(candlestickData);
           const lowPrices = extractLowPrices(candlestickData);
           const closePrices = extractClosePrices(candlestickData);
-          
+
           // 检查是否满足计算SAR的条件（至少需要2个数据点）
           if (highPrices.length < 2 || lowPrices.length < 2 || closePrices.length < 2) return;
-          
+
           // 计算SAR
           const sarValues = calculateSAR(highPrices, lowPrices, closePrices);
-          
+
           // 创建SAR点状图
           const sarSeries = chart.current.addLineSeries({
             color: '#00bcd4',
@@ -1121,19 +1134,19 @@ const CandlestickChart: React.FC = () => {
             lastValueVisible: false,
             priceLineVisible: false,
           });
-          
+
           // 准备数据，过滤掉无效值
           const sarData = sarValues.map((value, index) => ({
             time: candlestickData[index].time as Time,
             value: isNaN(value) ? null : value,
           })).filter(item => item.value !== null);
-          
+
           // 如果没有有效数据，不添加指标
           if (sarData.length === 0) return;
-          
+
           // 设置数据
           sarSeries.setData(sarData);
-          
+
           // 保存引用
           mainIndicatorSeries.current.push(sarSeries);
           break;
@@ -1145,49 +1158,49 @@ const CandlestickChart: React.FC = () => {
       console.error('绘制主图指标错误:', error);
     }
   };
-  
+
   // 准备时间序列数据，过滤掉所有无效值
   const prepareTimeSeriesData = (
-    values: number[], 
-    times: (Time)[], 
+    values: number[],
+    times: (Time)[],
     color?: string
   ) => {
     if (!values || !times || values.length === 0 || times.length === 0) {
       return [];
     }
-    
+
     // 确保两个数组长度匹配
     const length = Math.min(values.length, times.length);
-    
+
     const result = [];
     for (let i = 0; i < length; i++) {
       const value = values[i];
       const time = times[i];
-      
+
       // 跳过所有无效值
       if (value === undefined || value === null || isNaN(value) || !time) {
         continue;
       }
-      
+
       const point: any = {
         time: time,
         value: value
       };
-      
+
       if (color) {
         point.color = color;
       }
-      
+
       result.push(point);
     }
-    
+
     return result;
   };
-  
+
   // 绘制MACD指标
   const drawMacdIndicator = () => {
     if (!macdChart.current || !macdChartRef.current || !candlestickData.length) return;
-    
+
     try {
       // 清除旧的MACD系列
       if (macdSeries.current && macdSeries.current.length > 0) {
@@ -1202,54 +1215,54 @@ const CandlestickChart: React.FC = () => {
         });
         macdSeries.current = [];
       }
-      
+
       const closePrices = extractClosePrices(candlestickData);
-      
+
       // 检查是否满足计算MACD的条件（至少需要26个数据点）
       if (closePrices.length < 26) {
         console.warn('数据点不足，无法计算MACD');
         return;
       }
-      
+
       // 创建MACD指标窗格
       const { macd, signal, histogram } = calculateMACD(closePrices);
-      
-      if (!macd || !signal || !histogram || 
+
+      if (!macd || !signal || !histogram ||
           macd.length === 0 || signal.length === 0 || histogram.length === 0 ||
-          macd.every(v => isNaN(v)) || 
-          signal.every(v => isNaN(v)) || 
+          macd.every(v => isNaN(v)) ||
+          signal.every(v => isNaN(v)) ||
           histogram.every(v => isNaN(v))) {
         console.warn('MACD数据全为NaN，跳过绘制');
         return;
       }
-      
+
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
-      
+
       // 深度复制数组，避免直接修改原始数据
       const macdCopy = [...macd];
       const signalCopy = [...signal];
       const histogramCopy = [...histogram];
-      
+
       // 安全处理：将所有NaN值替换为null，以避免图表绘制错误
       for (let i = 0; i < macdCopy.length; i++) {
         if (isNaN(macdCopy[i])) macdCopy[i] = 0;
         if (isNaN(signalCopy[i])) signalCopy[i] = 0;
         if (isNaN(histogramCopy[i])) histogramCopy[i] = 0;
       }
-      
+
       // 准备数据，过滤掉无效值
       const macdData = prepareTimeSeriesData(macdCopy, times);
       const signalData = prepareTimeSeriesData(signalCopy, times);
-      
+
       // 特殊处理柱状图数据
       const histogramData: {time: Time, value: number, color: string}[] = [];
-      
+
       // 小心地构建柱状图数据，避免任何可能的null值
       for (let i = 0; i < Math.min(histogramCopy.length, times.length); i++) {
         const value = histogramCopy[i];
         const time = times[i];
-        
+
         if (value !== undefined && !isNaN(value) && time !== undefined) {
           histogramData.push({
             time: time,
@@ -1258,13 +1271,13 @@ const CandlestickChart: React.FC = () => {
           });
         }
       }
-      
+
       // 如果没有有效数据，不添加指标
       if (macdData.length === 0 || signalData.length === 0 || histogramData.length === 0) {
         console.warn('MACD处理后数据为空，跳过绘制');
         return;
       }
-      
+
       // 创建单独的价格轴
       const indicatorPriceScale = {
         scaleMargins: {
@@ -1274,10 +1287,10 @@ const CandlestickChart: React.FC = () => {
         borderVisible: true,
         borderColor: '#2e3241',
       };
-      
+
       try {
         if (!macdChart.current) return;
-        
+
         // MACD线
         const macdLine = macdChart.current.addLineSeries({
           color: '#90caf9',
@@ -1286,7 +1299,7 @@ const CandlestickChart: React.FC = () => {
           lastValueVisible: false,
           ...indicatorPriceScale
         });
-        
+
         // 信号线
         const signalLine = macdChart.current.addLineSeries({
           color: '#f48fb1',
@@ -1294,14 +1307,14 @@ const CandlestickChart: React.FC = () => {
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        
+
         // 柱状图
         const histogramSeries = macdChart.current.addHistogramSeries({
           color: '#26a69a',
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        
+
         // 设置数据
         if (macdLine && macdData.length > 0) {
           try {
@@ -1310,7 +1323,7 @@ const CandlestickChart: React.FC = () => {
             console.error('设置MACD线数据错误:', error);
           }
         }
-        
+
         if (signalLine && signalData.length > 0) {
           try {
             signalLine.setData(signalData);
@@ -1318,7 +1331,7 @@ const CandlestickChart: React.FC = () => {
             console.error('设置信号线数据错误:', error);
           }
         }
-        
+
         if (histogramSeries && histogramData.length > 0) {
           try {
             histogramSeries.setData(histogramData);
@@ -1326,12 +1339,12 @@ const CandlestickChart: React.FC = () => {
             console.error('设置直方图数据错误:', error);
           }
         }
-        
+
         // 保存引用
         macdSeries.current.push(macdLine);
         macdSeries.current.push(signalLine);
         macdSeries.current.push(histogramSeries);
-        
+
         // 适应视图
         if (macdChart.current && macdChart.current.timeScale()) {
           try {
@@ -1347,11 +1360,11 @@ const CandlestickChart: React.FC = () => {
       console.error('绘制MACD指标错误:', error);
     }
   };
-  
+
   // 绘制RSI指标
   const drawRsiIndicator = () => {
     if (!rsiChart.current || !rsiChartRef.current || !candlestickData.length) return;
-    
+
     try {
       // 清除旧的RSI系列
       if (rsiSeries.current && rsiSeries.current.length > 0) {
@@ -1366,46 +1379,46 @@ const CandlestickChart: React.FC = () => {
         });
         rsiSeries.current = [];
       }
-      
+
       const closePrices = extractClosePrices(candlestickData);
-      
+
       // 检查是否满足计算RSI的条件（至少需要14个数据点）
       if (closePrices.length < 14) {
         console.warn('数据点不足，无法计算RSI');
         return;
       }
-      
+
       // 创建RSI指标
       const rsiData = calculateRSI(closePrices);
-      
+
       if (!rsiData || rsiData.length === 0 || rsiData.every(v => isNaN(v))) {
         console.warn('RSI数据全为NaN，跳过绘制');
         return;
       }
-      
+
       // 深度复制数组，避免直接修改原始数据
       const rsiCopy = [...rsiData];
-      
+
       // 安全处理：将所有NaN值替换为null，以避免图表绘制错误
       for (let i = 0; i < rsiCopy.length; i++) {
         if (isNaN(rsiCopy[i])) rsiCopy[i] = 50; // 使用中间值50代替NaN
       }
-      
+
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
-      
+
       // 准备数据，过滤掉无效值
       const formattedData = prepareTimeSeriesData(rsiCopy, times);
-      
+
       // 如果没有有效数据，不添加指标
       if (formattedData.length === 0) {
         console.warn('RSI处理后数据为空，跳过绘制');
         return;
       }
-      
+
       try {
         if (!rsiChart.current) return;
-        
+
         // 创建单独的价格轴
         const indicatorPriceScale = {
           scaleMargins: {
@@ -1415,7 +1428,7 @@ const CandlestickChart: React.FC = () => {
           borderVisible: true,
           borderColor: '#2e3241',
         };
-        
+
         // RSI线
         const rsiLine = rsiChart.current.addLineSeries({
           color: '#90caf9',
@@ -1424,7 +1437,7 @@ const CandlestickChart: React.FC = () => {
           lastValueVisible: true,
           ...indicatorPriceScale
         });
-        
+
         // 添加70和30线
         const upperLine = rsiChart.current.addLineSeries({
           color: '#ef5350',
@@ -1432,25 +1445,25 @@ const CandlestickChart: React.FC = () => {
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        
+
         const lowerLine = rsiChart.current.addLineSeries({
           color: '#26a69a',
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        
+
         // 创建70和30线的数据
         const upperLineData = formattedData.map(item => ({
           time: item.time,
           value: 70,
         }));
-        
+
         const lowerLineData = formattedData.map(item => ({
           time: item.time,
           value: 30,
         }));
-        
+
         // 设置数据
         if (rsiLine && formattedData.length > 0) {
           try {
@@ -1459,7 +1472,7 @@ const CandlestickChart: React.FC = () => {
             console.error('设置RSI线数据错误:', error);
           }
         }
-        
+
         if (upperLine && upperLineData.length > 0) {
           try {
             upperLine.setData(upperLineData);
@@ -1467,7 +1480,7 @@ const CandlestickChart: React.FC = () => {
             console.error('设置RSI上限线数据错误:', error);
           }
         }
-        
+
         if (lowerLine && lowerLineData.length > 0) {
           try {
             lowerLine.setData(lowerLineData);
@@ -1475,12 +1488,12 @@ const CandlestickChart: React.FC = () => {
             console.error('设置RSI下限线数据错误:', error);
           }
         }
-        
+
         // 保存引用
         rsiSeries.current.push(rsiLine);
         rsiSeries.current.push(upperLine);
         rsiSeries.current.push(lowerLine);
-        
+
         // 适应视图
         if (rsiChart.current && rsiChart.current.timeScale()) {
           try {
@@ -1500,7 +1513,7 @@ const CandlestickChart: React.FC = () => {
   // 绘制StockRSI指标
   const drawStockRsiIndicator = () => {
     if (!rsiChart.current || !rsiChartRef.current || !candlestickData.length) return;
-    
+
     try {
       // 清除旧的RSI系列
       if (rsiSeries.current && rsiSeries.current.length > 0) {
@@ -1515,46 +1528,46 @@ const CandlestickChart: React.FC = () => {
         });
         rsiSeries.current = [];
       }
-      
+
       const closePrices = extractClosePrices(candlestickData);
-      
+
       // 检查是否满足计算StockRSI的条件（至少需要28个数据点，14+14）
       if (closePrices.length < 28) {
         console.warn('数据点不足，无法计算StockRSI');
         return;
       }
-      
+
       // 创建StockRSI指标
       const stockRsiData = calculateStockRSI(closePrices);
-      
+
       if (!stockRsiData || stockRsiData.length === 0 || stockRsiData.every(v => isNaN(v))) {
         console.warn('StockRSI数据全为NaN，跳过绘制');
         return;
       }
-      
+
       // 深度复制数组，避免直接修改原始数据
       const stockRsiCopy = [...stockRsiData];
-      
+
       // 安全处理：将所有NaN值替换为null，以避免图表绘制错误
       for (let i = 0; i < stockRsiCopy.length; i++) {
         if (isNaN(stockRsiCopy[i])) stockRsiCopy[i] = 50; // 使用中间值50代替NaN
       }
-      
+
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
-      
+
       // 准备数据，过滤掉无效值
       const formattedData = prepareTimeSeriesData(stockRsiCopy, times);
-      
+
       // 如果没有有效数据，不添加指标
       if (formattedData.length === 0) {
         console.warn('StockRSI处理后数据为空，跳过绘制');
         return;
       }
-      
+
       try {
         if (!rsiChart.current) return;
-        
+
         // 创建单独的价格轴
         const indicatorPriceScale = {
           scaleMargins: {
@@ -1564,7 +1577,7 @@ const CandlestickChart: React.FC = () => {
           borderVisible: true,
           borderColor: '#2e3241',
         };
-        
+
         // StockRSI线
         const stockRsiLine = rsiChart.current.addLineSeries({
           color: '#f48fb1',
@@ -1573,7 +1586,7 @@ const CandlestickChart: React.FC = () => {
           lastValueVisible: true,
           ...indicatorPriceScale
         });
-        
+
         // 添加80、50和20线
         const upperLine = rsiChart.current.addLineSeries({
           color: '#ef5350',
@@ -1581,37 +1594,37 @@ const CandlestickChart: React.FC = () => {
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        
+
         const middleLine = rsiChart.current.addLineSeries({
           color: '#90caf9',
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        
+
         const lowerLine = rsiChart.current.addLineSeries({
           color: '#26a69a',
           lineWidth: 1,
           priceLineVisible: false,
           lastValueVisible: false,
         });
-        
+
         // 创建80、50和20线的数据
         const upperLineData = formattedData.map(item => ({
           time: item.time,
           value: 80,
         }));
-        
+
         const middleLineData = formattedData.map(item => ({
           time: item.time,
           value: 50,
         }));
-        
+
         const lowerLineData = formattedData.map(item => ({
           time: item.time,
           value: 20,
         }));
-        
+
         // 设置数据
         if (stockRsiLine && formattedData.length > 0) {
           try {
@@ -1620,7 +1633,7 @@ const CandlestickChart: React.FC = () => {
             console.error('设置StockRSI线数据错误:', error);
           }
         }
-        
+
         if (upperLine && upperLineData.length > 0) {
           try {
             upperLine.setData(upperLineData);
@@ -1628,7 +1641,7 @@ const CandlestickChart: React.FC = () => {
             console.error('设置StockRSI上限线数据错误:', error);
           }
         }
-        
+
         if (middleLine && middleLineData.length > 0) {
           try {
             middleLine.setData(middleLineData);
@@ -1636,7 +1649,7 @@ const CandlestickChart: React.FC = () => {
             console.error('设置StockRSI中线数据错误:', error);
           }
         }
-        
+
         if (lowerLine && lowerLineData.length > 0) {
           try {
             lowerLine.setData(lowerLineData);
@@ -1644,13 +1657,13 @@ const CandlestickChart: React.FC = () => {
             console.error('设置StockRSI下限线数据错误:', error);
           }
         }
-        
+
         // 保存引用
         rsiSeries.current.push(stockRsiLine);
         rsiSeries.current.push(upperLine);
         rsiSeries.current.push(middleLine);
         rsiSeries.current.push(lowerLine);
-        
+
         // 适应视图
         if (rsiChart.current && rsiChart.current.timeScale()) {
           try {
@@ -1670,7 +1683,7 @@ const CandlestickChart: React.FC = () => {
   // 绘制KDJ指标
   const drawKdjIndicator = () => {
     if (!kdjChart.current || !kdjChartRef.current || !candlestickData.length) return;
-    
+
     try {
       // 清除旧的KDJ系列
       if (kdjSeries.current && kdjSeries.current.length > 0) {
@@ -1685,58 +1698,58 @@ const CandlestickChart: React.FC = () => {
         });
         kdjSeries.current = [];
       }
-      
+
       const closePrices = extractClosePrices(candlestickData);
       const highPrices = extractHighPrices(candlestickData);
       const lowPrices = extractLowPrices(candlestickData);
-      
+
       // 检查是否满足计算KDJ的条件（至少需要9个数据点）
       if (closePrices.length < 9 || highPrices.length < 9 || lowPrices.length < 9) {
         console.warn('数据点不足，无法计算KDJ');
         return;
       }
-      
+
       // 创建KDJ指标
       const { k, d, j } = calculateKDJ(highPrices, lowPrices, closePrices);
-      
-      if (!k || !d || !j || 
+
+      if (!k || !d || !j ||
           k.length === 0 || d.length === 0 || j.length === 0 ||
-          k.every(v => isNaN(v)) || 
-          d.every(v => isNaN(v)) || 
+          k.every(v => isNaN(v)) ||
+          d.every(v => isNaN(v)) ||
           j.every(v => isNaN(v))) {
         console.warn('KDJ数据全为NaN，跳过绘制');
         return;
       }
-      
+
       // 深度复制数组，避免直接修改原始数据
       const kCopy = [...k];
       const dCopy = [...d];
       const jCopy = [...j];
-      
+
       // 安全处理：将所有NaN值替换为50，以避免图表绘制错误
       for (let i = 0; i < kCopy.length; i++) {
         if (isNaN(kCopy[i])) kCopy[i] = 50;
         if (isNaN(dCopy[i])) dCopy[i] = 50;
         if (isNaN(jCopy[i])) jCopy[i] = 50;
       }
-      
+
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
-      
+
       // 准备数据，过滤掉无效值
       const kData = prepareTimeSeriesData(kCopy, times);
       const dData = prepareTimeSeriesData(dCopy, times);
       const jData = prepareTimeSeriesData(jCopy, times);
-      
+
       // 如果没有有效数据，不添加指标
       if (kData.length === 0 || dData.length === 0 || jData.length === 0) {
         console.warn('KDJ处理后数据为空，跳过绘制');
         return;
       }
-      
+
       try {
         if (!kdjChart.current) return;
-        
+
         // 创建单独的价格轴
         const indicatorPriceScale = {
           scaleMargins: {
@@ -1746,7 +1759,7 @@ const CandlestickChart: React.FC = () => {
           borderVisible: true,
           borderColor: '#2e3241',
         };
-        
+
         // K线
         const kLine = kdjChart.current.addLineSeries({
           color: '#90caf9',
@@ -1755,7 +1768,7 @@ const CandlestickChart: React.FC = () => {
           lastValueVisible: true,
           ...indicatorPriceScale
         });
-        
+
         // D线
         const dLine = kdjChart.current.addLineSeries({
           color: '#f48fb1',
@@ -1763,7 +1776,7 @@ const CandlestickChart: React.FC = () => {
           priceLineVisible: false,
           lastValueVisible: true,
         });
-        
+
         // J线
         const jLine = kdjChart.current.addLineSeries({
           color: '#80deea',
@@ -1771,7 +1784,7 @@ const CandlestickChart: React.FC = () => {
           priceLineVisible: false,
           lastValueVisible: true,
         });
-        
+
         // 设置数据
         if (kLine && kData.length > 0) {
           try {
@@ -1780,7 +1793,7 @@ const CandlestickChart: React.FC = () => {
             console.error('设置KDJ K线数据错误:', error);
           }
         }
-        
+
         if (dLine && dData.length > 0) {
           try {
             dLine.setData(dData);
@@ -1788,7 +1801,7 @@ const CandlestickChart: React.FC = () => {
             console.error('设置KDJ D线数据错误:', error);
           }
         }
-        
+
         if (jLine && jData.length > 0) {
           try {
             jLine.setData(jData);
@@ -1796,12 +1809,12 @@ const CandlestickChart: React.FC = () => {
             console.error('设置KDJ J线数据错误:', error);
           }
         }
-        
+
         // 保存引用
         kdjSeries.current.push(kLine);
         kdjSeries.current.push(dLine);
         kdjSeries.current.push(jLine);
-        
+
         // 适应视图
         if (kdjChart.current && kdjChart.current.timeScale()) {
           try {
@@ -1825,28 +1838,28 @@ const CandlestickChart: React.FC = () => {
         console.warn('没有数据可用于绘制副图指标');
         return;
       }
-      
+
       // 确保当前选择的副图指标存在，否则清除并退出
       if (!subIndicators || subIndicators.length === 0) {
         clearSubIndicators();
         return;
       }
-      
+
       // 确保图表容器已经创建，检查DOM节点是否存在
       const macdReady = subIndicators.includes('macd') ? !!macdChartRef.current : true;
       const rsiReady = (subIndicators.includes('rsi') || subIndicators.includes('stockrsi')) ? !!rsiChartRef.current : true;
       const kdjReady = subIndicators.includes('kdj') ? !!kdjChartRef.current : true;
-      
+
       if (!macdReady || !rsiReady || !kdjReady) {
         console.warn('部分副图容器未准备好，将延迟绘制');
         // 使用requestAnimationFrame延迟绘制，等待DOM更新
         requestAnimationFrame(() => drawSubIndicator());
         return;
       }
-      
+
       // 获取保存的K线宽度
       const savedBarSpacing = getSavedBarSpacing();
-      
+
       // 通用图表选项
       const commonOptions = {
         width: chartContainerRef.current ? chartContainerRef.current.clientWidth : 800,
@@ -1868,6 +1881,21 @@ const CandlestickChart: React.FC = () => {
         rightPriceScale: {
           borderColor: '#2e3241',
         },
+        crosshair: {
+          mode: CrosshairMode.Normal,
+          vertLine: {
+            color: '#555',
+            style: 1,
+            visible: true,
+            labelVisible: false,
+          },
+          horzLine: {
+            color: '#555',
+            style: 1,
+            visible: true,
+            labelVisible: true,
+          },
+        },
       };
 
       // 分步创建和绘制图表，确保稳定性
@@ -1878,17 +1906,17 @@ const CandlestickChart: React.FC = () => {
             macdChart.current.remove();
             macdChart.current = null;
           }
-          
+
           if (!subIndicators.includes('rsi') && !subIndicators.includes('stockrsi') && rsiChart.current) {
             rsiChart.current.remove();
             rsiChart.current = null;
           }
-          
+
           if (!subIndicators.includes('kdj') && kdjChart.current) {
             kdjChart.current.remove();
             kdjChart.current = null;
           }
-          
+
           // 2. 创建所有需要的图表实例
           await Promise.all(subIndicators.map(async (indicator) => {
             try {
@@ -1940,7 +1968,7 @@ const CandlestickChart: React.FC = () => {
               console.error(`创建${indicator}图表失败:`, error);
             }
           }));
-          
+
           // 3. 绘制各个指标，添加额外的错误处理
           for (const indicator of subIndicators) {
             try {
@@ -1972,13 +2000,13 @@ const CandlestickChart: React.FC = () => {
               console.error(`绘制${indicator}指标失败:`, error);
             }
           }
-          
+
           // 4. 手动设置副图表的可见范围，而不是使用同步
           setTimeout(() => {
             try {
               if (chart.current && chart.current.timeScale()) {
                 const mainVisibleRange = chart.current.timeScale().getVisibleLogicalRange();
-                
+
                 if (mainVisibleRange) {
                   // 手动设置每个副图表的可见范围
                   if (macdChart.current && macdChart.current.timeScale()) {
@@ -1988,7 +2016,7 @@ const CandlestickChart: React.FC = () => {
                       // 忽略错误
                     }
                   }
-                  
+
                   if (rsiChart.current && rsiChart.current.timeScale()) {
                     try {
                       rsiChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
@@ -1996,7 +2024,7 @@ const CandlestickChart: React.FC = () => {
                       // 忽略错误
                     }
                   }
-                  
+
                   if (kdjChart.current && kdjChart.current.timeScale()) {
                     try {
                       kdjChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
@@ -2005,7 +2033,7 @@ const CandlestickChart: React.FC = () => {
                     }
                   }
                 }
-                
+
                 // 如果有回测结果，重新绘制交易标记
                 if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
                   drawTradeMarkers();
@@ -2019,7 +2047,7 @@ const CandlestickChart: React.FC = () => {
           console.error('绘制副图表失败:', error);
         }
       };
-      
+
       // 执行绘制流程
       createAndDrawCharts().catch(error => {
         console.error('绘制副图表失败:', error);
@@ -2040,16 +2068,16 @@ const CandlestickChart: React.FC = () => {
       // 确保时间周期格式正确
       // 注意：API可能需要小写格式，根据实际情况调整
       const normalizedInterval = interval;
-      
+
       const result = await fetchHistoryWithIntegrityCheck(
         symbol,
         normalizedInterval,
         startDate,
         endDate
       );
-      
+
       console.log('API返回结果:', result); // 调试日志
-      
+
       // 直接返回API响应结果，不做数据验证
       return result;
     } catch (error: any) {
@@ -2064,21 +2092,21 @@ const CandlestickChart: React.FC = () => {
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     const startDate = oneYearAgo.toISOString().split('T')[0]; // YYYY-MM-DD格式
-    
+
     // 获取当前日期
     const endDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD格式
-    
+
     // 打开模态框并传入默认值
     setIsModalOpen(true);
-    
+
     // 通过自定义事件设置默认值
     setTimeout(() => {
-      const event = new CustomEvent('setDefaultDataLoadValues', { 
-        detail: { 
+      const event = new CustomEvent('setDefaultDataLoadValues', {
+        detail: {
           startDate: startDate,
           endDate: endDate,
           interval: '1D' // 默认周期为1天
-        } 
+        }
       });
       window.dispatchEvent(event);
     }, 100);
@@ -2096,34 +2124,34 @@ const CandlestickChart: React.FC = () => {
   const handleQueryClick = async () => {
     // 防止重复查询
     if (isHistoryLoading) return;
-    
+
     setIsLoading(true);
     setIsHistoryLoading(true);
-    
+
     try {
       // 使用Redux中的日期范围
       const startTimeStr = `${dateRange.startDate} 00:00:00`;
       const endTimeStr = `${dateRange.endDate} 23:59:59`;
-      
+
       // 确保时间周期格式正确
       const normalizedTimeframe = timeframe;
-      
+
       // 构建API URL
       const url = `/api/market/query_saved_history?symbol=${selectedPair}&interval=${normalizedTimeframe}&startTimeStr=${encodeURIComponent(startTimeStr)}&endTimeStr=${encodeURIComponent(endTimeStr)}`;
-      
+
       console.log('查询URL:', url);
-      
+
       const response = await fetch(url);
       const data = await response.json();
-      
+
       console.log('查询结果:', data);
-      
+
       if (data && data.data && Array.isArray(data.data)) {
         // 转换数据格式
         const candlestickData = data.data.map((item: any) => {
           // 将日期字符串转换为时间戳（秒）
           const openTime = new Date(item.openTime).getTime() / 1000;
-          
+
           return {
             time: openTime,
             open: item.open,
@@ -2133,10 +2161,10 @@ const CandlestickChart: React.FC = () => {
             volume: item.volume
           };
         });
-        
+
         // 更新Redux中的数据
         dispatch(updateCandlestickData(candlestickData));
-        
+
         // 显示成功消息
         setResponseMessage(`成功加载 ${data.data.length} 条数据`);
       } else {
@@ -2158,7 +2186,7 @@ const CandlestickChart: React.FC = () => {
       setSubIndicators([]);
       return;
     }
-    
+
     // 如果指标已经存在，则从列表中移除它
     if (subIndicators.includes(value)) {
       setSubIndicators(subIndicators.filter(indicator => indicator !== value));
@@ -2167,41 +2195,41 @@ const CandlestickChart: React.FC = () => {
       setSubIndicators([...subIndicators, value]);
     }
   };
-  
+
   // 切换回测和交易面板显示状态
   const togglePanels = () => {
     setShowPanels(!showPanels);
-    
+
     // 通过自定义事件通知App组件更新面板显示状态
     const event = new CustomEvent('togglePanels', { detail: { show: !showPanels } });
     window.dispatchEvent(event);
-    
+
     // 添加短暂延迟，确保DOM更新后重新调整图表大小
     setTimeout(() => {
       if (chart.current) {
         chart.current.applyOptions({
           width: chartContainerRef.current?.clientWidth
         });
-        
+
         // 同步更新所有副图的大小
         if (macdChart.current) {
           macdChart.current.applyOptions({
             width: chartContainerRef.current?.clientWidth
           });
         }
-        
+
         if (rsiChart.current) {
           rsiChart.current.applyOptions({
             width: chartContainerRef.current?.clientWidth
           });
         }
-        
+
         if (kdjChart.current) {
           kdjChart.current.applyOptions({
             width: chartContainerRef.current?.clientWidth
           });
         }
-        
+
         // 使时间轴适应新宽度
         chart.current.timeScale().fitContent();
         syncTimeScales();
@@ -2214,9 +2242,9 @@ const CandlestickChart: React.FC = () => {
     const handleTogglePanels = (event: CustomEvent<{show: boolean}>) => {
       setShowPanels(event.detail.show);
     };
-    
+
     window.addEventListener('togglePanels', handleTogglePanels as EventListener);
-    
+
     return () => {
       window.removeEventListener('togglePanels', handleTogglePanels as EventListener);
     };
@@ -2231,11 +2259,11 @@ const CandlestickChart: React.FC = () => {
     try {
       // 准备买入和卖出标记
       const markers: SeriesMarker<Time>[] = [];
-      
+
       // 安全地处理每个交易记录
       backtestResults.trades.forEach((trade: BacktestTrade) => {
         if (!trade || !trade.entryTime) return;
-        
+
         // 添加买入标记
         if (trade.side === 'buy') {
           markers.push({
@@ -2244,7 +2272,7 @@ const CandlestickChart: React.FC = () => {
             color: '#26a69a',
             shape: 'arrowUp',
             text: `买入 ${formatPrice(trade.entryPrice)}`,
-            size: 3, // 增大标记尺寸
+            size: 2, // 增大标记尺寸
             id: `entry-${trade.id || Math.random().toString(36).substring(2, 9)}`,
           });
         } else {
@@ -2255,11 +2283,11 @@ const CandlestickChart: React.FC = () => {
             color: '#ef5350',
             shape: 'arrowDown',
             text: `卖出 ${formatPrice(trade.entryPrice)}`,
-            size: 3, // 增大标记尺寸
+            size: 2, // 增大标记尺寸
             id: `entry-${trade.id || Math.random().toString(36).substring(2, 9)}`,
           });
         }
-        
+
         // 添加平仓标记，如果存在exitTime
         if (trade.exitTime) {
           markers.push({
@@ -2268,12 +2296,12 @@ const CandlestickChart: React.FC = () => {
             color: trade.side === 'buy' ? '#ef5350' : '#26a69a',
             shape: trade.side === 'buy' ? 'arrowDown' : 'arrowUp',
             text: `平仓 ${formatPrice(trade.exitPrice)} (${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})`,
-            size: 3, // 增大标记尺寸
+            size: 2, // 增大标记尺寸
             id: `exit-${trade.id || Math.random().toString(36).substring(2, 9)}`,
           });
         }
       });
-      
+
       // 设置标记
       if (markers.length > 0) {
         candleSeries.current.setMarkers(markers);
@@ -2314,7 +2342,7 @@ const CandlestickChart: React.FC = () => {
         });
       }
       mainIndicatorSeries.current = [];
-      
+
       // 清除副图指标
       clearSubChartSeries();
     } catch (error) {
@@ -2338,7 +2366,7 @@ const CandlestickChart: React.FC = () => {
         });
       }
       macdSeries.current = [];
-      
+
       // 清除RSI系列
       if (rsiSeries.current && rsiSeries.current.length > 0) {
         rsiSeries.current.forEach((series) => {
@@ -2352,7 +2380,7 @@ const CandlestickChart: React.FC = () => {
         });
       }
       rsiSeries.current = [];
-      
+
       // 清除KDJ系列
       if (kdjSeries.current && kdjSeries.current.length > 0) {
         kdjSeries.current.forEach((series) => {
@@ -2376,19 +2404,19 @@ const CandlestickChart: React.FC = () => {
     try {
       // 先清除系列数据
       clearSubChartSeries();
-      
+
       // 清除MACD图表
       if (macdChart.current) {
         macdChart.current.remove();
         macdChart.current = null;
       }
-      
+
       // 清除RSI图表
       if (rsiChart.current) {
         rsiChart.current.remove();
         rsiChart.current = null;
       }
-      
+
       // 清除KDJ图表
       if (kdjChart.current) {
         kdjChart.current.remove();
@@ -2403,7 +2431,7 @@ const CandlestickChart: React.FC = () => {
   const handlePairChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     // 使用正确的action更新Redux中的selectedPair
     dispatch(setSelectedPair(e.target.value));
-    
+
     // 清空K线数据，等待用户点击查询按钮重新加载
     if (candleSeries.current && volumeSeries.current) {
       candleSeries.current.setData([]);
@@ -2417,7 +2445,7 @@ const CandlestickChart: React.FC = () => {
   const handleTimeframeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     // 使用正确的action更新Redux中的timeframe
     dispatch(setTimeframe(e.target.value as '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M'));
-    
+
     // 清空K线数据，等待用户点击查询按钮重新加载
     if (candleSeries.current && volumeSeries.current) {
       candleSeries.current.setData([]);
@@ -2442,9 +2470,9 @@ const CandlestickChart: React.FC = () => {
         <div className="chart-selectors">
           <div className="selector-group">
             <label>交易对:</label>
-            <select 
-              className="pair-selector" 
-              value={selectedPair} 
+            <select
+              className="pair-selector"
+              value={selectedPair}
               onChange={handlePairChange}
             >
               {COMMON_PAIRS.map(pair => (
@@ -2454,9 +2482,9 @@ const CandlestickChart: React.FC = () => {
           </div>
           <div className="selector-group">
             <label>时间周期:</label>
-            <select 
-              className="timeframe-selector" 
-              value={timeframe} 
+            <select
+              className="timeframe-selector"
+              value={timeframe}
               onChange={handleTimeframeChange}
             >
               {TIMEFRAMES.map(tf => (
@@ -2469,8 +2497,8 @@ const CandlestickChart: React.FC = () => {
           <div className="date-range-selector">
             <div className="date-input-group">
               <label>开始日期:</label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 className="date-input"
                 value={dateRange.startDate}
                 onChange={handleStartDateChange}
@@ -2478,15 +2506,15 @@ const CandlestickChart: React.FC = () => {
             </div>
             <div className="date-input-group">
               <label>结束日期:</label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 className="date-input"
                 value={dateRange.endDate}
                 onChange={handleEndDateChange}
               />
             </div>
           </div>
-          <IndicatorSelector 
+          <IndicatorSelector
             type="main"
             value={mainIndicator}
             onChange={setMainIndicator}
@@ -2496,27 +2524,27 @@ const CandlestickChart: React.FC = () => {
             <label>副图指标:</label>
             <div className="checkbox-group">
               <label className="checkbox-label">
-                <input 
-                  type="checkbox" 
-                  checked={isSubIndicatorSelected('macd')} 
+                <input
+                  type="checkbox"
+                  checked={isSubIndicatorSelected('macd')}
                   onChange={() => handleSubIndicatorChange('macd')}
                   disabled={isLoading || candlestickData.length === 0}
                 />
                 MACD
               </label>
               <label className="checkbox-label">
-                <input 
-                  type="checkbox" 
-                  checked={isSubIndicatorSelected('rsi')} 
+                <input
+                  type="checkbox"
+                  checked={isSubIndicatorSelected('rsi')}
                   onChange={() => handleSubIndicatorChange('rsi')}
                   disabled={isLoading || candlestickData.length === 0}
                 />
                 RSI
               </label>
               <label className="checkbox-label">
-                <input 
-                  type="checkbox" 
-                  checked={isSubIndicatorSelected('kdj')} 
+                <input
+                  type="checkbox"
+                  checked={isSubIndicatorSelected('kdj')}
                   onChange={() => handleSubIndicatorChange('kdj')}
                   disabled={isLoading || candlestickData.length === 0}
                 />
@@ -2545,28 +2573,28 @@ const CandlestickChart: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           {/* MACD副图 */}
           {subIndicators.includes('macd') && (
             <div ref={macdChartRef} className={`chart-content sub-chart macd-chart ${showPanels ? '' : 'panels-hidden'}`}>
               <div className="indicator-label">MACD</div>
             </div>
           )}
-          
+
           {/* RSI副图 */}
           {subIndicators.includes('rsi') && (
             <div ref={rsiChartRef} className={`chart-content sub-chart rsi-chart ${showPanels ? '' : 'panels-hidden'}`}>
               <div className="indicator-label">RSI</div>
             </div>
           )}
-          
+
           {/* KDJ副图 */}
           {subIndicators.includes('kdj') && (
             <div ref={kdjChartRef} className={`chart-content sub-chart kdj-chart ${showPanels ? '' : 'panels-hidden'}`}>
               <div className="indicator-label">KDJ</div>
             </div>
           )}
-          
+
           {isLoading && (
             <div className="loading-overlay">
               <div className="loading-spinner"></div>
@@ -2574,7 +2602,7 @@ const CandlestickChart: React.FC = () => {
             </div>
           )}
         </div>
-        
+
         {/* K线详细信息浮层 */}
         {hoveredData && (
           <div className="chart-tooltip" ref={tooltipRef}>
@@ -2608,102 +2636,9 @@ const CandlestickChart: React.FC = () => {
                 {hoveredData.change} ({hoveredData.changePercent}%)
               </span>
             </div>
-            
-            {/* 显示技术指标值 */}
-            {hoveredData.indicators && hoveredData.indicators.boll && (
-              <>
-                <div className="tooltip-divider"></div>
-                <div className="tooltip-section-title">布林带(BOLL)</div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">上轨:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.boll.upper}</span>
-                </div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">中轨:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.boll.middle}</span>
-                </div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">下轨:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.boll.lower}</span>
-                </div>
-              </>
-            )}
-            
-            {hoveredData.indicators && hoveredData.indicators.sar && (
-              <>
-                <div className="tooltip-divider"></div>
-                <div className="tooltip-section-title">抛物线(SAR)</div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">SAR:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.sar}</span>
-                </div>
-              </>
-            )}
-            
-            {hoveredData.indicators && hoveredData.indicators.macd && (
-              <>
-                <div className="tooltip-divider"></div>
-                <div className="tooltip-section-title">MACD</div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">MACD:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.macd.macd}</span>
-                </div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">信号线:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.macd.signal}</span>
-                </div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">直方图:</span>
-                  <span className={`tooltip-value ${parseFloat(hoveredData.indicators.macd.histogram) >= 0 ? 'positive' : 'negative'}`}>
-                    {hoveredData.indicators.macd.histogram}
-                  </span>
-                </div>
-              </>
-            )}
-            
-            {hoveredData.indicators && hoveredData.indicators.rsi && (
-              <>
-                <div className="tooltip-divider"></div>
-                <div className="tooltip-section-title">RSI</div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">RSI:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.rsi}</span>
-                </div>
-              </>
-            )}
-            
-            {hoveredData.indicators && hoveredData.indicators.stockrsi && (
-              <>
-                <div className="tooltip-divider"></div>
-                <div className="tooltip-section-title">StockRSI</div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">StockRSI:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.stockrsi}</span>
-                </div>
-              </>
-            )}
-            
-            {hoveredData.indicators && hoveredData.indicators.kdj && (
-              <>
-                <div className="tooltip-divider"></div>
-                <div className="tooltip-section-title">KDJ</div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">K:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.kdj.k}</span>
-                </div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">D:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.kdj.d}</span>
-                </div>
-                <div className="tooltip-row">
-                  <span className="tooltip-label">J:</span>
-                  <span className="tooltip-value">{hoveredData.indicators.kdj.j}</span>
-                </div>
-              </>
-            )}
           </div>
         )}
-        
+
         {/* 数据加载弹窗 */}
         <DataLoadModal
           isOpen={isModalOpen}
@@ -2711,7 +2646,7 @@ const CandlestickChart: React.FC = () => {
           onLoadData={handleLoadHistoryData}
         />
       </div>
-      
+
       {/* 加载历史数据模态框 */}
       {isModalOpen && (
         <DataLoadModal
@@ -2720,7 +2655,7 @@ const CandlestickChart: React.FC = () => {
           onLoadData={handleLoadHistoryData}
         />
       )}
-      
+
       {/* 显示错误信息 */}
       {isHistoryLoading && (
         <div className="loading-overlay">
@@ -2732,4 +2667,4 @@ const CandlestickChart: React.FC = () => {
   );
 };
 
-export default CandlestickChart; 
+export default CandlestickChart;
