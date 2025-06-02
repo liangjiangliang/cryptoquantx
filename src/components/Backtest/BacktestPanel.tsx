@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppState, BacktestResults } from '../../store/types';
-import { startBacktest, finishBacktest } from '../../store/actions';
+import { startBacktest, finishBacktest, setSelectedPair, setTimeframe } from '../../store/actions';
 import { formatDate, formatPrice, formatPercentage } from '../../utils/helpers';
 import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
+
+// 导入与CandlestickChart相同的常量
+import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
 
 // 获取一年前的日期
 const getOneYearAgo = () => {
@@ -109,13 +112,64 @@ const BacktestPanel: React.FC = () => {
   }, []);
 
   // 运行回测
-  const runBacktest = () => {
+  const runBacktest = async () => {
     dispatch(startBacktest());
     
-    // 模拟回测过程
-    setTimeout(() => {
-      dispatch(finishBacktest(mockBacktestResults as BacktestResults));
-    }, 2000);
+    try {
+      // 格式化开始和结束时间
+      const formattedStartTime = `${startDate} 00:00:00`;
+      const formattedEndTime = `${endDate} 23:59:59`;
+      
+      // 构建API URL
+      const url = `/api/api/backtest/ta4j/run?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialCapital}&strategyType=${strategy}&symbol=${selectedPair}&interval=${timeframe}&saveResult=True`;
+      
+      console.log('发送回测请求:', url);
+      
+      // 发送请求
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('回测API返回数据:', data);
+      
+      if (data.code === 200 && data.data && data.data.success) {
+        // 转换API返回的数据为应用所需的格式
+        const results: BacktestResults = {
+          initialCapital: data.data.initialAmount,
+          finalCapital: data.data.finalAmount,
+          profit: data.data.totalProfit,
+          profitPercentage: data.data.totalReturn,
+          totalTrades: data.data.numberOfTrades,
+          winningTrades: data.data.profitableTrades,
+          losingTrades: data.data.unprofitableTrades,
+          winRate: data.data.winRate * 100, // 转换为百分比
+          maxDrawdown: data.data.maxDrawdown * 100, // 转换为百分比
+          sharpeRatio: data.data.sharpeRatio,
+          trades: (data.data.trades || []).map((trade: any) => ({
+            id: String(trade.index || Math.random()),
+            entryTime: new Date(trade.entryTime).getTime() / 1000,
+            entryPrice: trade.entryPrice,
+            exitTime: trade.exitTime ? new Date(trade.exitTime).getTime() / 1000 : 0,
+            exitPrice: trade.exitPrice || 0,
+            side: trade.type === 'BUY' ? 'buy' : 'sell',
+            amount: trade.entryAmount || 0,
+            profit: trade.profit || 0,
+            profitPercentage: trade.profitPercentage * 100 || 0 // 转换为百分比
+          }))
+        };
+        
+        dispatch(finishBacktest(results));
+      } else {
+        throw new Error(data.data?.errorMessage || data.message || '回测失败');
+      }
+    } catch (error) {
+      console.error('回测失败:', error);
+      alert(`回测失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      dispatch(finishBacktest(null as any)); // 重置回测状态
+    }
   };
 
   return (
@@ -185,12 +239,28 @@ const BacktestPanel: React.FC = () => {
             
             <div className="input-group">
               <label>交易对</label>
-              <input type="text" value={selectedPair} disabled />
+              <select 
+                className="pair-selector" 
+                value={selectedPair} 
+                onChange={(e) => dispatch(setSelectedPair(e.target.value))}
+              >
+                {COMMON_PAIRS.map((pair: string) => (
+                  <option key={pair} value={pair}>{pair}</option>
+                ))}
+              </select>
             </div>
             
             <div className="input-group">
               <label>时间周期</label>
-              <input type="text" value={timeframe} disabled />
+              <select 
+                className="timeframe-selector" 
+                value={timeframe} 
+                onChange={(e) => dispatch(setTimeframe(e.target.value as '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M'))}
+              >
+                {TIMEFRAMES.map((tf: {value: string, label: string}) => (
+                  <option key={tf.value} value={tf.value}>{tf.label}</option>
+                ))}
+              </select>
             </div>
             
             <button
