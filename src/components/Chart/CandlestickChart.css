@@ -316,12 +316,21 @@
 
 /* 买入标记样式 */
 .trade-marker-buy {
-  filter: drop-shadow(0 0 5px rgba(38, 166, 154, 0.8));
+  filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.8));
 }
 
 /* 卖出标记样式 */
 .trade-marker-sell {
-  filter: drop-shadow(0 0 5px rgba(239, 83, 80, 0.8));
+  filter: drop-shadow(0 0 5px rgba(255, 0, 255, 0.8));
+}
+
+/* 平仓标记样式 */
+.trade-marker-exit-buy {
+  filter: drop-shadow(0 0 5px rgba(255, 255, 0, 0.8));
+}
+
+.trade-marker-exit-sell {
+  filter: drop-shadow(0 0 5px rgba(0, 255, 0, 0.8));
 }
 
 /* 鼠标悬停效果 */
@@ -352,11 +361,19 @@
 
 /* 增强交易标记样式 */
 .tv-lightweight-charts .trade-marker-buy {
-  filter: drop-shadow(0 0 4px rgba(38, 166, 154, 0.7));
+  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.7));
 }
 
 .tv-lightweight-charts .trade-marker-sell {
-  filter: drop-shadow(0 0 4px rgba(239, 83, 80, 0.7));
+  filter: drop-shadow(0 0 4px rgba(255, 0, 255, 0.7));
+}
+
+.tv-lightweight-charts .trade-marker-exit-buy {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 0, 0.7));
+}
+
+.tv-lightweight-charts .trade-marker-exit-sell {
+  filter: drop-shadow(0 0 4px rgba(0, 255, 0, 0.7));
 }
 
 /* 使标记在鼠标悬停时更明显 */
@@ -506,4 +523,32 @@
   outline: none;
   border-color: #5a6181;
   box-shadow: 0 0 0 2px rgba(90, 97, 129, 0.2);
-} 
+}
+
+.tv-lightweight-charts path[fill="#00FFFF"] {
+  filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.9));
+  stroke: #000;
+  stroke-width: 0.5px;
+  transform: scale(0.8);
+}
+
+.tv-lightweight-charts path[fill="#FF00FF"] {
+  filter: drop-shadow(0 0 6px rgba(255, 0, 255, 0.9));
+  stroke: #000;
+  stroke-width: 0.5px;
+  transform: scale(0.8);
+}
+
+.tv-lightweight-charts path[fill="#FFFF00"] {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 0, 0.9));
+  stroke: #000;
+  stroke-width: 0.5px;
+  transform: scale(0.8);
+}
+
+.tv-lightweight-charts path[fill="#00FF00"] {
+  filter: drop-shadow(0 0 6px rgba(0, 255, 0, 0.9));
+  stroke: #000;
+  stroke-width: 0.5px;
+  transform: scale(0.8);
+}

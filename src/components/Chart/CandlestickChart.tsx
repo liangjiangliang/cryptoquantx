@@ -353,6 +353,41 @@ const CandlestickChart: React.FC = () => {
               kdjValueElement.style.display = 'block';
             }
           }
+
+          // 更新BOLL指标值
+          if (mainIndicator === 'boll' && chartContainerRef.current) {
+            const closePrices = extractClosePrices(candlestickData);
+            const { upper, middle, lower } = calculateBollingerBands(closePrices);
+
+            const upperValue = safeGetDataPoint(upper, dataIndex);
+            const middleValue = safeGetDataPoint(middle, dataIndex);
+            const lowerValue = safeGetDataPoint(lower, dataIndex);
+
+            if (upperValue !== null && middleValue !== null && lowerValue !== null) {
+              // 创建或更新BOLL值显示元素
+              let bollValueElement = document.getElementById('boll-indicator-values');
+              if (!bollValueElement) {
+                bollValueElement = document.createElement('div');
+                bollValueElement.id = 'boll-indicator-values';
+                bollValueElement.className = 'indicator-value-text boll-indicator';
+                chartContainerRef.current.appendChild(bollValueElement);
+              }
+
+              bollValueElement.innerHTML = `
+                上轨: <span class="value">${upperValue.toFixed(2)}</span> | 
+                中轨: <span class="value">${middleValue.toFixed(2)}</span> | 
+                下轨: <span class="value">${lowerValue.toFixed(2)}</span>
+              `;
+              bollValueElement.style.display = 'block';
+              bollValueElement.style.position = 'absolute';
+              bollValueElement.style.left = '10px';
+              bollValueElement.style.top = '10px';
+              bollValueElement.style.backgroundColor = 'rgba(30, 34, 45, 0.7)';
+              bollValueElement.style.padding = '5px';
+              bollValueElement.style.borderRadius = '3px';
+              bollValueElement.style.zIndex = '2';
+            }
+          }
         }
       }
     });
@@ -377,6 +412,12 @@ const CandlestickChart: React.FC = () => {
       const kdjValueElement = document.getElementById('kdj-indicator-values');
       if (kdjValueElement) {
         kdjValueElement.style.display = 'none';
+      }
+
+      // 清除BOLL指标值
+      const bollValueElement = document.getElementById('boll-indicator-values');
+      if (bollValueElement) {
+        bollValueElement.style.display = 'none';
       }
     } catch (error) {
       console.error('清除指标值显示错误:', error);
@@ -762,7 +803,6 @@ const CandlestickChart: React.FC = () => {
         // 计算MACD值
         const closePrices = extractClosePrices(candlestickData);
         const { macd, signal, histogram } = calculateMACD(closePrices);
-
         const macdValue = safeGetDataPoint(macd, dataIndex);
         const signalValue = safeGetDataPoint(signal, dataIndex);
         const histogramValue = safeGetDataPoint(histogram, dataIndex);
@@ -829,6 +869,41 @@ const CandlestickChart: React.FC = () => {
             D: <span class="value">${dValue.toFixed(2)}</span> | 
             J: <span class="value">${jValue.toFixed(2)}</span>
           `;
+        }
+      }
+
+      // 更新BOLL指标值
+      if (mainIndicator === 'boll' && chartContainerRef.current) {
+        const closePrices = extractClosePrices(candlestickData);
+        const { upper, middle, lower } = calculateBollingerBands(closePrices);
+
+        const upperValue = safeGetDataPoint(upper, dataIndex);
+        const middleValue = safeGetDataPoint(middle, dataIndex);
+        const lowerValue = safeGetDataPoint(lower, dataIndex);
+
+        if (upperValue !== null && middleValue !== null && lowerValue !== null) {
+          // 创建或更新BOLL值显示元素
+          let bollValueElement = document.getElementById('boll-indicator-values');
+          if (!bollValueElement) {
+            bollValueElement = document.createElement('div');
+            bollValueElement.id = 'boll-indicator-values';
+            bollValueElement.className = 'indicator-value-text boll-indicator';
+            chartContainerRef.current.appendChild(bollValueElement);
+          }
+
+          bollValueElement.innerHTML = `
+            上轨: <span class="value">${upperValue.toFixed(2)}</span> | 
+            中轨: <span class="value">${middleValue.toFixed(2)}</span> | 
+            下轨: <span class="value">${lowerValue.toFixed(2)}</span>
+          `;
+          bollValueElement.style.display = 'block';
+          bollValueElement.style.position = 'absolute';
+          bollValueElement.style.left = '10px';
+          bollValueElement.style.top = '10px';
+          bollValueElement.style.backgroundColor = 'rgba(30, 34, 45, 0.7)';
+          bollValueElement.style.padding = '5px';
+          bollValueElement.style.borderRadius = '3px';
+          bollValueElement.style.zIndex = '2';
         }
       }
     } catch (error) {
@@ -2259,20 +2334,20 @@ const CandlestickChart: React.FC = () => {
     try {
       // 准备买入和卖出标记
       const markers: SeriesMarker<Time>[] = [];
-
+      
       // 安全地处理每个交易记录
       backtestResults.trades.forEach((trade: BacktestTrade) => {
         if (!trade || !trade.entryTime) return;
-
+        
         // 添加买入标记
         if (trade.side === 'buy') {
           markers.push({
             time: trade.entryTime as Time,
             position: 'belowBar' as SeriesMarkerPosition,
-            color: '#26a69a',
+            color: '#00FFFF', // 青色，更容易区分
             shape: 'arrowUp',
             text: `买入 ${formatPrice(trade.entryPrice)}`,
-            size: 2, // 增大标记尺寸
+            size: 1, // 减小标记尺寸
             id: `entry-${trade.id || Math.random().toString(36).substring(2, 9)}`,
           });
         } else {
@@ -2280,28 +2355,28 @@ const CandlestickChart: React.FC = () => {
           markers.push({
             time: trade.entryTime as Time,
             position: 'aboveBar' as SeriesMarkerPosition,
-            color: '#ef5350',
+            color: '#FF00FF', // 品红色，更容易区分
             shape: 'arrowDown',
             text: `卖出 ${formatPrice(trade.entryPrice)}`,
-            size: 2, // 增大标记尺寸
+            size: 1, // 减小标记尺寸
             id: `entry-${trade.id || Math.random().toString(36).substring(2, 9)}`,
           });
         }
-
+        
         // 添加平仓标记，如果存在exitTime
         if (trade.exitTime) {
           markers.push({
             time: trade.exitTime as Time,
             position: (trade.side === 'buy' ? 'aboveBar' : 'belowBar') as SeriesMarkerPosition,
-            color: trade.side === 'buy' ? '#ef5350' : '#26a69a',
+            color: trade.side === 'buy' ? '#FFFF00' : '#00FF00', // 买入平仓用黄色，卖出平仓用绿色
             shape: trade.side === 'buy' ? 'arrowDown' : 'arrowUp',
             text: `平仓 ${formatPrice(trade.exitPrice)} (${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})`,
-            size: 2, // 增大标记尺寸
+            size: 1, // 减小标记尺寸
             id: `exit-${trade.id || Math.random().toString(36).substring(2, 9)}`,
           });
         }
       });
-
+      
       // 设置标记
       if (markers.length > 0) {
         candleSeries.current.setMarkers(markers);
@@ -2668,3 +2743,4 @@ const CandlestickChart: React.FC = () => {
 };
 
 export default CandlestickChart;
+
