@@ -118,6 +118,8 @@ const CandlestickChart: React.FC = () => {
     volume: string;
     change: string;
     changePercent: string;
+    mouseX?: number;
+    mouseY?: number;
     indicators?: {
       boll?: {
         upper: string;
@@ -213,7 +215,7 @@ const CandlestickChart: React.FC = () => {
         const change = (candleData.close - candleData.open).toFixed(2);
         const changePercent = ((candleData.close - candleData.open) / candleData.open * 100).toFixed(2);
 
-        // 设置悬浮数据，但不包含指标值
+        // 设置悬浮数据，并包含鼠标位置信息
         setHoveredData({
           time,
           open,
@@ -222,7 +224,10 @@ const CandlestickChart: React.FC = () => {
           close,
           volume,
           change,
-          changePercent
+          changePercent,
+          // 添加鼠标位置信息
+          mouseX: param.point.x,
+          mouseY: param.point.y
         });
 
         // 打印一些调试信息，查看candlestickData的格式
@@ -380,6 +385,8 @@ const CandlestickChart: React.FC = () => {
               `;
               bollValueElement.style.display = 'block';
               bollValueElement.style.position = 'absolute';
+              
+              // 恢复BOLL指标值固定在左上角
               bollValueElement.style.left = '10px';
               bollValueElement.style.top = '10px';
               bollValueElement.style.backgroundColor = 'rgba(30, 34, 45, 0.7)';
@@ -773,7 +780,7 @@ const CandlestickChart: React.FC = () => {
     try {
       // 如果没有数据，不进行更新
       if (candlestickData.length === 0) return;
-
+    
       // 获取当前鼠标位置对应的数据索引
       if (!chart.current) return;
 
@@ -791,7 +798,7 @@ const CandlestickChart: React.FC = () => {
       if (isSubIndicatorSelected('macd') && macdChart.current) {
         const macdContainer = macdChartRef.current;
         if (!macdContainer) return;
-
+          
         // 查找或创建MACD指标值显示元素
         let macdValueElement = macdContainer.querySelector('.macd-indicator-values');
         if (!macdValueElement) {
@@ -806,7 +813,7 @@ const CandlestickChart: React.FC = () => {
         const macdValue = safeGetDataPoint(macd, dataIndex);
         const signalValue = safeGetDataPoint(signal, dataIndex);
         const histogramValue = safeGetDataPoint(histogram, dataIndex);
-
+        
         if (macdValue !== null && signalValue !== null && histogramValue !== null) {
           macdValueElement.innerHTML = `
             MACD: <span class="value">${macdValue.toFixed(4)}</span> | 
@@ -832,9 +839,9 @@ const CandlestickChart: React.FC = () => {
         // 计算RSI值
         const closePrices = extractClosePrices(candlestickData);
         const rsiData = calculateRSI(closePrices);
-
+        
         const rsiValue = safeGetDataPoint(rsiData, dataIndex);
-
+        
         if (rsiValue !== null) {
           rsiValueElement.innerHTML = `RSI: <span class="value">${rsiValue.toFixed(2)}</span>`;
         }
@@ -858,7 +865,7 @@ const CandlestickChart: React.FC = () => {
         const highPrices = extractHighPrices(candlestickData);
         const lowPrices = extractLowPrices(candlestickData);
         const { k, d, j } = calculateKDJ(highPrices, lowPrices, closePrices);
-
+        
         const kValue = safeGetDataPoint(k, dataIndex);
         const dValue = safeGetDataPoint(d, dataIndex);
         const jValue = safeGetDataPoint(j, dataIndex);
@@ -880,7 +887,7 @@ const CandlestickChart: React.FC = () => {
         const upperValue = safeGetDataPoint(upper, dataIndex);
         const middleValue = safeGetDataPoint(middle, dataIndex);
         const lowerValue = safeGetDataPoint(lower, dataIndex);
-
+        
         if (upperValue !== null && middleValue !== null && lowerValue !== null) {
           // 创建或更新BOLL值显示元素
           let bollValueElement = document.getElementById('boll-indicator-values');
@@ -2589,7 +2596,7 @@ const CandlestickChart: React.FC = () => {
               />
             </div>
           </div>
-          <IndicatorSelector
+          <IndicatorSelector 
             type="main"
             value={mainIndicator}
             onChange={setMainIndicator}
@@ -2599,27 +2606,27 @@ const CandlestickChart: React.FC = () => {
             <label>副图指标:</label>
             <div className="checkbox-group">
               <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={isSubIndicatorSelected('macd')}
+                <input 
+                  type="checkbox" 
+                  checked={isSubIndicatorSelected('macd')} 
                   onChange={() => handleSubIndicatorChange('macd')}
                   disabled={isLoading || candlestickData.length === 0}
                 />
                 MACD
               </label>
               <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={isSubIndicatorSelected('rsi')}
+                <input 
+                  type="checkbox" 
+                  checked={isSubIndicatorSelected('rsi')} 
                   onChange={() => handleSubIndicatorChange('rsi')}
                   disabled={isLoading || candlestickData.length === 0}
                 />
                 RSI
               </label>
               <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={isSubIndicatorSelected('kdj')}
+                <input 
+                  type="checkbox" 
+                  checked={isSubIndicatorSelected('kdj')} 
                   onChange={() => handleSubIndicatorChange('kdj')}
                   disabled={isLoading || candlestickData.length === 0}
                 />
@@ -2648,28 +2655,28 @@ const CandlestickChart: React.FC = () => {
               </div>
             )}
           </div>
-
+          
           {/* MACD副图 */}
           {subIndicators.includes('macd') && (
             <div ref={macdChartRef} className={`chart-content sub-chart macd-chart ${showPanels ? '' : 'panels-hidden'}`}>
               <div className="indicator-label">MACD</div>
             </div>
           )}
-
+          
           {/* RSI副图 */}
           {subIndicators.includes('rsi') && (
             <div ref={rsiChartRef} className={`chart-content sub-chart rsi-chart ${showPanels ? '' : 'panels-hidden'}`}>
               <div className="indicator-label">RSI</div>
             </div>
           )}
-
+          
           {/* KDJ副图 */}
           {subIndicators.includes('kdj') && (
             <div ref={kdjChartRef} className={`chart-content sub-chart kdj-chart ${showPanels ? '' : 'panels-hidden'}`}>
               <div className="indicator-label">KDJ</div>
             </div>
           )}
-
+          
           {isLoading && (
             <div className="loading-overlay">
               <div className="loading-spinner"></div>
@@ -2677,10 +2684,23 @@ const CandlestickChart: React.FC = () => {
             </div>
           )}
         </div>
-
+        
         {/* K线详细信息浮层 */}
         {hoveredData && (
-          <div className="chart-tooltip" ref={tooltipRef}>
+          <div 
+            className="chart-tooltip" 
+            ref={tooltipRef}
+            style={{
+              position: 'absolute',
+              left: `${hoveredData.mouseX ? Math.min(chartContainerRef.current?.clientWidth ? chartContainerRef.current.clientWidth - 150 : 800, Math.max(10, hoveredData.mouseX + 15)) : 0}px`,
+              top: `${hoveredData.mouseY ? Math.min(chartContainerRef.current?.clientHeight ? chartContainerRef.current.clientHeight - 150 : 400, Math.max(10, hoveredData.mouseY - 20)) : 0}px`,
+              backgroundColor: 'rgba(30, 34, 45, 0.9)',
+              padding: '8px',
+              borderRadius: '4px',
+              zIndex: 3,
+              pointerEvents: 'none'
+            }}
+          >
             <div className="tooltip-row">
               <span className="tooltip-label">时间:</span>
               <span className="tooltip-value">{hoveredData.time}</span>
