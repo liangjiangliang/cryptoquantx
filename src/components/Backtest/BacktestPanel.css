@@ -99,7 +99,7 @@
 
 .results-summary {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 15px;
   margin-bottom: 20px;
 }
@@ -134,6 +134,7 @@
 
 .trades-table {
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .trades-table h4 {
@@ -146,6 +147,7 @@
 .trades-table table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
 }
 
 .trades-table th,
@@ -164,6 +166,29 @@
 .trades-table td {
   font-size: 14px;
   color: #d9d9d9;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* 设置列宽度 - 移除固定宽度，让表格自动调整 */
+.trades-table th:nth-child(1) {
+  min-width: 120px;
+}
+
+.trades-table th:nth-child(2) {
+  min-width: 60px;
+}
+
+.trades-table th:nth-child(3) {
+  min-width: 80px;
+}
+
+.trades-table th:nth-child(4) {
+  min-width: 80px;
+}
+
+.trades-table th:nth-child(5) {
+  min-width: 120px;
 }
 
 .trades-table td.buy {

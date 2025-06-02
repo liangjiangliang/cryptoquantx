@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppState, BacktestResults } from '../../store/types';
-import { startBacktest, finishBacktest, setSelectedPair, setTimeframe, setDateRange } from '../../store/actions';
+import { startBacktest, finishBacktest, setSelectedPair, setTimeframe, setDateRange, clearBacktestResults } from '../../store/actions';
 import { formatDate, formatPrice, formatPercentage } from '../../utils/helpers';
 import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
@@ -168,6 +168,11 @@ const BacktestPanel: React.FC = () => {
     dispatch(setDateRange(dateRange.startDate, e.target.value));
   };
 
+  // 清除回测结果
+  const handleClearResults = () => {
+    dispatch(clearBacktestResults());
+  };
+
   return (
     <div className="backtest-panel">
       <div className="backtest-panel-header">
@@ -235,9 +240,9 @@ const BacktestPanel: React.FC = () => {
             
             <div className="input-group">
               <label>交易对</label>
-              <select 
-                className="pair-selector" 
-                value={selectedPair} 
+              <select
+                className="pair-selector"
+                value={selectedPair}
                 onChange={(e) => dispatch(setSelectedPair(e.target.value))}
               >
                 {COMMON_PAIRS.map((pair: string) => (
@@ -248,9 +253,9 @@ const BacktestPanel: React.FC = () => {
             
             <div className="input-group">
               <label>时间周期</label>
-              <select 
-                className="timeframe-selector" 
-                value={timeframe} 
+              <select
+                className="timeframe-selector"
+                value={timeframe}
                 onChange={(e) => dispatch(setTimeframe(e.target.value as '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M'))}
               >
                 {TIMEFRAMES.map((tf: {value: string, label: string}) => (
@@ -272,16 +277,16 @@ const BacktestPanel: React.FC = () => {
             <div className="results-summary">
               <div className="summary-item">
                 <span className="label">初始资金</span>
-                <span className="value">{backtestResults.initialCapital} USDT</span>
+                <span className="value">{(backtestResults.initialCapital/1000.0).toFixed(2)}K</span>
               </div>
               <div className="summary-item">
                 <span className="label">最终资金</span>
-                <span className="value">{backtestResults.finalCapital} USDT</span>
+                <span className="value">{(backtestResults.finalCapital / 1000.0).toFixed(2)}K </span>
               </div>
               <div className="summary-item">
                 <span className="label">净利润</span>
                 <span className={`value ${backtestResults.profit >= 0 ? 'positive' : 'negative'}`}>
-                  {backtestResults.profit >= 0 ? '+' : ''}{backtestResults.profit} USDT
+                  {backtestResults.profit >= 0 ? '+' : ''}{(backtestResults.profit/ 1000.0).toFixed(2)}K
                 </span>
               </div>
               <div className="summary-item">
@@ -341,7 +346,7 @@ const BacktestPanel: React.FC = () => {
             
             <button
               className="reset-backtest-button"
-              onClick={() => dispatch(finishBacktest(null as any))}
+              onClick={handleClearResults}
             >
               重新设置
             </button>
@@ -352,4 +357,4 @@ const BacktestPanel: React.FC = () => {
   );
 };
 
-export default BacktestPanel; 
+export default BacktestPanel;

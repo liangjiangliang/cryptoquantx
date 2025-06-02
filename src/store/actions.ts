@@ -22,6 +22,7 @@ export enum ActionType {
   CANCEL_USER_ORDER = 'CANCEL_USER_ORDER',
   START_BACKTEST = 'START_BACKTEST',
   FINISH_BACKTEST = 'FINISH_BACKTEST',
+  CLEAR_BACKTEST_RESULTS = 'CLEAR_BACKTEST_RESULTS',
   UPDATE_BALANCE = 'UPDATE_BALANCE',
   FETCH_BACKTEST_SUMMARIES = 'FETCH_BACKTEST_SUMMARIES',
   SET_BACKTEST_SUMMARIES = 'SET_BACKTEST_SUMMARIES',
@@ -85,6 +86,10 @@ export const startBacktest = () => ({
 export const finishBacktest = (results: BacktestResults) => ({
   type: ActionType.FINISH_BACKTEST,
   payload: results
+});
+
+export const clearBacktestResults = () => ({
+  type: ActionType.CLEAR_BACKTEST_RESULTS
 });
 
 export const updateBalance = (balance: { [key: string]: number }) => ({

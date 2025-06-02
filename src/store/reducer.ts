@@ -111,6 +111,18 @@ const reducer = (state = initialState, action: any): AppState => {
         backtestResults: action.payload
       };
     
+    case ActionType.CLEAR_BACKTEST_RESULTS:
+      // 清除回测结果时，也从localStorage中移除
+      try {
+        localStorage.removeItem('backtest_results');
+      } catch (error) {
+        console.error('Failed to remove backtest results from localStorage:', error);
+      }
+      return {
+        ...state,
+        backtestResults: null
+      };
+    
     case ActionType.UPDATE_BALANCE:
       return {
         ...state,
