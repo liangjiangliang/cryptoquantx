@@ -2035,9 +2035,13 @@ const CandlestickChart: React.FC = () => {
     endDate: string
   ) => {
     try {
+      // 确保时间周期格式正确
+      // 注意：API可能需要小写格式，根据实际情况调整
+      const normalizedInterval = interval;
+      
       const result = await fetchHistoryWithIntegrityCheck(
         symbol,
-        interval,
+        normalizedInterval,
         startDate,
         endDate
       );
@@ -2054,7 +2058,28 @@ const CandlestickChart: React.FC = () => {
 
   // 处理加载数据按钮点击
   const handleLoadDataClick = () => {
+    // 获取一年前的日期
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const startDate = oneYearAgo.toISOString().split('T')[0]; // YYYY-MM-DD格式
+    
+    // 获取当前日期
+    const endDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD格式
+    
+    // 打开模态框并传入默认值
     setIsModalOpen(true);
+    
+    // 通过自定义事件设置默认值
+    setTimeout(() => {
+      const event = new CustomEvent('setDefaultDataLoadValues', { 
+        detail: { 
+          startDate: startDate,
+          endDate: endDate,
+          interval: '1D' // 默认周期为1天
+        } 
+      });
+      window.dispatchEvent(event);
+    }, 100);
   };
 
   // 格式化日期为API所需格式
@@ -2084,8 +2109,12 @@ const CandlestickChart: React.FC = () => {
       const startTimeStr = formatDateForApi(oneYearAgo);
       const endTimeStr = formatDateForApi(now);
       
+      // 确保时间周期格式正确
+      // 注意：API可能需要特定格式，根据实际情况调整
+      const normalizedTimeframe = timeframe;
+      
       // 构建API URL
-      const url = `/api/market/query_saved_history?symbol=${selectedPair}&interval=${timeframe}&startTimeStr=${encodeURIComponent(startTimeStr)}&endTimeStr=${encodeURIComponent(endTimeStr)}`;
+      const url = `/api/market/query_saved_history?symbol=${selectedPair}&interval=${normalizedTimeframe}&startTimeStr=${encodeURIComponent(startTimeStr)}&endTimeStr=${encodeURIComponent(endTimeStr)}`;
       
       console.log('查询URL:', url);
       

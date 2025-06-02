@@ -10,7 +10,7 @@ defaultStartDate.setFullYear(today.getFullYear() - 1);
 // 初始状态
 const initialState: AppState = {
   selectedPair: 'BTC/USDT',
-  timeframe: '1d',
+  timeframe: '1D',
   dateRange: {
     startDate: defaultStartDate.toISOString().split('T')[0],
     endDate: today.toISOString().split('T')[0]

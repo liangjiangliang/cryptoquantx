@@ -111,7 +111,7 @@ export interface DateRange {
 // 应用状态类型
 export interface AppState {
   selectedPair: string;
-  timeframe: '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w';
+  timeframe: '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M';
   dateRange: DateRange;
   candlestickData: CandlestickData[];
   orderBookData: OrderBookData;

@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppState, BacktestResults } from '../../store/types';
 import { startBacktest, finishBacktest } from '../../store/actions';
 import { formatDate, formatPrice, formatPercentage } from '../../utils/helpers';
 import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
+
+// 获取一年前的日期
+const getOneYearAgo = () => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 1);
+  return date.toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
+};
+
+// 获取当前日期
+const getCurrentDate = () => {
+  return new Date().toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
+};
 
 const BacktestPanel: React.FC = () => {
   const dispatch = useDispatch();
@@ -13,8 +25,8 @@ const BacktestPanel: React.FC = () => {
   const isBacktesting = useSelector((state: AppState) => state.isBacktesting);
   const backtestResults = useSelector((state: AppState) => state.backtestResults);
 
-  const [startDate, setStartDate] = useState('2023-01-01');
-  const [endDate, setEndDate] = useState('2023-12-31');
+  const [startDate, setStartDate] = useState(getOneYearAgo());
+  const [endDate, setEndDate] = useState(getCurrentDate());
   const [initialCapital, setInitialCapital] = useState('10000');
   const [strategy, setStrategy] = useState('ma_crossover');
 

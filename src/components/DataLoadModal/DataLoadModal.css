@@ -141,6 +141,30 @@ select.form-control {
   padding: 15px 20px;
   border-top: 1px solid #2e3241;
   text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-button {
+  background-color: #666;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #555;
+}
+
+.cancel-button:disabled {
+  background-color: #444;
+  cursor: not-allowed;
 }
 
 .load-button {

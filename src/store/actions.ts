@@ -33,7 +33,7 @@ export const setSelectedPair = (pair: string) => ({
   payload: pair
 });
 
-export const setTimeframe = (timeframe: '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w') => ({
+export const setTimeframe = (timeframe: '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M') => ({
   type: ActionType.SET_TIMEFRAME,
   payload: timeframe
 });
