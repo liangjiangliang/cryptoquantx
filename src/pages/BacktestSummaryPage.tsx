@@ -79,15 +79,22 @@ const BacktestSummaryPage: React.FC = () => {
   };
 
   const formatAmount = (amount: number): string => {
-    if (amount >= 1000000000) {
-      return `${(amount / 1000000000).toFixed(2)}B`;
-    } else if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(2)}M`;
-    } else if (amount >= 1000) {
-      return `${(amount / 1000).toFixed(2)}K`;
+    // 处理负数
+    const isNegative = amount < 0;
+    const absAmount = Math.abs(amount);
+    
+    let formattedValue: string;
+    if (absAmount >= 1000000000) {
+      formattedValue = `${(absAmount / 1000000000).toFixed(2)}B`;
+    } else if (absAmount >= 1000000) {
+      formattedValue = `${(absAmount / 1000000).toFixed(2)}M`;
+    } else if (absAmount >= 1000) {
+      formattedValue = `${(absAmount / 1000).toFixed(2)}K`;
     } else {
-      return amount.toFixed(2);
+      formattedValue = absAmount.toFixed(2);
     }
+    
+    return isNegative ? `-${formattedValue}` : formattedValue;
   };
   
   // 处理排序

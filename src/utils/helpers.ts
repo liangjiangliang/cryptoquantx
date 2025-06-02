@@ -51,10 +51,15 @@ export const formatTime = (timestamp: number): string => {
  * 格式化数量，添加千位分隔符
  */
 export const formatAmount = (amount: number, decimals: number = 4): string => {
-  return amount.toLocaleString(undefined, {
+  const isNegative = amount < 0;
+  const absAmount = Math.abs(amount);
+  
+  const formattedValue = absAmount.toLocaleString(undefined, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals
   });
+  
+  return isNegative ? `-${formattedValue}` : formattedValue;
 };
 
 /**

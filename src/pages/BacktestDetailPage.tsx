@@ -33,7 +33,10 @@ const BacktestDetailPage: React.FC = () => {
   };
 
   const formatAmount = (amount: number): string => {
-    return amount.toFixed(2);
+    const isNegative = amount < 0;
+    const absAmount = Math.abs(amount);
+    const formattedValue = absAmount.toFixed(2);
+    return isNegative ? `-${formattedValue}` : formattedValue;
   };
 
   const formatDateTime = (dateTimeStr: string): string => {
