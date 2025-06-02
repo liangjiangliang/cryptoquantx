@@ -33,6 +33,7 @@ const DataLoader: React.FC = () => {
   // 加载数据
   const loadData = useCallback(async () => {
     try {
+      console.log('正在加载K线数据...');
       const apiPair = convertPairFormat(selectedPair);
       const apiTimeframe = convertTimeframeFormat(timeframe);
       
@@ -43,6 +44,7 @@ const DataLoader: React.FC = () => {
         dateRange.endDate
       );
       dispatch(updateCandlestickData(data));
+      console.log(`已加载 ${data.length} 条K线数据`);
     } catch (error) {
       console.error('加载数据失败:', error);
     }
@@ -57,6 +59,20 @@ const DataLoader: React.FC = () => {
     
     return () => {
       clearInterval(intervalId);
+    };
+  }, [loadData]);
+
+  // 添加对reload_data事件的监听
+  useEffect(() => {
+    const handleReloadData = () => {
+      console.log('接收到reload_data事件，重新加载数据');
+      loadData();
+    };
+
+    window.addEventListener('reload_data', handleReloadData);
+    
+    return () => {
+      window.removeEventListener('reload_data', handleReloadData);
     };
   }, [loadData]);
 
