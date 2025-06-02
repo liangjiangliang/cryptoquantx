@@ -169,26 +169,45 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       const volumeData = param.seriesPrices.get(volumeSeries.current);
       
       if (candleData && volumeData) {
+        // 调试信息，查看param.time的实际类型和值
+        console.log('param.time类型:', typeof param.time, 'param.time值:', param.time);
+        
         let time;
         
-        if (originalData.length > 0) {
-          // 查找原始数据中对应的K线
-          const dateStr = param.time.toString(); // 图表中的日期格式为 'YYYY-MM-DD'
+        // 处理param.time是对象的情况
+        let dateStr = '';
+        if (typeof param.time === 'object' && param.time !== null) {
+          // 从对象中提取年月日并格式化
+          const { year, month, day } = param.time;
+          // 确保月份和日期是两位数
+          const formattedMonth = String(month).padStart(2, '0');
+          const formattedDay = String(day).padStart(2, '0');
+          dateStr = `${year}-${formattedMonth}-${formattedDay}`;
+          console.log('格式化后的日期:', dateStr);
+        } else {
+          // 如果不是对象，转为字符串
+          dateStr = String(param.time);
+          console.log('转换为字符串的日期:', dateStr);
+        }
+        
+        // 尝试从原始数据中找到对应的K线
+        if (originalData && originalData.length > 0) {
           const originalCandle = originalData.find(item => {
             // 从openTime提取日期部分（不含时间）
             const itemDate = item.openTime.split(' ')[0];
             return itemDate === dateStr;
           });
           
-          // 使用原始数据中的时间，确保显示正确格式
-          time = dateStr;
           if (originalCandle) {
-            // 直接使用原始数据中的日期时间格式（如 "2024-02-17 00:00:00"）
+            // 直接使用原始数据中的日期时间格式
             time = originalCandle.openTime;
+          } else {
+            // 如果找不到匹配的原始数据，则使用格式化的日期字符串
+            time = dateStr;
           }
         } else {
-          // 常规模式：使用格式化日期
-          time = formatDate(param.time);
+          // 没有原始数据，使用格式化的日期字符串
+          time = dateStr;
         }
         
         const open = formatPrice(candleData.open);
@@ -297,6 +316,9 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       // 保存原始K线数据，包含完整的日期时间信息
       setOriginalData(result.data);
       
+      // 调试信息，查看原始数据的格式
+      console.log('原始K线数据示例:', result.data.length > 0 ? result.data[0] : '无数据');
+      
       // 转换为图表需要的格式
       const convertedData = result.data.map((item: {
         openTime: string;
@@ -307,10 +329,10 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         volume?: number;
         quoteVolume?: number;
       }) => {
-        // 从openTime中提取日期部分并转换为时间戳
-        const date = new Date(item.openTime.split(' ')[0]);
+        // 从openTime中提取日期部分作为时间
+        const dateStr = item.openTime.split(' ')[0]; // 格式: YYYY-MM-DD
         return {
-          time: date.getTime() / 1000,
+          time: dateStr, // 直接使用日期字符串作为时间
           open: item.open,
           high: item.high,
           low: item.low,
@@ -319,36 +341,28 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         };
       });
       
+      // 调试信息，查看转换后的数据格式
+      console.log('转换后的K线数据示例:', convertedData.length > 0 ? convertedData[0] : '无数据');
+      
       // 更新K线图
       if (candleSeries.current && volumeSeries.current) {
-        // 转换时间格式
-        const formattedData = convertedData.map((item: {
-          time: number;
+        // 直接使用转换好的数据
+        candleSeries.current.setData(convertedData);
+        
+        // 创建成交量数据
+        const volumeData = convertedData.map((item: {
+          time: string;
           open: number;
           high: number;
           low: number;
           close: number;
           volume: number;
         }) => ({
-          time: new Date(item.time * 1000).toISOString().split('T')[0],
-          open: item.open,
-          high: item.high,
-          low: item.low,
-          close: item.close
-        }));
-
-        const volumeData = convertedData.map((item: {
-          time: number;
-          open: number;
-          close: number;
-          volume: number;
-        }) => ({
-          time: new Date(item.time * 1000).toISOString().split('T')[0],
+          time: item.time,
           value: item.volume,
           color: item.close > item.open ? '#ff5555' : '#32a852',
         }));
         
-        candleSeries.current.setData(formattedData);
         volumeSeries.current.setData(volumeData);
         
         // 绘制交易标记
