@@ -1,25 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppState, BacktestResults } from '../../store/types';
-import { startBacktest, finishBacktest, setSelectedPair, setTimeframe } from '../../store/actions';
+import { startBacktest, finishBacktest, setSelectedPair, setTimeframe, setDateRange } from '../../store/actions';
 import { formatDate, formatPrice, formatPercentage } from '../../utils/helpers';
 import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
 
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
-
-// 获取一年前的日期
-const getOneYearAgo = () => {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - 1);
-  return date.toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
-};
-
-// 获取当前日期
-const getCurrentDate = () => {
-  return new Date().toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
-};
 
 // 策略接口定义
 interface Strategy {
@@ -42,13 +30,12 @@ const BacktestPanel: React.FC = () => {
   const timeframe = useSelector((state: AppState) => state.timeframe);
   const isBacktesting = useSelector((state: AppState) => state.isBacktesting);
   const backtestResults = useSelector((state: AppState) => state.backtestResults);
+  const dateRange = useSelector((state: AppState) => state.dateRange);
 
-  const [startDate, setStartDate] = useState(getOneYearAgo());
-  const [endDate, setEndDate] = useState(getCurrentDate());
-  const [initialCapital, setInitialCapital] = useState('10000');
-  const [strategy, setStrategy] = useState('');
+  const [initialCapital, setInitialCapital] = useState<string>('10000');
+  const [strategy, setStrategy] = useState<string>('');
   const [strategies, setStrategies] = useState<{[key: string]: Strategy}>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // 获取可用策略列表
@@ -117,8 +104,8 @@ const BacktestPanel: React.FC = () => {
     
     try {
       // 格式化开始和结束时间
-      const formattedStartTime = `${startDate} 00:00:00`;
-      const formattedEndTime = `${endDate} 23:59:59`;
+      const formattedStartTime = `${dateRange.startDate} 00:00:00`;
+      const formattedEndTime = `${dateRange.endDate} 23:59:59`;
       
       // 构建API URL
       const url = `/api/api/backtest/ta4j/run?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialCapital}&strategyType=${strategy}&symbol=${selectedPair}&interval=${timeframe}&saveResult=True`;
@@ -172,6 +159,15 @@ const BacktestPanel: React.FC = () => {
     }
   };
 
+  // 处理日期变更
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setDateRange(e.target.value, dateRange.endDate));
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setDateRange(dateRange.startDate, e.target.value));
+  };
+
   return (
     <div className="backtest-panel">
       <div className="backtest-panel-header">
@@ -185,8 +181,8 @@ const BacktestPanel: React.FC = () => {
               <label>开始日期</label>
               <input
                 type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                value={dateRange.startDate}
+                onChange={handleStartDateChange}
               />
             </div>
             
@@ -194,8 +190,8 @@ const BacktestPanel: React.FC = () => {
               <label>结束日期</label>
               <input
                 type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                value={dateRange.endDate}
+                onChange={handleEndDateChange}
               />
             </div>
             

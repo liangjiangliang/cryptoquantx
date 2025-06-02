@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createChart, CrosshairMode, Time, LineWidth, ISeriesApi, IChartApi, SeriesMarkerPosition, SeriesMarker, LineStyle } from 'lightweight-charts';
 import { useSelector, useDispatch } from 'react-redux';
 import { AppState, CandlestickData, BacktestTrade } from '../../store/types';
-import { updateCandlestickData, setSelectedPair, setTimeframe } from '../../store/actions';
+import { updateCandlestickData, setSelectedPair, setTimeframe, setDateRange } from '../../store/actions';
 import { fetchHistoryWithIntegrityCheck } from '../../services/api';
 import DataLoadModal from '../DataLoadModal/DataLoadModal';
 import IndicatorSelector, { IndicatorType } from './IndicatorSelector';
@@ -153,24 +153,12 @@ const CandlestickChart: React.FC = () => {
   // 添加面板显示/隐藏状态
   const [showPanels, setShowPanels] = useState<boolean>(true);
 
-  // 添加日期范围状态
-  const [startDate, setStartDate] = useState<string>(() => {
-    // 默认开始日期为一年前
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-    return oneYearAgo.toISOString().split('T')[0]; // YYYY-MM-DD格式
-  });
-  
-  const [endDate, setEndDate] = useState<string>(() => {
-    // 默认结束日期为今天
-    return new Date().toISOString().split('T')[0]; // YYYY-MM-DD格式
-  });
-
   const dispatch = useDispatch();
   const candlestickData = useSelector((state: AppState) => state.candlestickData);
   const selectedPair = useSelector((state: AppState) => state.selectedPair);
   const timeframe = useSelector((state: AppState) => state.timeframe);
   const backtestResults = useSelector((state: AppState) => state.backtestResults);
+  const dateRange = useSelector((state: AppState) => state.dateRange);
   
   // 检查副图指标是否被选中
   const isSubIndicatorSelected = (indicator: IndicatorType): boolean => {
@@ -2113,9 +2101,9 @@ const CandlestickChart: React.FC = () => {
     setIsHistoryLoading(true);
     
     try {
-      // 使用用户选择的日期范围
-      const startTimeStr = `${startDate} 00:00:00`;
-      const endTimeStr = `${endDate} 23:59:59`;
+      // 使用Redux中的日期范围
+      const startTimeStr = `${dateRange.startDate} 00:00:00`;
+      const endTimeStr = `${dateRange.endDate} 23:59:59`;
       
       // 确保时间周期格式正确
       const normalizedTimeframe = timeframe;
@@ -2441,11 +2429,11 @@ const CandlestickChart: React.FC = () => {
 
   // 处理日期变更
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setStartDate(e.target.value);
+    dispatch(setDateRange(e.target.value, dateRange.endDate));
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEndDate(e.target.value);
+    dispatch(setDateRange(dateRange.startDate, e.target.value));
   };
 
   return (
@@ -2484,7 +2472,7 @@ const CandlestickChart: React.FC = () => {
               <input 
                 type="date" 
                 className="date-input"
-                value={startDate}
+                value={dateRange.startDate}
                 onChange={handleStartDateChange}
               />
             </div>
@@ -2493,7 +2481,7 @@ const CandlestickChart: React.FC = () => {
               <input 
                 type="date" 
                 className="date-input"
-                value={endDate}
+                value={dateRange.endDate}
                 onChange={handleEndDateChange}
               />
             </div>

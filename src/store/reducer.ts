@@ -1,19 +1,15 @@
 import { AppState } from './types';
 import { ActionType } from './actions';
 import { mockOrderBookData, mockTradeHistoryData, mockCryptoPairs } from '../data/mockData';
-
-// 获取当前日期和一年前的日期作为默认日期范围
-const today = new Date();
-const defaultStartDate = new Date();
-defaultStartDate.setFullYear(today.getFullYear() - 1);
+import { getDefaultStartDate, getDefaultEndDate } from '../constants/trading';
 
 // 初始状态
 const initialState: AppState = {
-  selectedPair: 'BTC/USDT',
+  selectedPair: 'BTC-USDT',
   timeframe: '1D',
   dateRange: {
-    startDate: defaultStartDate.toISOString().split('T')[0],
-    endDate: today.toISOString().split('T')[0]
+    startDate: getDefaultStartDate(),
+    endDate: getDefaultEndDate()
   },
   candlestickData: [], // 初始化为空数组，将通过API加载数据
   orderBookData: mockOrderBookData,

@@ -26,4 +26,16 @@ export const TIMEFRAMES = [
   { value: '1D', label: '1天' },
   { value: '1W', label: '1周' },
   { value: '1M', label: '1月' }
-]; 
+];
+
+// 获取一年前的日期
+export const getDefaultStartDate = (): string => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 1);
+  return date.toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
+};
+
+// 获取当前日期
+export const getDefaultEndDate = (): string => {
+  return new Date().toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
+}; 
