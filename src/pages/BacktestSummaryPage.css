@@ -83,6 +83,65 @@
   font-size: 18px;
 }
 
+/* 筛选器样式 */
+.filters-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #1e2233;
+  border-radius: 4px;
+  border: 1px solid #2a2a3a;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-item label {
+  font-size: 13px;
+  color: #8d8d8d;
+}
+
+.filter-item input, .filter-item select {
+  background-color: #2e3241;
+  border: 1px solid #3a3f52;
+  border-radius: 4px;
+  color: #e6e6e6;
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.filter-item input:focus, .filter-item select:focus {
+  outline: none;
+  border-color: #4a5169;
+}
+
+/* 表格排序样式 */
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.sortable-header:hover {
+  background-color: #1a2548;
+}
+
+.sort-icon {
+  margin-left: 5px;
+  font-size: 12px;
+  color: #8d8d8d;
+}
+
+.sort-icon.active {
+  color: #4a618b;
+}
+
 .summary-table-container {
   overflow-x: auto;
   margin-top: 20px;
