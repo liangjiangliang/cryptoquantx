@@ -91,4 +91,15 @@
   border-radius: 3px;
   font-size: 12px;
   z-index: 5;
+}
+
+/* 交易标记中的盈亏显示样式 */
+.profit-positive {
+  color: #ff5555 !important; /* 红色，表示盈利 */
+  font-weight: bold;
+}
+
+.profit-negative {
+  color: #32a852 !important; /* 绿色，表示亏损 */
+  font-weight: bold;
 } 

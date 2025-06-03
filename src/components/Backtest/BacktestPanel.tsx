@@ -25,7 +25,7 @@ interface StrategiesResponse {
 }
 
 // 每页显示的交易记录数量
-const TRADES_PER_PAGE = 10;
+const TRADES_PER_PAGE = 13;
 
 const BacktestPanel: React.FC = () => {
   const dispatch = useDispatch();
@@ -179,22 +179,22 @@ const BacktestPanel: React.FC = () => {
     if (!backtestResults || !backtestResults.trades) return 1;
     return Math.ceil(backtestResults.trades.length / TRADES_PER_PAGE);
   };
-  
+
   // 获取当前页的交易记录
   const getCurrentPageTrades = () => {
     if (!backtestResults || !backtestResults.trades) return [];
-    
+
     const startIndex = (currentPage - 1) * TRADES_PER_PAGE;
     const endIndex = startIndex + TRADES_PER_PAGE;
-    
+
     return backtestResults.trades.slice(startIndex, endIndex);
   };
-  
+
   // 处理页面变更
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
-  
+
   // 清除回测结果时重置页码
   const handleClearResults = () => {
     setCurrentPage(1);
@@ -345,7 +345,7 @@ const BacktestPanel: React.FC = () => {
               <div className="trades-table-header">
                 <h4>交易记录</h4>
               </div>
-              
+
               <div className="trades-table-container">
                 <table>
                   <thead>
@@ -375,11 +375,11 @@ const BacktestPanel: React.FC = () => {
                   </tbody>
                 </table>
               </div>
-              
+
               {backtestResults.trades.length > TRADES_PER_PAGE && (
                 <div className="pagination bottom">
-                  <button 
-                    className="pagination-button" 
+                  <button
+                    className="pagination-button"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                   >
@@ -388,23 +388,34 @@ const BacktestPanel: React.FC = () => {
                   <span className="pagination-info">
                     {currentPage} / {getTotalPages()}
                   </span>
-                  <button 
-                    className="pagination-button" 
+                  <button
+                    className="pagination-button"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === getTotalPages()}
                   >
                     下一页
                   </button>
+
+                  <button
+                    className="reset-backtest-button"
+                    onClick={handleClearResults}
+                  >
+                    重新设置
+                  </button>
+                </div>
+              )}
+
+              {backtestResults.trades.length <= TRADES_PER_PAGE && (
+                <div className="pagination bottom">
+                  <button
+                    className="reset-backtest-button"
+                    onClick={handleClearResults}
+                  >
+                    重新设置
+                  </button>
                 </div>
               )}
             </div>
-
-            <button
-              className="reset-backtest-button"
-              onClick={handleClearResults}
-            >
-              重新设置
-            </button>
           </div>
         )}
       </div>

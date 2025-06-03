@@ -32,10 +32,10 @@ const TradeMarkers: React.FC<TradeMarkersProps> = ({ chart, candleSeries, backte
           markers.push({
             time: trade.entryTime as Time,
             position: 'belowBar' as SeriesMarkerPosition,
-            color: '#26a69a',
+            color: '#00FFFF', // 青色，更容易区分
             shape: 'arrowUp',
             text: `买入 ${formatPrice(trade.entryPrice)}`,
-            size: 2,
+            size: 1,
             id: `entry-${trade.id || ''}`,
           });
         } else {
@@ -43,27 +43,28 @@ const TradeMarkers: React.FC<TradeMarkersProps> = ({ chart, candleSeries, backte
           markers.push({
             time: trade.entryTime as Time,
             position: 'aboveBar' as SeriesMarkerPosition,
-            color: '#ef5350',
+            color: '#FF00FF', // 品红色，更容易区分
             shape: 'arrowDown',
             text: `卖出 ${formatPrice(trade.entryPrice)}`,
-            size: 2,
+            size: 1,
             id: `entry-${trade.id || ''}`,
           });
         }
 
         // 添加平仓标记
         if (trade.exitTime && trade.exitPrice !== undefined) {
-          const profitText = trade.profit !== undefined ?
-            `(${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})` : '';
+          const profitText = trade.profit !== undefined && trade.profit !== null
+            ? `(${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})`
+            : '';
 
           markers.push({
             time: trade.exitTime as Time,
             position: (trade.side === 'buy' ? 'aboveBar' : 'belowBar') as SeriesMarkerPosition,
-            color: trade.side === 'buy' ? '#ef5350' : '#26a69a',
+            color: trade.side === 'buy' ? '#FFFF00' : '#00FF00', // 买入平仓黄色，卖出平仓绿色
             shape: trade.side === 'buy' ? 'arrowDown' : 'arrowUp',
             text: `平仓 ${formatPrice(trade.exitPrice)} ${profitText}`,
-            size: 2,
-            id: `exit-${trade.id || ''}`,
+            size: 1,
+            id: `exit-${trade.id || Math.random().toString(36).substring(2, 9)}`,
           });
         }
 

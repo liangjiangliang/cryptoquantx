@@ -9,7 +9,7 @@
   flex-direction: column;
   flex: 1;
   transition: height 0.3s ease, width 0.3s ease;
-  min-height: calc(100vh - 200px); /* 确保最小高度填充视口 */
+  min-height: calc(100vh - 150px); /* 增加最小高度，更好地填充屏幕 */
 }
 
 .chart-header {
@@ -147,13 +147,17 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  height: calc(100vh - 300px); /* 固定高度，与交易记录模块匹配 */
+  height: calc(100vh - 200px); /* 调整高度，更好地填充屏幕 */
   border-radius: 4px;
   overflow: hidden;
   transition: height 0.3s ease;
 }
 
-/* 添加底部填充区域，确保与交易记录模块对齐 */
+/* 移除底部填充区域，让图表自然填充空间 */
+.chart-bottom-padding {
+  display: none;
+}
+
 .chart-wrapper {
   position: relative;
   width: 100%;
@@ -166,21 +170,6 @@
   padding-bottom: 0; /* 移除底部填充，使用专门的元素代替 */
 }
 
-/* 底部填充区域样式 */
-.chart-bottom-padding {
-  height: 80px; /* 增加高度以确保完全对齐 */
-  width: 100%;
-  background-color: #1e222d;
-  border-top: 1px solid #2e3241;
-  flex-shrink: 0;
-  margin-top: 1px; /* 添加顶部间距 */
-}
-
-/* 面板隐藏时，底部填充区域也隐藏 */
-.panels-hidden .chart-bottom-padding {
-  display: none;
-}
-
 .chart-content {
   position: relative;
   width: 100%;
@@ -189,13 +178,13 @@
 
 .main-chart {
   min-height: 400px;
-  flex: 3; /* 增加主图所占比例 */
+  flex: 4; /* 增加主图所占比例 */
   transition: flex 0.3s ease, height 0.3s ease;
 }
 
 /* 面板隐藏时，主图表可以占据更多空间 */
 .panels-hidden .main-chart {
-  flex: 4; /* 增加隐藏面板时的主图比例 */
+  flex: 5; /* 增加隐藏面板时的主图比例 */
   min-height: 600px;
 }
 
@@ -398,6 +387,17 @@
   transform: scale(1.2);
   z-index: 100;
   filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.7));
+}
+
+/* 交易标记中的盈亏显示样式 */
+.profit-positive {
+  color: #ff5555 !important; /* 红色，表示盈利 */
+  font-weight: bold;
+}
+
+.profit-negative {
+  color: #32a852 !important; /* 绿色，表示亏损 */
+  font-weight: bold;
 }
 
 /* 指标值文本显示样式 */

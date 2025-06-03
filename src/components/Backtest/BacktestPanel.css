@@ -22,7 +22,7 @@
 
 .backtest-panel-content {
   flex: 1;
-  padding: 15px;
+  padding: 15px 15px 5px 15px;
   overflow-y: auto;
 }
 
@@ -95,6 +95,7 @@
 .backtest-results {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .results-summary {
@@ -133,13 +134,12 @@
 }
 
 .trades-table {
-  margin-bottom: 20px;
+  margin-bottom: 0;
   width: 100%;
   display: flex;
   flex-direction: column;
-  /* 调整高度计算，确保与图表区域完全对齐 */
-  height: calc(100vh - 460px);
-  min-height: 400px;
+  flex: 1;
+  min-height: 300px;
 }
 
 .trades-table-header {
@@ -159,7 +159,7 @@
 .trades-table-container {
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   border: 1px solid #2e3241;
   border-radius: 4px;
 }
@@ -235,18 +235,25 @@
 
 .reset-backtest-button {
   padding: 12px;
-  background-color: #2e3241;
+  background-color: #2962ff;
   border: none;
   border-radius: 4px;
-  color: #d9d9d9;
-  font-size: 16px;
+  color: white;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .reset-backtest-button:hover {
-  background-color: #3a4052;
+  background-color: #1e4bd8;
+}
+
+.reset-backtest-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .strategy-description {
@@ -286,30 +293,46 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap; /* 允许在小屏幕上换行 */
 }
 
 .pagination.bottom {
-  margin-top: 10px;
+  margin-top: 5px;
+  margin-bottom: 0;
   justify-content: center;
 }
 
+/* 添加重置按钮的特殊样式，当它在分页器中时 */
+.pagination .reset-backtest-button {
+  margin-left: 20px; /* 与分页按钮保持一定距离 */
+  background-color: #2962ff; /* 与运行回测按钮保持一致 */
+  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.pagination .reset-backtest-button:hover {
+  background-color: #1e4bd8; /* 与运行回测按钮悬停效果一致 */
+}
+
 .pagination-button {
-  background-color: #2e3241;
+  background-color: #2962ff; /* 与运行回测按钮保持一致 */
   border: none;
   border-radius: 4px;
-  color: #d9d9d9;
-  padding: 5px 10px;
-  font-size: 12px;
+  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: #3a4052;
+  background-color: #1e4bd8; /* 与运行回测按钮悬停效果一致 */
 }
 
 .pagination-button:disabled {
-  opacity: 0.5;
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
