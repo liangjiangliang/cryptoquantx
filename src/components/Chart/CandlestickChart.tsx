@@ -441,7 +441,7 @@ const CandlestickChart: React.FC = () => {
 
       // 获取容器高度
       const containerHeight = chartContainerRef.current.clientHeight || 600;
-      const mainChartHeight = Math.max(400, containerHeight * 0.7); // 主图占70%或至少400px
+      const mainChartHeight = Math.max(500, containerHeight * 0.75); // 主图占75%或至少500px
       const subChartHeight = 150; // 每个副图的高度
 
       // 通用图表选项
@@ -2645,7 +2645,7 @@ const CandlestickChart: React.FC = () => {
           </button>
         </div>
       </div>
-      <div className={`chart-container ${showPanels ? '' : 'panels-hidden'}`}>
+      <div className="chart-container">
         <div className="chart-wrapper">
           <div ref={chartContainerRef} className={`chart-content main-chart ${showPanels ? '' : 'panels-hidden'}`}>
             {candlestickData.length === 0 && (
@@ -2676,7 +2676,10 @@ const CandlestickChart: React.FC = () => {
               <div className="indicator-label">KDJ</div>
             </div>
           )}
-
+          
+          {/* 底部填充区域 - 始终显示 */}
+          <div className={`chart-bottom-padding ${showPanels ? '' : 'panels-hidden'}`}></div>
+          
           {isLoading && (
             <div className="loading-overlay">
               <div className="loading-spinner"></div>

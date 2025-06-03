@@ -24,6 +24,9 @@ interface StrategiesResponse {
   message: string;
 }
 
+// 每页显示的交易记录数量
+const TRADES_PER_PAGE = 10;
+
 const BacktestPanel: React.FC = () => {
   const dispatch = useDispatch();
   const selectedPair = useSelector((state: AppState) => state.selectedPair);
@@ -37,6 +40,9 @@ const BacktestPanel: React.FC = () => {
   const [strategies, setStrategies] = useState<{[key: string]: Strategy}>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 添加分页状态
+  const [currentPage, setCurrentPage] = useState(1);
 
   // 获取可用策略列表
   useEffect(() => {
@@ -168,8 +174,30 @@ const BacktestPanel: React.FC = () => {
     dispatch(setDateRange(dateRange.startDate, e.target.value));
   };
 
-  // 清除回测结果
+  // 计算总页数
+  const getTotalPages = () => {
+    if (!backtestResults || !backtestResults.trades) return 1;
+    return Math.ceil(backtestResults.trades.length / TRADES_PER_PAGE);
+  };
+  
+  // 获取当前页的交易记录
+  const getCurrentPageTrades = () => {
+    if (!backtestResults || !backtestResults.trades) return [];
+    
+    const startIndex = (currentPage - 1) * TRADES_PER_PAGE;
+    const endIndex = startIndex + TRADES_PER_PAGE;
+    
+    return backtestResults.trades.slice(startIndex, endIndex);
+  };
+  
+  // 处理页面变更
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+  
+  // 清除回测结果时重置页码
   const handleClearResults = () => {
+    setCurrentPage(1);
     dispatch(clearBacktestResults());
   };
 
@@ -314,34 +342,61 @@ const BacktestPanel: React.FC = () => {
             </div>
 
             <div className="trades-table">
-              <h4>交易记录</h4>
-              <table>
-                <thead>
-                  <tr>
-                    <th>时间</th>
-                    <th>类型</th>
-                    <th>价格</th>
-                    <th>金额</th>
-                    <th>盈亏</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {backtestResults.trades.map((trade) => (
-                    <tr key={trade.id}>
-                      <td>{formatDate(trade.entryTime)}</td>
-                      <td className={trade.side}>{trade.side === 'buy' ? '买入' : '卖出'}</td>
-                      <td>{formatPrice(trade.entryPrice)}</td>
-                      <td>{trade.amount?.toFixed(2) || '0.0000'}</td>
-                      <td className={trade.profit >= 0 ? 'positive' : 'negative'}>
-                        {trade.profit >= 0 ? '+' : ''}{trade.profit?.toFixed(2) || '0.00'}
-                        <span className="percentage">
-                          ({formatPercentage(trade.profitPercentage || 0)})
-                        </span>
-                      </td>
+              <div className="trades-table-header">
+                <h4>交易记录</h4>
+              </div>
+              
+              <div className="trades-table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>时间</th>
+                      <th>类型</th>
+                      <th>价格</th>
+                      <th>金额</th>
+                      <th>盈亏</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {getCurrentPageTrades().map((trade) => (
+                      <tr key={trade.id}>
+                        <td>{formatDate(trade.entryTime)}</td>
+                        <td className={trade.side}>{trade.side === 'buy' ? '买入' : '卖出'}</td>
+                        <td>{formatPrice(trade.entryPrice)}</td>
+                        <td>{trade.amount?.toFixed(2) || '0.0000'}</td>
+                        <td className={trade.profit >= 0 ? 'positive' : 'negative'}>
+                          {trade.profit >= 0 ? '+' : ''}{trade.profit?.toFixed(2) || '0.00'}
+                          <span className="percentage">
+                            ({formatPercentage(trade.profitPercentage || 0)})
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {backtestResults.trades.length > TRADES_PER_PAGE && (
+                <div className="pagination bottom">
+                  <button 
+                    className="pagination-button" 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    上一页
+                  </button>
+                  <span className="pagination-info">
+                    {currentPage} / {getTotalPages()}
+                  </span>
+                  <button 
+                    className="pagination-button" 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === getTotalPages()}
+                  >
+                    下一页
+                  </button>
+                </div>
+              )}
             </div>
 
             <button

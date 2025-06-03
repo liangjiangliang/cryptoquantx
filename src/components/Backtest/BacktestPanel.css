@@ -135,13 +135,33 @@
 .trades-table {
   margin-bottom: 20px;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  /* 调整高度计算，确保与图表区域完全对齐 */
+  height: calc(100vh - 460px);
+  min-height: 400px;
+}
+
+.trades-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .trades-table h4 {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 14px;
   font-weight: 500;
   color: #d9d9d9;
+}
+
+.trades-table-container {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  border: 1px solid #2e3241;
+  border-radius: 4px;
 }
 
 .trades-table table {
@@ -259,4 +279,41 @@
   padding: 8px;
   color: #ff5555;
   font-style: italic;
+}
+
+/* 分页样式 */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination.bottom {
+  margin-top: 10px;
+  justify-content: center;
+}
+
+.pagination-button {
+  background-color: #2e3241;
+  border: none;
+  border-radius: 4px;
+  color: #d9d9d9;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #3a4052;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  color: #6c7284;
+  font-size: 12px;
 } 

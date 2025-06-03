@@ -9,6 +9,7 @@
   flex-direction: column;
   flex: 1;
   transition: height 0.3s ease, width 0.3s ease;
+  min-height: calc(100vh - 200px); /* 确保最小高度填充视口 */
 }
 
 .chart-header {
@@ -146,13 +147,13 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 600px;
-  height: 100%;
+  height: calc(100vh - 300px); /* 固定高度，与交易记录模块匹配 */
   border-radius: 4px;
   overflow: hidden;
   transition: height 0.3s ease;
 }
 
+/* 添加底部填充区域，确保与交易记录模块对齐 */
 .chart-wrapper {
   position: relative;
   width: 100%;
@@ -162,6 +163,22 @@
   flex: 1;
   overflow: hidden;
   transition: all 0.3s ease;
+  padding-bottom: 0; /* 移除底部填充，使用专门的元素代替 */
+}
+
+/* 底部填充区域样式 */
+.chart-bottom-padding {
+  height: 80px; /* 增加高度以确保完全对齐 */
+  width: 100%;
+  background-color: #1e222d;
+  border-top: 1px solid #2e3241;
+  flex-shrink: 0;
+  margin-top: 1px; /* 添加顶部间距 */
+}
+
+/* 面板隐藏时，底部填充区域也隐藏 */
+.panels-hidden .chart-bottom-padding {
+  display: none;
 }
 
 .chart-content {
@@ -172,13 +189,13 @@
 
 .main-chart {
   min-height: 400px;
-  flex: 2;
+  flex: 3; /* 增加主图所占比例 */
   transition: flex 0.3s ease, height 0.3s ease;
 }
 
 /* 面板隐藏时，主图表可以占据更多空间 */
 .panels-hidden .main-chart {
-  flex: 3;
+  flex: 4; /* 增加隐藏面板时的主图比例 */
   min-height: 600px;
 }
 
@@ -552,3 +569,21 @@
   stroke-width: 0.5px;
   transform: scale(0.8);
 }
+
+/* 删除底部填充区域 */
+/* .chart-wrapper::after {
+  content: '';
+  display: block;
+  height: 40px;
+  width: 100%;
+  background-color: #1e222d;
+  border-top: 1px solid #2e3241;
+}
+
+.chart-wrapper:not(:has(.sub-chart))::after {
+  display: none;
+}
+
+.chart-wrapper.no-sub-charts::after {
+  display: none;
+} */

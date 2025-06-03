@@ -6,11 +6,15 @@
   overflow: hidden;
   background-color: #1e222d;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-height: calc(100vh - 200px); /* 确保最小高度填充视口 */
+  display: flex;
+  flex-direction: column;
 }
 
 .chart {
   width: 100%;
-  height: 400px;
+  height: 500px; /* 增加主图高度 */
+  flex: 3; /* 增加主图所占比例 */
 }
 
 /* 指标副图样式 */
@@ -18,6 +22,7 @@
   width: 100%;
   height: 150px;
   border-top: 1px solid #2e3241;
+  flex: 1;
 }
 
 .chart-loading {

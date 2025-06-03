@@ -73,7 +73,7 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       // 创建主图表
       chart.current = createChart(chartContainerRef.current, {
         width: chartContainerRef.current.clientWidth,
-        height: 400, // 减小主图高度，为副图留出空间
+        height: 500, // 增加主图高度，为副图留出空间
         layout: {
           background: { color: '#1e222d' },
           textColor: '#d9d9d9',
@@ -655,7 +655,7 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         ref={chartContainerRef} 
         className="chart" 
         style={{ 
-          height: '400px',
+          height: '500px',
           visibility: loading ? 'hidden' : 'visible'
         }}
       />
