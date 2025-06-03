@@ -339,4 +339,55 @@
 .pagination-info {
   color: #6c7284;
   font-size: 12px;
+}
+
+/* 添加刷新数据、返回主页和交易详情按钮样式 */
+.refresh-button, 
+.home-button, 
+.trade-detail-button {
+  padding: 8px 16px;
+  background-color: #2962ff;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0 5px;
+}
+
+.refresh-button:hover:not(:disabled), 
+.home-button:hover:not(:disabled), 
+.trade-detail-button:hover:not(:disabled) {
+  background-color: #1e4bd8;
+}
+
+.refresh-button:disabled, 
+.home-button:disabled, 
+.trade-detail-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 表格操作列按钮样式 */
+.action-button {
+  padding: 6px 12px;
+  background-color: #2962ff;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover:not(:disabled) {
+  background-color: #1e4bd8;
+}
+
+.action-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 } 

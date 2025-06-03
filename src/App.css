@@ -45,26 +45,28 @@ body {
 }
 
 .tab-button {
-  background-color: transparent;
-  color: #8d8d8d;
+  background-color: #2962ff;
+  color: white;
   border: none;
   padding: 8px 16px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
   border-radius: 4px;
-  transition: all 0.3s;
+  transition: all 0.2s ease;
   text-decoration: none;
   display: inline-block;
 }
 
 .tab-button:hover {
-  background-color: #1e1e30;
-  color: #e6e6e6;
+  background-color: #1e4bd8;
+  color: white;
 }
 
 .tab-button.active {
-  background-color: #3a506b;
+  background-color: #2962ff;
   color: white;
+  box-shadow: 0 0 8px rgba(41, 98, 255, 0.6);
 }
 
 /* 主内容区域 */
