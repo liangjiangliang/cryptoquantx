@@ -34,7 +34,7 @@ const BacktestSummaries: React.FC = () => {
     // 处理负数
     const isNegative = amount < 0;
     const absAmount = Math.abs(amount);
-    
+
     let formattedValue: string;
     if (absAmount >= 1000000000) {
       formattedValue = `${(absAmount / 1000000000).toFixed(2)}B`;
@@ -45,7 +45,7 @@ const BacktestSummaries: React.FC = () => {
     } else {
       formattedValue = absAmount.toFixed(2);
     }
-    
+
     return isNegative ? `-${formattedValue}` : formattedValue;
   };
 
@@ -53,7 +53,7 @@ const BacktestSummaries: React.FC = () => {
     <div className="backtest-summaries">
       <div className="backtest-summaries-header">
         <h3>回测汇总</h3>
-        <button 
+        <button
           className="refresh-button"
           onClick={loadBacktestSummaries}
           disabled={loading}
@@ -105,7 +105,7 @@ const BacktestSummaries: React.FC = () => {
                   <td>{formatAmount(summary.finalAmount)}</td>
                   <td>{formatAmount(summary.totalProfit)}</td>
                   <td className={summary.totalReturn >= 0 ? 'positive' : 'negative'}>
-                    {formatPercentage(summary.totalReturn / 100)}
+                    {formatPercentage(summary.totalReturn * 100)}
                   </td>
                   <td>{summary.numberOfTrades}</td>
                   <td>{(summary.winRate * 100).toFixed(2)}%</td>
@@ -122,4 +122,4 @@ const BacktestSummaries: React.FC = () => {
   );
 };
 
-export default BacktestSummaries; 
+export default BacktestSummaries;

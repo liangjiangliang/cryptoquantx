@@ -292,7 +292,7 @@ const BacktestPanel: React.FC = () => {
               <div className="summary-item">
                 <span className="label">收益率</span>
                 <span className={`value ${backtestResults.profitPercentage >= 0 ? 'positive' : 'negative'}`}>
-                  {formatPercentage(backtestResults.profitPercentage)}
+                  {formatPercentage(backtestResults.profitPercentage *100)}
                 </span>
               </div>
               <div className="summary-item">
@@ -321,7 +321,7 @@ const BacktestPanel: React.FC = () => {
                     <th>时间</th>
                     <th>类型</th>
                     <th>价格</th>
-                    <th>数量</th>
+                    <th>金额</th>
                     <th>盈亏</th>
                   </tr>
                 </thead>
@@ -331,9 +331,9 @@ const BacktestPanel: React.FC = () => {
                       <td>{formatDate(trade.entryTime)}</td>
                       <td className={trade.side}>{trade.side === 'buy' ? '买入' : '卖出'}</td>
                       <td>{formatPrice(trade.entryPrice)}</td>
-                      <td>{trade.amount?.toFixed(4) || '0.0000'}</td>
+                      <td>{trade.amount?.toFixed(2) || '0.0000'}</td>
                       <td className={trade.profit >= 0 ? 'positive' : 'negative'}>
-                        {trade.profit >= 0 ? '+' : ''}{trade.profit?.toFixed(2) || '0.00'} USDT
+                        {trade.profit >= 0 ? '+' : ''}{trade.profit?.toFixed(2) || '0.00'}
                         <span className="percentage">
                           ({formatPercentage(trade.profitPercentage || 0)})
                         </span>

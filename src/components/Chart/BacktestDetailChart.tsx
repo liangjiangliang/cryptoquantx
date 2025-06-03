@@ -23,6 +23,11 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
   const volumeSeries = useRef<ISeriesApi<'Histogram'> | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   
+  // 添加指标副图引用
+  const indicatorChartRef = useRef<HTMLDivElement>(null);
+  const indicatorChart = useRef<IChartApi | null>(null);
+  const indicatorSeries = useRef<ISeriesApi<'Line'>[]>([]);
+  
   const [hoveredData, setHoveredData] = useState<{
     time: string;
     open: string;
@@ -68,7 +73,7 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       // 创建主图表
       chart.current = createChart(chartContainerRef.current, {
         width: chartContainerRef.current.clientWidth,
-        height: 500,
+        height: 400, // 减小主图高度，为副图留出空间
         layout: {
           background: { color: '#1e222d' },
           textColor: '#d9d9d9',
@@ -126,6 +131,9 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       // 设置十字线移动事件
       setupCrosshairMoveHandler();
       
+      // 创建指标副图
+      createIndicatorChart();
+      
       // 加载K线数据
       loadKlineData();
       
@@ -133,9 +141,18 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       const handleResize = () => {
         if (!chartContainerRef.current || !chart.current) return;
         
+        const width = chartContainerRef.current.clientWidth;
+        
         chart.current.applyOptions({
-          width: chartContainerRef.current.clientWidth
+          width: width
         });
+        
+        // 同时调整指标副图的大小
+        if (indicatorChart.current && indicatorChartRef.current) {
+          indicatorChart.current.applyOptions({
+            width: width
+          });
+        }
       };
 
       window.addEventListener('resize', handleResize);
@@ -147,6 +164,58 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       console.error('图表初始化错误:', error);
       setError('图表初始化失败');
     }
+  };
+  
+  // 创建指标副图
+  const createIndicatorChart = () => {
+    if (!indicatorChartRef.current) return;
+    
+    try {
+      // 创建指标副图
+      indicatorChart.current = createChart(indicatorChartRef.current, {
+        width: indicatorChartRef.current.clientWidth,
+        height: 150, // 副图高度
+        layout: {
+          background: { color: '#1e222d' },
+          textColor: '#d9d9d9',
+        },
+        grid: {
+          vertLines: { color: '#2e3241' },
+          horzLines: { color: '#2e3241' },
+        },
+        rightPriceScale: {
+          borderColor: '#2e3241',
+        },
+        timeScale: {
+          borderColor: '#2e3241',
+          visible: true,
+        },
+      });
+      
+      // 设置指标副图的十字线移动事件
+      setupIndicatorCrosshairHandler();
+      
+    } catch (error) {
+      console.error('指标副图初始化错误:', error);
+    }
+  };
+  
+  // 设置指标副图的十字线移动事件
+  const setupIndicatorCrosshairHandler = () => {
+    if (!chart.current || !indicatorChart.current) return;
+    
+    // 同步主图和副图的时间轴
+    chart.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (range && indicatorChart.current) {
+        indicatorChart.current.timeScale().setVisibleLogicalRange(range);
+      }
+    });
+    
+    indicatorChart.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      if (range && chart.current) {
+        chart.current.timeScale().setVisibleLogicalRange(range);
+      }
+    });
   };
 
   // 设置十字线移动事件监听
@@ -271,8 +340,30 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
             tooltipRef.current.style.top = `${top}px`;
           });
         }
+        
+        // 同步副图的十字线位置
+        if (indicatorChart.current && param.time) {
+          // 通过设置时间范围来同步十字线位置
+          const visibleRange = indicatorChart.current.timeScale().getVisibleLogicalRange();
+          if (visibleRange) {
+            indicatorChart.current.timeScale().setVisibleLogicalRange(visibleRange);
+          }
+        }
       }
     });
+    
+    // 副图十字线移动事件
+    if (indicatorChart.current) {
+      indicatorChart.current.subscribeCrosshairMove((param) => {
+        if (!param.point || !param.time || !chart.current) return;
+        
+        // 通过设置时间范围来同步十字线位置
+        const visibleRange = chart.current.timeScale().getVisibleLogicalRange();
+        if (visibleRange) {
+          chart.current.timeScale().setVisibleLogicalRange(visibleRange);
+        }
+      });
+    }
   };
 
   // 加载K线数据
@@ -387,6 +478,9 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
             }
           }, 100); // 小延迟确保渲染完成
         }
+        
+        // 添加指标
+        drawIndicators(convertedData);
       }
       
       setLoading(false);
@@ -395,6 +489,95 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       setError('加载K线数据失败');
       setLoading(false);
     }
+  };
+  
+  // 绘制指标
+  const drawIndicators = (klineData: any[]) => {
+    if (!indicatorChart.current || !indicatorChartRef.current || klineData.length === 0) return;
+    
+    try {
+      // 清除旧的指标
+      indicatorSeries.current.forEach(series => {
+        if (indicatorChart.current) {
+          indicatorChart.current.removeSeries(series);
+        }
+      });
+      indicatorSeries.current = [];
+      
+      // 提取收盘价
+      const closePrices = klineData.map(item => item.close);
+      
+      // 计算MA5
+      const ma5Data = calculateMA(closePrices, 5);
+      const ma5Series = indicatorChart.current.addLineSeries({
+        color: '#ff5555',
+        lineWidth: 2,
+        title: 'MA5'
+      });
+      
+      // 计算MA10
+      const ma10Data = calculateMA(closePrices, 10);
+      const ma10Series = indicatorChart.current.addLineSeries({
+        color: '#32a852',
+        lineWidth: 2,
+        title: 'MA10'
+      });
+      
+      // 计算MA20
+      const ma20Data = calculateMA(closePrices, 20);
+      const ma20Series = indicatorChart.current.addLineSeries({
+        color: '#3a7bd5',
+        lineWidth: 2,
+        title: 'MA20'
+      });
+      
+      // 设置数据
+      ma5Series.setData(ma5Data.map((value, index) => ({
+        time: klineData[index].time,
+        value: value
+      })));
+      
+      ma10Series.setData(ma10Data.map((value, index) => ({
+        time: klineData[index].time,
+        value: value
+      })));
+      
+      ma20Series.setData(ma20Data.map((value, index) => ({
+        time: klineData[index].time,
+        value: value
+      })));
+      
+      // 保存指标系列引用
+      indicatorSeries.current.push(ma5Series);
+      indicatorSeries.current.push(ma10Series);
+      indicatorSeries.current.push(ma20Series);
+      
+      // 适应内容
+      indicatorChart.current.timeScale().fitContent();
+      
+    } catch (error) {
+      console.error('绘制指标错误:', error);
+    }
+  };
+  
+  // 计算移动平均线
+  const calculateMA = (data: number[], period: number): number[] => {
+    const result: number[] = [];
+    
+    for (let i = 0; i < data.length; i++) {
+      if (i < period - 1) {
+        result.push(NaN); // 前period-1个点无法计算MA
+        continue;
+      }
+      
+      let sum = 0;
+      for (let j = 0; j < period; j++) {
+        sum += data[i - j];
+      }
+      result.push(sum / period);
+    }
+    
+    return result;
   };
 
   // 绘制交易标记
@@ -450,6 +633,12 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         chart.current.remove();
         chart.current = null;
       }
+      
+      // 清理指标副图
+      if (indicatorChart.current) {
+        indicatorChart.current.remove();
+        indicatorChart.current = null;
+      }
     };
   }, []);
 
@@ -466,7 +655,18 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         ref={chartContainerRef} 
         className="chart" 
         style={{ 
-          height: '500px',
+          height: '400px',
+          visibility: loading ? 'hidden' : 'visible'
+        }}
+      />
+      
+      {/* 指标副图 */}
+      <div 
+        ref={indicatorChartRef} 
+        className="indicator-chart" 
+        style={{ 
+          height: '150px',
+          marginTop: '5px',
           visibility: loading ? 'hidden' : 'visible'
         }}
       />

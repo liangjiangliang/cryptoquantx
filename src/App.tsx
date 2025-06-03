@@ -27,47 +27,47 @@ const HomePage = () => {
       window.removeEventListener('togglePanels', handleTogglePanels as EventListener);
     };
   }, []);
-
+  
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>OKX 加密货币交易平台</h1>
-        <div className="header-tabs">
-          <button 
-            className={`tab-button ${!showBacktestSummaries ? 'active' : ''}`}
-            onClick={() => setShowBacktestSummaries(false)}
-          >
-            回测
-          </button>
-          <Link 
-            to="/backtest-summaries" 
-            className="tab-button"
-          >
-            回测汇总
-          </Link>
-        </div>
-      </header>
-      
-      <main className={`app-content-simplified ${showPanels ? '' : 'panels-hidden'}`}>
-        <div className="main-content">
-          <div className="chart-container">
-            <CandlestickChart />
-          </div>
-        </div>
-        
-        {showPanels && (
-          <div className="right-sidebar">
-            <div className="sidebar-panel">
-              <BacktestPanel />
+            <div className="app">
+              <header className="app-header">
+                <h1>OKX 加密货币交易平台</h1>
+                <div className="header-tabs">
+                  <button 
+                    className={`tab-button ${!showBacktestSummaries ? 'active' : ''}`}
+                    onClick={() => setShowBacktestSummaries(false)}
+                  >
+                    回测
+                  </button>
+                  <Link 
+                    to="/backtest-summaries" 
+                    className="tab-button"
+                  >
+                    回测汇总
+                  </Link>
+                </div>
+              </header>
+              
+              <main className={`app-content-simplified ${showPanels ? '' : 'panels-hidden'}`}>
+                <div className="main-content">
+                  <div className="chart-container">
+                    <CandlestickChart />
+                  </div>
+                </div>
+                
+                {showPanels && (
+                  <div className="right-sidebar">
+                    <div className="sidebar-panel">
+                      <BacktestPanel />
+                    </div>
+                  </div>
+                )}
+              </main>
+              
+              <footer className="app-footer">
+                <p>© 2023 OKX 加密货币交易平台 - 模拟数据仅供演示</p>
+              </footer>
             </div>
-          </div>
-        )}
-      </main>
-      
-      <footer className="app-footer">
-        <p>© 2023 OKX 加密货币交易平台 - 模拟数据仅供演示</p>
-      </footer>
-    </div>
   );
 };
 

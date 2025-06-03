@@ -11,21 +11,21 @@ import './BacktestSummaryPage.css';
 type SortDirection = 'asc' | 'desc';
 
 // 排序字段类型
-type SortField = 
-  | 'id' 
-  | 'createTime' 
-  | 'symbol' 
-  | 'intervalVal' 
-  | 'strategyName' 
-  | 'startTime' 
-  | 'endTime' 
-  | 'initialAmount' 
-  | 'finalAmount' 
-  | 'totalProfit' 
-  | 'totalReturn' 
-  | 'numberOfTrades' 
-  | 'winRate' 
-  | 'maxDrawdown' 
+type SortField =
+  | 'id'
+  | 'createTime'
+  | 'symbol'
+  | 'intervalVal'
+  | 'strategyName'
+  | 'startTime'
+  | 'endTime'
+  | 'initialAmount'
+  | 'finalAmount'
+  | 'totalProfit'
+  | 'totalReturn'
+  | 'numberOfTrades'
+  | 'winRate'
+  | 'maxDrawdown'
   | 'sharpeRatio';
 
 // 过滤器类型
@@ -40,25 +40,25 @@ const BacktestSummaryPage: React.FC = () => {
   const backtestSummaries = useSelector((state: AppState) => state.backtestSummaries);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // 排序状态
   const [sortField, setSortField] = useState<SortField>('createTime');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  
+
   // 过滤状态
   const [filters, setFilters] = useState<Filters>({
     symbol: '',
     intervalVal: '',
     strategyName: ''
   });
-  
+
   // 过滤后的数据
   const [filteredData, setFilteredData] = useState<BacktestSummary[]>([]);
 
   useEffect(() => {
     loadBacktestSummaries();
   }, []);
-  
+
   // 当原始数据或过滤条件变化时，更新过滤后的数据
   useEffect(() => {
     filterAndSortData();
@@ -82,7 +82,7 @@ const BacktestSummaryPage: React.FC = () => {
     // 处理负数
     const isNegative = amount < 0;
     const absAmount = Math.abs(amount);
-    
+
     let formattedValue: string;
     if (absAmount >= 1000000000) {
       formattedValue = `${(absAmount / 1000000000).toFixed(2)}B`;
@@ -93,10 +93,10 @@ const BacktestSummaryPage: React.FC = () => {
     } else {
       formattedValue = absAmount.toFixed(2);
     }
-    
+
     return isNegative ? `-${formattedValue}` : formattedValue;
   };
-  
+
   // 处理排序
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -108,7 +108,7 @@ const BacktestSummaryPage: React.FC = () => {
       setSortDirection('desc');
     }
   };
-  
+
   // 处理过滤器变化
   const handleFilterChange = (field: keyof Filters, value: string) => {
     setFilters(prev => ({
@@ -116,35 +116,35 @@ const BacktestSummaryPage: React.FC = () => {
       [field]: value
     }));
   };
-  
+
   // 过滤和排序数据
   const filterAndSortData = () => {
     // 先过滤
     let result = [...backtestSummaries];
-    
+
     if (filters.symbol) {
-      result = result.filter(item => 
+      result = result.filter(item =>
         item.symbol.toLowerCase().includes(filters.symbol.toLowerCase())
       );
     }
-    
+
     if (filters.intervalVal) {
-      result = result.filter(item => 
+      result = result.filter(item =>
         item.intervalVal.toLowerCase().includes(filters.intervalVal.toLowerCase())
       );
     }
-    
+
     if (filters.strategyName) {
-      result = result.filter(item => 
+      result = result.filter(item =>
         item.strategyName.toLowerCase().includes(filters.strategyName.toLowerCase())
       );
     }
-    
+
     // 再排序
     result.sort((a, b) => {
       let valueA: any;
       let valueB: any;
-      
+
       // 根据排序字段获取对应的值
       switch (sortField) {
         case 'id':
@@ -211,33 +211,33 @@ const BacktestSummaryPage: React.FC = () => {
           valueA = a.id;
           valueB = b.id;
       }
-      
+
       // 字符串比较
       if (typeof valueA === 'string' && typeof valueB === 'string') {
-        return sortDirection === 'asc' 
+        return sortDirection === 'asc'
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
       }
-      
+
       // 数值比较
-      return sortDirection === 'asc' 
-        ? valueA - valueB 
+      return sortDirection === 'asc'
+        ? valueA - valueB
         : valueB - valueA;
     });
-    
+
     setFilteredData(result);
   };
-  
+
   // 渲染排序图标
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
       return <span className="sort-icon">⇅</span>;
     }
-    return sortDirection === 'asc' 
-      ? <span className="sort-icon active">↑</span> 
+    return sortDirection === 'asc'
+      ? <span className="sort-icon active">↑</span>
       : <span className="sort-icon active">↓</span>;
   };
-  
+
   // 获取唯一的筛选选项
   const getUniqueValues = (field: keyof BacktestSummary) => {
     const values = new Set<string>();
@@ -254,7 +254,7 @@ const BacktestSummaryPage: React.FC = () => {
       <div className="backtest-summary-header">
         <h2>回测汇总</h2>
         <div className="header-actions">
-          <button 
+          <button
             className="refresh-button"
             onClick={loadBacktestSummaries}
             disabled={loading}
@@ -266,13 +266,13 @@ const BacktestSummaryPage: React.FC = () => {
       </div>
 
       {error && <div className="error-message">{error}</div>}
-      
+
       {/* 过滤器 */}
       <div className="filters-container">
         <div className="filter-item">
           <label>交易对:</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={filters.symbol}
             onChange={(e) => handleFilterChange('symbol', e.target.value)}
             placeholder="筛选交易对"
@@ -280,8 +280,8 @@ const BacktestSummaryPage: React.FC = () => {
         </div>
         <div className="filter-item">
           <label>时间周期:</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={filters.intervalVal}
             onChange={(e) => handleFilterChange('intervalVal', e.target.value)}
             placeholder="筛选时间周期"
@@ -289,8 +289,8 @@ const BacktestSummaryPage: React.FC = () => {
         </div>
         <div className="filter-item">
           <label>策略:</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={filters.strategyName}
             onChange={(e) => handleFilterChange('strategyName', e.target.value)}
             placeholder="筛选策略"
@@ -370,7 +370,7 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{formatAmount(summary.finalAmount)}</td>
                   <td>{formatAmount(summary.totalProfit)}</td>
                   <td className={summary.totalReturn >= 0 ? 'positive' : 'negative'}>
-                    {formatPercentage(summary.totalReturn / 100)}
+                    {formatPercentage(summary.totalReturn * 100)}
                   </td>
                   <td>{summary.numberOfTrades}</td>
                   <td>{(summary.winRate * 100).toFixed(2)}%</td>
@@ -378,8 +378,8 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{summary.sharpeRatio.toFixed(2)}</td>
                   <td>{summary.createTime.substring(0, 10)}</td>
                   <td>
-                    <Link 
-                      to={`/backtest-detail/${summary.backtestId}`} 
+                    <Link
+                      to={`/backtest-detail/${summary.backtestId}`}
                       className="detail-button"
                     >
                       交易详情
@@ -395,4 +395,4 @@ const BacktestSummaryPage: React.FC = () => {
   );
 };
 
-export default BacktestSummaryPage; 
+export default BacktestSummaryPage;
