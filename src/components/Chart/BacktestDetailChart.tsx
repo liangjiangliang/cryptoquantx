@@ -593,21 +593,21 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         const entryDate = trade.entryTime.split(' ')[0];
         const exitDate = trade.exitTime.split(' ')[0];
         
-        // 添加入场标记
+        // 添加入场标记 - 使用与主图相同的颜色
         markers.push({
           time: entryDate,
           position: trade.type === 'BUY' ? 'belowBar' : 'aboveBar',
-          color: trade.type === 'BUY' ? '#26a69a' : '#ef5350',
+          color: trade.type === 'BUY' ? '#00FFFF' : '#FF00FF', // 买入青色，卖出品红色
           shape: trade.type === 'BUY' ? 'arrowUp' : 'arrowDown',
           text: `${trade.type === 'BUY' ? '买入' : '卖出'} ${formatPrice(trade.entryPrice)}`,
           size: 2,
         });
         
-        // 添加出场标记
+        // 添加出场标记 - 使用与主图相同的颜色
         markers.push({
           time: exitDate,
           position: trade.type === 'BUY' ? 'aboveBar' : 'belowBar',
-          color: trade.type === 'BUY' ? '#ef5350' : '#26a69a',
+          color: trade.type === 'BUY' ? '#FFFF00' : '#00FF00', // 买入平仓黄色，卖出平仓绿色
           shape: trade.type === 'BUY' ? 'arrowDown' : 'arrowUp',
           text: `平仓 ${formatPrice(trade.exitPrice)} (${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})`,
           size: 2,
@@ -719,7 +719,7 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
           <div className="tooltip-row">
             <span className="tooltip-label">涨跌:</span>
             <span style={{
-              color: parseFloat(hoveredData.change) >= 0 ? '#26a69a' : '#ef5350',
+              color: parseFloat(hoveredData.change) >= 0 ? '#ff5555' : '#32a852',
               fontWeight: '500'
             }}>
               {hoveredData.change} ({hoveredData.changePercent}%)

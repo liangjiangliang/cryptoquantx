@@ -125,11 +125,11 @@
 }
 
 .summary-item .value.positive {
-  color: #26a69a;
+  color: #ff5555;
 }
 
 .summary-item .value.negative {
-  color: #ef5350;
+  color: #32a852;
 }
 
 .trades-table {
@@ -192,19 +192,19 @@
 }
 
 .trades-table td.buy {
-  color: #26a69a;
+  color: #ff5555;
 }
 
 .trades-table td.sell {
-  color: #ef5350;
+  color: #32a852;
 }
 
 .trades-table td.positive {
-  color: #26a69a;
+  color: #ff5555;
 }
 
 .trades-table td.negative {
-  color: #ef5350;
+  color: #32a852;
 }
 
 .trades-table .percentage {

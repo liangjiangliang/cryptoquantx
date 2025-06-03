@@ -147,19 +147,19 @@
 }
 
 .positive {
-  color: #4caf50;
+  color: #ff5555;
 }
 
 .negative {
-  color: #ff6b6b;
+  color: #32a852;
 }
 
 .buy {
-  color: #4caf50;
+  color: #ff5555;
 }
 
 .sell {
-  color: #ff6b6b;
+  color: #32a852;
 }
 
 .backtest-chart-container {
