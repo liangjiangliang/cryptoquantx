@@ -10,8 +10,9 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  padding-bottom: 15px;
+  padding: 0;
   border-bottom: 1px solid #2a2a3a;
+  height: 60px;
 }
 
 .backtest-summary-header h2 {

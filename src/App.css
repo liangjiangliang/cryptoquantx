@@ -26,11 +26,12 @@ body {
 .app-header {
   background-color: #16213e;
   color: white;
-  padding: 10px 20px;
+  padding: 0 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #2a2a3a;
+  height: 60px; /* 设置固定高度 */
 }
 
 .app-header h1 {
