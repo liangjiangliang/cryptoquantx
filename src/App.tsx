@@ -8,6 +8,7 @@ import BacktestSummaries from './components/Backtest/BacktestSummaries';
 import BacktestSummaryPage from './pages/BacktestSummaryPage';
 import BacktestDetailPage from './pages/BacktestDetailPage';
 import DataLoader from './components/DataLoader';
+import GlobalNavbar from './components/GlobalNavbar';
 import Logo from './components/Logo';
 import './App.css';
 
@@ -30,39 +31,27 @@ const HomePage = () => {
   }, []);
   
   return (
-            <div className="app">
-              <header className="app-header">
-                <Logo />
-                <div className="header-tabs">
-                  <Link 
-                    to="/backtest-summaries" 
-                    className="tab-button"
-                  >
-                    回测汇总
-                  </Link>
-                </div>
-              </header>
-              
-              <main className={`app-content-simplified ${showPanels ? '' : 'panels-hidden'}`}>
-                <div className="main-content">
-                  <div className="chart-container">
-                    <CandlestickChart />
-                  </div>
-                </div>
-                
-                {showPanels && (
-                  <div className="right-sidebar">
-                    <div className="sidebar-panel">
-                      <BacktestPanel />
-                    </div>
-                  </div>
-                )}
-              </main>
-              
-              <footer className="app-footer">
-                <p>© 2023 OKX 加密货币交易平台 - 模拟数据仅供演示</p>
-              </footer>
+    <div className="app">
+      <main className={`app-content-simplified ${showPanels ? '' : 'panels-hidden'}`}>
+        <div className="main-content">
+          <div className="chart-container">
+            <CandlestickChart />
+          </div>
+        </div>
+        
+        {showPanels && (
+          <div className="right-sidebar">
+            <div className="sidebar-panel">
+              <BacktestPanel />
             </div>
+          </div>
+        )}
+      </main>
+      
+      <footer className="app-footer">
+        <p>© 2023 OKX 加密货币交易平台 - 模拟数据仅供演示</p>
+      </footer>
+    </div>
   );
 };
 
@@ -89,11 +78,14 @@ function App() {
     <Provider store={store}>
       <Router>
         <RouteChangeHandler />
-        <Routes>
-          <Route path="/backtest-summaries" element={<BacktestSummaryPage />} />
-          <Route path="/backtest-detail/:backtestId" element={<BacktestDetailPage />} />
-          <Route path="/" element={<HomePage />} />
-        </Routes>
+        <GlobalNavbar />
+        <div className="app-container">
+          <Routes>
+            <Route path="/backtest-summaries" element={<BacktestSummaryPage />} />
+            <Route path="/backtest-detail/:backtestId" element={<BacktestDetailPage />} />
+            <Route path="/" element={<HomePage />} />
+          </Routes>
+        </div>
         {/* 数据加载器 */}
         <DataLoader />
       </Router>

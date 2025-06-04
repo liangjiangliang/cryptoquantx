@@ -282,20 +282,6 @@ const BacktestSummaryPage: React.FC = () => {
 
   return (
     <div className="backtest-summary-page">
-      <div className="backtest-summary-header">
-        <Logo />
-        <div className="header-actions">
-          <button
-            className="refresh-button"
-            onClick={loadBacktestSummaries}
-            disabled={loading}
-          >
-            {loading ? '加载中...' : '刷新数据'}
-          </button>
-          <Link to="/" className="back-button">返回主页</Link>
-        </div>
-      </div>
-
       {error && <div className="error-message">{error}</div>}
 
       {/* 过滤器 */}
@@ -335,6 +321,15 @@ const BacktestSummaryPage: React.FC = () => {
               <option key={value} value={value}>{value}</option>
             ))}
           </select>
+        </div>
+        <div className="filter-action">
+          <button
+            className="refresh-button"
+            onClick={loadBacktestSummaries}
+            disabled={loading}
+          >
+            {loading ? '加载中...' : '刷新数据'}
+          </button>
         </div>
       </div>
 

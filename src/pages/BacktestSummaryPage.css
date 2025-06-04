@@ -1,8 +1,13 @@
 .backtest-summary-page {
   padding: 20px;
   background-color: #171b26;
-  min-height: 100vh;
+  height: calc(100vh - 60px);
   color: #e6e6e6;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: fixed;
+  width: calc(100% - 40px);
 }
 
 .backtest-summary-header {
@@ -145,8 +150,11 @@
 }
 
 .summary-table-container {
-  overflow-x: auto;
+  overflow-y: auto;
+  flex-grow: 1;
   margin-top: 20px;
+  margin-bottom: 20px;
+  max-height: calc(100vh - 240px);
 }
 
 .summary-table {
@@ -208,7 +216,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 0;
   padding: 10px;
   background-color: #1e2233;
   border-radius: 4px;
@@ -256,4 +264,25 @@
   color: #e6e6e6;
   border: 1px solid #3a4157;
   border-radius: 4px;
+}
+
+.filter-action {
+  display: flex;
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.filter-action .refresh-button {
+  height: 37px;
+  margin-bottom: 0;
+}
+
+body {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  overflow: hidden;
 } 

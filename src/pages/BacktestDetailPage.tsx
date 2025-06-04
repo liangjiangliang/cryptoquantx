@@ -95,10 +95,13 @@ const BacktestDetailPage: React.FC = () => {
   return (
     <div className="backtest-detail-page">
       <div className="backtest-detail-header">
-        <h2>回测交易详情</h2>
         <div className="header-actions">
-          <Link to="/" className="home-button">返回首页</Link>
-          <Link to="/backtest-summaries" className="back-button">返回回测汇总</Link>
+          <Link to="/backtest-summaries" className="back-to-summary-button">
+            回测汇总
+          </Link>
+          <button onClick={() => loadBacktestDetail(backtestId || '')} className="refresh-button">
+            {loading ? '加载中...' : '刷新数据'}
+          </button>
         </div>
       </div>
 
