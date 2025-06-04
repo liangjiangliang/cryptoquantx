@@ -201,4 +201,59 @@
 
 .detail-button:hover {
   background-color: #1a3daf;
+}
+
+/* 添加分页样式 */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #1e2233;
+  border-radius: 4px;
+}
+
+.pagination-button {
+  padding: 6px 12px;
+  margin: 0 5px;
+  background-color: #2a3042;
+  color: #e6e6e6;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #3a4157;
+}
+
+.pagination-button:disabled {
+  background-color: #242a38;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.pagination-info {
+  margin: 0 15px;
+  font-size: 14px;
+  color: #e6e6e6;
+}
+
+.page-size-selector {
+  margin-left: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #e6e6e6;
+}
+
+.page-size-selector select {
+  margin: 0 8px;
+  padding: 4px 8px;
+  background-color: #2a3042;
+  color: #e6e6e6;
+  border: 1px solid #3a4157;
+  border-radius: 4px;
 } 

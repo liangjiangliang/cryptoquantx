@@ -24,6 +24,7 @@ type SortField =
   | 'totalProfit'
   | 'totalReturn'
   | 'totalFee'
+  | 'feeRate'
   | 'numberOfTrades'
   | 'winRate'
   | 'maxDrawdown'
@@ -45,6 +46,10 @@ const BacktestSummaryPage: React.FC = () => {
   // 排序状态
   const [sortField, setSortField] = useState<SortField>('createTime');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(16);
 
   // 过滤状态
   const [filters, setFilters] = useState<Filters>({
@@ -196,6 +201,10 @@ const BacktestSummaryPage: React.FC = () => {
           valueA = a.totalFee;
           valueB = b.totalFee;
           break;
+        case 'feeRate':
+          valueA = a.totalFee / a.initialAmount;
+          valueB = b.totalFee / b.initialAmount;
+          break;
         case 'numberOfTrades':
           valueA = a.numberOfTrades;
           valueB = b.numberOfTrades;
@@ -222,7 +231,7 @@ const BacktestSummaryPage: React.FC = () => {
         return sortDirection === 'asc'
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
-    }
+      }
 
       // 数值比较
       return sortDirection === 'asc'
@@ -230,6 +239,8 @@ const BacktestSummaryPage: React.FC = () => {
         : valueB - valueA;
     });
 
+    // 在设置filtered数据时重置到第一页
+    setCurrentPage(1);
     setFilteredData(result);
   };
 
@@ -254,12 +265,26 @@ const BacktestSummaryPage: React.FC = () => {
     return Array.from(values).sort();
   };
 
+  // 页面处理函数
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // 计算总页数
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+
+  // 获取当前页的数据
+  const currentPageData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
     <div className="backtest-summary-page">
       <div className="backtest-summary-header">
         <h2>回测汇总</h2>
         <div className="header-actions">
-          <button 
+          <button
             className="refresh-button"
             onClick={loadBacktestSummaries}
             disabled={loading}
@@ -346,6 +371,9 @@ const BacktestSummaryPage: React.FC = () => {
                 <th onClick={() => handleSort('totalFee')} className="sortable-header">
                   手续费 {renderSortIcon('totalFee')}
                 </th>
+                <th onClick={() => handleSort('feeRate')} className="sortable-header">
+                  手续费率 {renderSortIcon('feeRate')}
+                </th>
                 <th onClick={() => handleSort('numberOfTrades')} className="sortable-header">
                   交易次数 {renderSortIcon('numberOfTrades')}
                 </th>
@@ -365,7 +393,7 @@ const BacktestSummaryPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((summary) => (
+              {currentPageData.map((summary) => (
                 <tr key={summary.id}>
                   <td>{summary.id}</td>
                   <td>{summary.symbol}</td>
@@ -381,14 +409,15 @@ const BacktestSummaryPage: React.FC = () => {
                     {formatPercentage(summary.totalReturn * 100)}
                   </td>
                   <td>{formatAmount(summary.totalFee)}</td>
+                  <td>{((summary.totalFee / summary.initialAmount) * 100).toFixed(2)}%</td>
                   <td>{summary.numberOfTrades}</td>
                   <td>{(summary.winRate * 100).toFixed(2)}%</td>
                   <td>{(summary.maxDrawdown * 100).toFixed(2)}%</td>
                   <td>{summary.sharpeRatio.toFixed(2)}</td>
                   <td>{summary.createTime.substring(0, 10)}</td>
                   <td>
-                    <Link 
-                      to={`/backtest-detail/${summary.backtestId}`} 
+                    <Link
+                      to={`/backtest-detail/${summary.backtestId}`}
                       className="detail-button"
                     >
                       交易详情
@@ -400,8 +429,61 @@ const BacktestSummaryPage: React.FC = () => {
           </table>
         </div>
       )}
+
+      {/* 分页控制 */}
+      {filteredData.length > 0 && (
+        <div className="pagination-container">
+          <button
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+            className="pagination-button"
+          >
+            首页
+          </button>
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="pagination-button"
+          >
+            上一页
+          </button>
+          <div className="pagination-info">
+            {currentPage} / {totalPages} 页 (共 {filteredData.length} 条记录)
+          </div>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="pagination-button"
+          >
+            下一页
+          </button>
+          <button
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            className="pagination-button"
+          >
+            末页
+          </button>
+          <div className="page-size-selector">
+            每页
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            条
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default BacktestSummaryPage; 
+export default BacktestSummaryPage;
