@@ -1,12 +1,13 @@
 .backtest-detail-chart-container {
   position: relative;
   width: 100%;
-  margin: 20px 0;
+  margin: 0;
+  margin-bottom: 0; /* 确保底部无间距 */
   border-radius: 6px;
   overflow: hidden;
   background-color: #1e222d;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  min-height: calc(100vh - 200px); /* 确保最小高度填充视口 */
+  min-height: calc(100vh - 400px); /* 减小最小高度 */
   display: flex;
   flex-direction: column;
 }
@@ -44,17 +45,11 @@
 
 .chart {
   width: 100%;
-  height: 500px; /* 增加主图高度 */
-  flex: 3; /* 增加主图所占比例 */
+  height: 450px; /* 减小图表高度 */
+  flex: 1; /* 让主图占据所有可用空间 */
 }
 
-/* 指标副图样式 */
-.indicator-chart {
-  width: 100%;
-  height: 150px;
-  border-top: 1px solid #2e3241;
-  flex: 1;
-}
+/* 移除指标副图样式 */
 
 .chart-loading {
   position: absolute;

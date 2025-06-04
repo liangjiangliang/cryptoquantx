@@ -23,6 +23,7 @@ type SortField =
   | 'finalAmount'
   | 'totalProfit'
   | 'totalReturn'
+  | 'totalFee'
   | 'numberOfTrades'
   | 'winRate'
   | 'maxDrawdown'
@@ -191,6 +192,10 @@ const BacktestSummaryPage: React.FC = () => {
           valueA = a.totalReturn;
           valueB = b.totalReturn;
           break;
+        case 'totalFee':
+          valueA = a.totalFee;
+          valueB = b.totalFee;
+          break;
         case 'numberOfTrades':
           valueA = a.numberOfTrades;
           valueB = b.numberOfTrades;
@@ -217,7 +222,7 @@ const BacktestSummaryPage: React.FC = () => {
         return sortDirection === 'asc'
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
-      }
+    }
 
       // 数值比较
       return sortDirection === 'asc'
@@ -254,7 +259,7 @@ const BacktestSummaryPage: React.FC = () => {
       <div className="backtest-summary-header">
         <h2>回测汇总</h2>
         <div className="header-actions">
-          <button
+          <button 
             className="refresh-button"
             onClick={loadBacktestSummaries}
             disabled={loading}
@@ -338,6 +343,9 @@ const BacktestSummaryPage: React.FC = () => {
                 <th onClick={() => handleSort('totalReturn')} className="sortable-header">
                   收益率 {renderSortIcon('totalReturn')}
                 </th>
+                <th onClick={() => handleSort('totalFee')} className="sortable-header">
+                  手续费 {renderSortIcon('totalFee')}
+                </th>
                 <th onClick={() => handleSort('numberOfTrades')} className="sortable-header">
                   交易次数 {renderSortIcon('numberOfTrades')}
                 </th>
@@ -372,14 +380,15 @@ const BacktestSummaryPage: React.FC = () => {
                   <td className={summary.totalReturn >= 0 ? 'positive' : 'negative'}>
                     {formatPercentage(summary.totalReturn * 100)}
                   </td>
+                  <td>{formatAmount(summary.totalFee)}</td>
                   <td>{summary.numberOfTrades}</td>
                   <td>{(summary.winRate * 100).toFixed(2)}%</td>
                   <td>{(summary.maxDrawdown * 100).toFixed(2)}%</td>
                   <td>{summary.sharpeRatio.toFixed(2)}</td>
                   <td>{summary.createTime.substring(0, 10)}</td>
                   <td>
-                    <Link
-                      to={`/backtest-detail/${summary.backtestId}`}
+                    <Link 
+                      to={`/backtest-detail/${summary.backtestId}`} 
                       className="detail-button"
                     >
                       交易详情
@@ -395,4 +404,4 @@ const BacktestSummaryPage: React.FC = () => {
   );
 };
 
-export default BacktestSummaryPage;
+export default BacktestSummaryPage; 

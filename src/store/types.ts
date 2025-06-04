@@ -30,6 +30,7 @@ export interface BacktestSummary {
   totalReturn: number;
   unprofitableTrades: number;
   winRate: number;
+  totalFee: number;
 }
 
 // 订单簿数据类型

@@ -6,11 +6,16 @@ import { formatPercentage } from '../utils/helpers';
 import BacktestDetailChart from '../components/Chart/BacktestDetailChart';
 import './BacktestDetailPage.css';
 
+// 每页显示的交易记录数量
+const TRADES_PER_PAGE = 15;
+
 const BacktestDetailPage: React.FC = () => {
   const { backtestId } = useParams<{ backtestId: string }>();
   const [tradeDetails, setTradeDetails] = useState<BacktestTradeDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 添加分页状态
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (backtestId) {
@@ -24,6 +29,8 @@ const BacktestDetailPage: React.FC = () => {
     try {
       const details = await fetchBacktestDetail(id);
       setTradeDetails(details);
+      // 重置到第一页
+      setCurrentPage(1);
     } catch (err) {
       setError('获取回测详情数据失败，请稍后重试');
       console.error('获取回测详情数据失败:', err);
@@ -48,12 +55,12 @@ const BacktestDetailPage: React.FC = () => {
     if (tradeDetails.length === 0) {
       return { startTime: '', endTime: '', symbol: '' };
     }
-    
+
     // 找出最早的入场时间和最晚的出场时间
     let earliestEntryTime = tradeDetails[0].entryTime;
     let latestExitTime = tradeDetails[0].exitTime;
     let symbol = tradeDetails[0].symbol;
-    
+
     tradeDetails.forEach(trade => {
       if (new Date(trade.entryTime) < new Date(earliestEntryTime)) {
         earliestEntryTime = trade.entryTime;
@@ -62,8 +69,25 @@ const BacktestDetailPage: React.FC = () => {
         latestExitTime = trade.exitTime;
       }
     });
-    
+
     return { startTime: earliestEntryTime, endTime: latestExitTime, symbol };
+  };
+
+  // 计算总页数
+  const getTotalPages = () => {
+    return Math.ceil(tradeDetails.length / TRADES_PER_PAGE);
+  };
+
+  // 获取当前页的交易记录
+  const getCurrentPageTrades = () => {
+    const startIndex = (currentPage - 1) * TRADES_PER_PAGE;
+    const endIndex = startIndex + TRADES_PER_PAGE;
+    return tradeDetails.slice(startIndex, endIndex);
+  };
+
+  // 处理页面变更
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   const { startTime, endTime, symbol } = getBacktestTimeRange();
@@ -127,6 +151,7 @@ const BacktestDetailPage: React.FC = () => {
                   <th>出场时间</th>
                   <th>出场价格</th>
                   <th>出场金额</th>
+                  <th>手续费</th>
                   <th>盈亏</th>
                   <th>收益率</th>
                   <th>总资产</th>
@@ -134,7 +159,7 @@ const BacktestDetailPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {tradeDetails.map((trade) => (
+                {getCurrentPageTrades().map((trade) => (
                   <tr key={trade.id}>
                     <td>{trade.index}</td>
                     <td className={trade.type === 'BUY' ? 'buy' : 'sell'}>
@@ -146,11 +171,12 @@ const BacktestDetailPage: React.FC = () => {
                     <td>{formatDateTime(trade.exitTime)}</td>
                     <td>{formatAmount(trade.exitPrice)}</td>
                     <td>{formatAmount(trade.exitAmount)}</td>
+                    <td>{trade.fee ? formatAmount(trade.fee) : '0.00'}</td>
                     <td className={trade.profit >= 0 ? 'positive' : 'negative'}>
                       {trade.profit >= 0 ? '+' : ''}{formatAmount(trade.profit)}
                     </td>
                     <td className={trade.profitPercentage >= 0 ? 'positive' : 'negative'}>
-                      {formatPercentage(trade.profitPercentage)}
+                      {formatPercentage(trade.profitPercentage*100)}
                     </td>
                     <td>{formatAmount(trade.totalAssets)}</td>
                     <td>{formatPercentage(trade.maxDrawdown)}</td>
@@ -158,6 +184,29 @@ const BacktestDetailPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
+
+            {/* 添加分页控制 */}
+            {tradeDetails.length > TRADES_PER_PAGE && (
+              <div className="pagination">
+                <button
+                  className="pagination-button"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  上一页
+                </button>
+                <span className="pagination-info">
+                  {currentPage} / {getTotalPages()}
+                </span>
+                <button
+                  className="pagination-button"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === getTotalPages()}
+                >
+                  下一页
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -165,4 +214,4 @@ const BacktestDetailPage: React.FC = () => {
   );
 };
 
-export default BacktestDetailPage; 
+export default BacktestDetailPage;

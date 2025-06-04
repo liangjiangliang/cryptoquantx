@@ -36,6 +36,7 @@ const BacktestPanel: React.FC = () => {
   const dateRange = useSelector((state: AppState) => state.dateRange);
 
   const [initialCapital, setInitialCapital] = useState<string>('10000');
+  const [feeRatio, setFeeRatio] = useState<string>('0.001'); // 默认手续费率0.1%
   const [strategy, setStrategy] = useState<string>('');
   const [strategies, setStrategies] = useState<{[key: string]: Strategy}>({});
   const [loading, setLoading] = useState<boolean>(true);
@@ -113,8 +114,8 @@ const BacktestPanel: React.FC = () => {
       const formattedStartTime = `${dateRange.startDate} 00:00:00`;
       const formattedEndTime = `${dateRange.endDate} 23:59:59`;
 
-      // 构建API URL
-      const url = `/api/api/backtest/ta4j/run?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialCapital}&strategyType=${strategy}&symbol=${selectedPair}&interval=${timeframe}&saveResult=True`;
+      // 构建API URL，添加手续费参数
+      const url = `/api/api/backtest/ta4j/run?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialCapital}&strategyType=${strategy}&symbol=${selectedPair}&interval=${timeframe}&saveResult=True&feeRatio=${feeRatio}`;
 
       console.log('发送回测请求:', url);
 
@@ -240,6 +241,19 @@ const BacktestPanel: React.FC = () => {
             </div>
 
             <div className="input-group">
+              <label>手续费率</label>
+              <input
+                type="number"
+                value={feeRatio}
+                onChange={(e) => setFeeRatio(e.target.value)}
+                min="0"
+                max="0.01"
+                step="0.0001"
+                placeholder="例如：0.001 表示 0.1%"
+              />
+            </div>
+
+            <div className="input-group">
               <label>交易策略</label>
               {loading ? (
                 <div className="loading-strategies">加载策略中...</div>
@@ -333,11 +347,11 @@ const BacktestPanel: React.FC = () => {
               </div>
               <div className="summary-item">
                 <span className="label">最大回撤</span>
-                <span className="value">{backtestResults.maxDrawdown}%</span>
+                <span className="value">{formatPercentage(backtestResults.maxDrawdown)}</span>
               </div>
               <div className="summary-item">
                 <span className="label">夏普比率</span>
-                <span className="value">{backtestResults.sharpeRatio}</span>
+                <span className="value">{backtestResults.sharpeRatio.toFixed(2)}</span>
               </div>
             </div>
 
