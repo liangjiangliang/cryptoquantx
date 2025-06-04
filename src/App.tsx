@@ -8,6 +8,7 @@ import BacktestSummaries from './components/Backtest/BacktestSummaries';
 import BacktestSummaryPage from './pages/BacktestSummaryPage';
 import BacktestDetailPage from './pages/BacktestDetailPage';
 import DataLoader from './components/DataLoader';
+import Logo from './components/Logo';
 import './App.css';
 
 // 首页组件，用于包装首页内容
@@ -31,14 +32,8 @@ const HomePage = () => {
   return (
             <div className="app">
               <header className="app-header">
-                <h1>OKX 加密货币交易平台</h1>
+                <Logo />
                 <div className="header-tabs">
-                  <button 
-                    className={`tab-button ${!showBacktestSummaries ? 'active' : ''}`}
-                    onClick={() => setShowBacktestSummaries(false)}
-                  >
-                    回测
-                  </button>
                   <Link 
                     to="/backtest-summaries" 
                     className="tab-button"

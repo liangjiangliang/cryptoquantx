@@ -5,6 +5,7 @@ import { AppState, BacktestSummary } from '../store/types';
 import { setBacktestSummaries } from '../store/actions';
 import { fetchBacktestSummaries } from '../services/api';
 import { formatPercentage } from '../utils/helpers';
+import Logo from '../components/Logo';
 import './BacktestSummaryPage.css';
 
 // 排序方向类型
@@ -282,7 +283,7 @@ const BacktestSummaryPage: React.FC = () => {
   return (
     <div className="backtest-summary-page">
       <div className="backtest-summary-header">
-        <h2>回测汇总</h2>
+        <Logo />
         <div className="header-actions">
           <button
             className="refresh-button"
@@ -301,30 +302,39 @@ const BacktestSummaryPage: React.FC = () => {
       <div className="filters-container">
         <div className="filter-item">
           <label>交易对:</label>
-          <input
-            type="text"
+          <select
             value={filters.symbol}
             onChange={(e) => handleFilterChange('symbol', e.target.value)}
-            placeholder="筛选交易对"
-          />
+          >
+            <option value="">全部交易对</option>
+            {getUniqueValues('symbol').map(value => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
         </div>
         <div className="filter-item">
           <label>时间周期:</label>
-          <input
-            type="text"
+          <select
             value={filters.intervalVal}
             onChange={(e) => handleFilterChange('intervalVal', e.target.value)}
-            placeholder="筛选时间周期"
-          />
+          >
+            <option value="">全部时间周期</option>
+            {getUniqueValues('intervalVal').map(value => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
         </div>
         <div className="filter-item">
           <label>策略:</label>
-          <input
-            type="text"
+          <select
             value={filters.strategyName}
             onChange={(e) => handleFilterChange('strategyName', e.target.value)}
-            placeholder="筛选策略"
-          />
+          >
+            <option value="">全部策略</option>
+            {getUniqueValues('strategyName').map(value => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -473,7 +483,7 @@ const BacktestSummaryPage: React.FC = () => {
                 setCurrentPage(1);
               }}
             >
-              <option value={10}>10</option>
+              <option value={pageSize}>{pageSize}</option>
               <option value={20}>20</option>
               <option value={50}>50</option>
               <option value={100}>100</option>
