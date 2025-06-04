@@ -303,32 +303,30 @@
 }
 
 /* 添加重置按钮的特殊样式，当它在分页器中时 */
-.pagination .reset-backtest-button {
-  margin-left: 20px; /* 与分页按钮保持一定距离 */
-  background-color: #2962ff; /* 与运行回测按钮保持一致 */
+.pagination .reset-backtest-button,
+.pagination-button,
+.pagination .detail-button {
+  height: 36px;
+  box-sizing: border-box;
+  margin: 0 5px;
+  background-color: #2962ff;
   color: white;
-  padding: 8px 16px;
-  font-size: 14px;
-}
-
-.pagination .reset-backtest-button:hover {
-  background-color: #1e4bd8; /* 与运行回测按钮悬停效果一致 */
-}
-
-.pagination-button {
-  background-color: rgb(41, 98, 255); /* 与运行回测按钮保持一致 */
   border: none;
   border-radius: 4px;
-  color: white;
-  padding: 8px 16px;
+  padding: 0 16px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.pagination-button:hover:not(:disabled) {
-  background-color: #1e4bd8; /* 与运行回测按钮悬停效果一致 */
+.pagination .reset-backtest-button:hover,
+.pagination-button:hover:not(:disabled),
+.pagination .detail-button:hover {
+  background-color: #1e4bd8;
 }
 
 .pagination-button:disabled {

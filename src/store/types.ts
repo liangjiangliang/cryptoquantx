@@ -87,6 +87,7 @@ export interface BacktestResults {
   maxDrawdown: number;
   sharpeRatio: number;
   trades: BacktestTrade[];
+  backtestId?: string;
 }
 
 // 用户订单类型

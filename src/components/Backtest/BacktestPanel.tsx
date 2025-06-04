@@ -5,6 +5,7 @@ import { startBacktest, finishBacktest, setSelectedPair, setTimeframe, setDateRa
 import { formatDate, formatPrice, formatPercentage } from '../../utils/helpers';
 import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
+import { Link } from 'react-router-dom';
 
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
@@ -142,6 +143,7 @@ const BacktestPanel: React.FC = () => {
           winRate: data.data.winRate * 100, // 转换为百分比
           maxDrawdown: data.data.maxDrawdown * 100, // 转换为百分比
           sharpeRatio: data.data.sharpeRatio,
+          backtestId: data.data.backtestId || String(Date.now()), // 保存backtestId
           trades: (data.data.trades || []).map((trade: any) => ({
             id: String(trade.index || Math.random()),
             entryTime: new Date(trade.entryTime).getTime() / 1000,
@@ -409,6 +411,14 @@ const BacktestPanel: React.FC = () => {
                   >
                     下一页
                   </button>
+                  
+                  <Link 
+                    to={`/backtest-detail/${backtestResults.backtestId || ''}`}
+                    className="detail-button"
+                    style={{ marginLeft: '15px' }}
+                  >
+                    回测明细
+                  </Link>
 
                   <button
                     className="reset-backtest-button"
@@ -421,6 +431,13 @@ const BacktestPanel: React.FC = () => {
 
               {backtestResults.trades.length <= TRADES_PER_PAGE && (
                 <div className="pagination bottom">
+                  <Link 
+                    to={`/backtest-detail/${backtestResults.backtestId || ''}`}
+                    className="detail-button"
+                    style={{ marginRight: '15px' }}
+                  >
+                    回测明细
+                  </Link>
                   <button
                     className="reset-backtest-button"
                     onClick={handleClearResults}

@@ -50,7 +50,7 @@ const BacktestSummaryPage: React.FC = () => {
 
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(16);
+  const [pageSize, setPageSize] = useState(15);
 
   // 过滤状态
   const [filters, setFilters] = useState<Filters>({
