@@ -468,7 +468,9 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         ref={chartContainerRef} 
         className="chart" 
         style={{ 
-          height: '600px', // 增加高度，因为移除了副图
+          height: 'auto', // 由固定600px改为自适应
+          minHeight: 300,
+          maxHeight: 600,
           visibility: loading ? 'hidden' : 'visible'
         }}
       />
@@ -543,4 +545,4 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
   );
 };
 
-export default BacktestDetailChart; 
+export default BacktestDetailChart;
