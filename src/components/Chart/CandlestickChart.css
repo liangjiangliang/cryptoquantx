@@ -62,7 +62,7 @@
   flex-wrap: wrap;
 }
 
-.query-button, .load-data-button, .toggle-panels-button {
+.query-button, .load-data-button, .toggle-panels-button, .history-backtest-button {
   padding: 8px 16px;
   border-radius: 4px;
   font-size: 14px;
@@ -72,11 +72,15 @@
   color: white;
   transition: all 0.2s ease;
   background-color: #2962ff;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 
 .query-button:hover:not(:disabled), 
 .load-data-button:hover:not(:disabled), 
-.toggle-panels-button:hover:not(:disabled) {
+.toggle-panels-button:hover:not(:disabled),
+.history-backtest-button:hover {
   background-color: #1e4bd8;
 }
 

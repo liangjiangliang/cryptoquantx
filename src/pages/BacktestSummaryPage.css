@@ -225,20 +225,22 @@
 .pagination-button {
   padding: 6px 12px;
   margin: 0 5px;
-  background-color: #2a3042;
-  color: #e6e6e6;
+  background-color: rgb(41, 98, 255);
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .pagination-button:hover:not(:disabled) {
-  background-color: #3a4157;
+  background-color: #1e4bd8;
 }
 
 .pagination-button:disabled {
-  background-color: #242a38;
+  background-color: rgb(41, 98, 255);
   cursor: not-allowed;
   opacity: 0.7;
 }

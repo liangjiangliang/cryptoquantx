@@ -20,6 +20,7 @@ import {
 import './CandlestickChart.css';
 import TradeMarkers from './TradeMarkers';
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
+import { Link } from 'react-router-dom';
 
 // K线宽度本地存储键名
 const CHART_BAR_SPACING_KEY = 'cryptoquantx_chart_bar_spacing';
@@ -2640,6 +2641,9 @@ const CandlestickChart: React.FC = () => {
           <button className="load-data-button" onClick={handleLoadDataClick}>
             加载历史数据
           </button>
+          <Link to="/backtest-summaries" className="history-backtest-button">
+            历史回测
+          </Link>
           <button className="toggle-panels-button" onClick={togglePanels}>
             {showPanels ? '隐藏回测面板' : '显示回测面板'}
           </button>

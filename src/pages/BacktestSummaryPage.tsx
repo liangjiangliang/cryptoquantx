@@ -322,15 +322,6 @@ const BacktestSummaryPage: React.FC = () => {
             ))}
           </select>
         </div>
-        <div className="filter-action">
-          <button
-            className="refresh-button"
-            onClick={loadBacktestSummaries}
-            disabled={loading}
-          >
-            {loading ? '加载中...' : '刷新数据'}
-          </button>
-        </div>
       </div>
 
       {loading ? (

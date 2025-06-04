@@ -190,24 +190,41 @@ const BacktestDetailPage: React.FC = () => {
 
             {/* 添加分页控制 */}
             {tradeDetails.length > TRADES_PER_PAGE && (
-              <div className="pagination">
+              <div className="pagination-container">
                 <button
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
                   className="pagination-button"
+                >
+                  首页
+                </button>
+                <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
+                  className="pagination-button"
                 >
                   上一页
                 </button>
-                <span className="pagination-info">
-                  {currentPage} / {getTotalPages()}
-                </span>
+                <div className="pagination-info">
+                  {currentPage} / {getTotalPages()} 页 (共 {tradeDetails.length} 条记录)
+                </div>
                 <button
-                  className="pagination-button"
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === getTotalPages()}
+                  className="pagination-button"
                 >
                   下一页
                 </button>
+                <button
+                  onClick={() => handlePageChange(getTotalPages())}
+                  disabled={currentPage === getTotalPages()}
+                  className="pagination-button"
+                >
+                  末页
+                </button>
+                <div className="page-size-selector">
+                  每页 {TRADES_PER_PAGE} 条
+                </div>
               </div>
             )}
           </div>
