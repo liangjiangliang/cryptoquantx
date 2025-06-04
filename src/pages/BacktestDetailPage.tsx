@@ -7,7 +7,7 @@ import BacktestDetailChart from '../components/Chart/BacktestDetailChart';
 import './BacktestDetailPage.css';
 
 // 每页显示的交易记录数量
-const TRADES_PER_PAGE = 15;
+const TRADES_PER_PAGE = 14;
 
 const BacktestDetailPage: React.FC = () => {
   const { backtestId } = useParams<{ backtestId: string }>();

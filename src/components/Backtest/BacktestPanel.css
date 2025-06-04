@@ -316,7 +316,7 @@
 }
 
 .pagination-button {
-  background-color: #2962ff; /* 与运行回测按钮保持一致 */
+  background-color: rgb(41, 98, 255); /* 与运行回测按钮保持一致 */
   border: none;
   border-radius: 4px;
   color: white;
