@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { fetchBacktestDetail } from '../services/api';
+import { fetchBacktestDetail, fetchBacktestSummary } from '../services/api';
 import { BacktestTradeDetail } from '../store/types';
 import { formatPercentage } from '../utils/helpers';
 import BacktestDetailChart from '../components/Chart/BacktestDetailChart';
@@ -16,12 +16,29 @@ const BacktestDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
+  // 添加时间周期状态
+  const [intervalVal, setIntervalVal] = useState<string>('1D');
 
   useEffect(() => {
     if (backtestId) {
       loadBacktestDetail(backtestId);
+      loadBacktestSummary(backtestId);
     }
   }, [backtestId]);
+
+  const loadBacktestSummary = async (id: string) => {
+    try {
+      const summary = await fetchBacktestSummary(id);
+      if (summary && summary.intervalVal) {
+        console.log('获取到回测周期:', summary.intervalVal);
+        setIntervalVal(summary.intervalVal);
+      } else {
+        console.warn('未能获取回测周期，使用默认值1D');
+      }
+    } catch (err) {
+      console.error('获取回测摘要失败:', err);
+    }
+  };
 
   const loadBacktestDetail = async (id: string) => {
     setLoading(true);

@@ -260,4 +260,35 @@ export const fetchBacktestDetail = async (backtestId: string): Promise<any[]> =>
     console.error('获取回测详情数据失败:', error);
     return [];
   }
+};
+
+// 获取单个回测摘要信息
+export const fetchBacktestSummary = async (backtestId: string): Promise<any> => {
+  try {
+    const url = `/api/api/backtest/ta4j/summary/${backtestId}`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.warn(`获取回测摘要失败: ${response.status}`);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    if (data.code !== 200) {
+      console.warn(`API错误: ${data.message}`);
+      return null;
+    }
+    
+    if (!data.data) {
+      console.warn('API返回的回测摘要数据为空');
+      return null;
+    }
+    
+    return data.data;
+  } catch (error) {
+    console.error('获取回测摘要数据失败:', error);
+    return null;
+  }
 }; 

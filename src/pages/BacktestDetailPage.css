@@ -7,7 +7,7 @@
 
 .backtest-detail-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
   padding: 0;
@@ -24,10 +24,9 @@
 .header-actions {
   display: flex;
   gap: 10px;
-  justify-content: flex-end;
 }
 
-.back-to-summary-button {
+.back-button {
   background-color: #2962ff;
   color: white;
   border: none;
@@ -43,11 +42,11 @@
   justify-content: center;
 }
 
-.back-to-summary-button:hover {
+.back-button:hover {
   background-color: #1e4bd8;
 }
 
-.refresh-button {
+.home-button {
   background-color: #2962ff;
   color: white;
   border: none;
@@ -57,15 +56,14 @@
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.refresh-button:hover {
+.home-button:hover {
   background-color: #1e4bd8;
-}
-
-.refresh-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
 }
 
 .error-message {
@@ -220,25 +218,26 @@
 }
 
 /* 分页控制样式 */
-.pagination-container {
+.pagination {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  gap: 10px;
   margin-top: 10px;
-  padding: 10px;
-  background-color: #1e2233;
-  border-radius: 4px;
+  padding: 5px 0;
+  flex-wrap: wrap;
 }
 
 .pagination-button {
-  padding: 6px 12px;
-  margin: 0 5px;
-  background-color: rgb(41, 98, 255);
-  color: #e6e6e6;
+  background-color: #2962ff;
   border: none;
   border-radius: 4px;
+  color: white;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.2s ease;
 }
 
 .pagination-button:hover:not(:disabled) {
@@ -246,19 +245,11 @@
 }
 
 .pagination-button:disabled {
-  background-color: rgb(41, 98, 255);
-  cursor: not-allowed;
   opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .pagination-info {
-  margin: 0 15px;
+  color: #8d8d8d;
   font-size: 14px;
-  color: #e6e6e6;
-}
-
-.page-size-selector {
-  margin-left: 15px;
-  font-size: 14px;
-  color: #e6e6e6;
 }
