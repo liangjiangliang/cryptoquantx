@@ -6,6 +6,9 @@ import reportWebVitals from './reportWebVitals';
 
 // 隐蔽初始化Stagewise工具栏
 const initStagewiseToolbar = () => {
+  // 检查环境变量控制开关
+  if (process.env.REACT_APP_ENABLE_STAGEWISE !== 'true') return;
+  
   // 避免在生产环境运行
   if (process.env.NODE_ENV !== 'development') return;
   

@@ -53,6 +53,20 @@ CryptoQuantX提供了功能强大的回测系统，支持多种量化交易策�
 npm install
 ```
 
+### 环境变量配置
+
+复制环境变量示例文件并根据需要修改：
+
+```bash
+cp .env.example .env
+```
+
+主要配置项：
+
+- `REACT_APP_ENABLE_STAGEWISE` - 控制Stagewise工具栏的显示（true/false，默认为false）
+
+**注意：** Stagewise工具栏仅在开发环境下可用。
+
 ### 启动开发服务器
 
 ```bash

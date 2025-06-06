@@ -9,7 +9,7 @@
   flex-direction: column;
   flex: 1;
   transition: height 0.3s ease, width 0.3s ease;
-  min-height: calc(100vh - 150px); /* 增加最小高度，更好地填充屏幕 */
+  min-height: calc(100vh - 90px); /* 增加最小高度，填充整个页面 */
 }
 
 .chart-header {

@@ -85,7 +85,7 @@ body {
   flex: 1;
   padding: 15px;
   gap: 15px;
-  height: calc(100vh - 130px); /* 减去头部和底部高度 */
+  height: calc(100vh - 90px); /* 减去头部高度60px和底部页脚约30px，填充整个页面 */
   transition: all 0.3s ease; /* 添加过渡效果 */
 }
 

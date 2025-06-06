@@ -211,7 +211,25 @@ const BacktestPanel: React.FC = () => {
   return (
     <div className="backtest-panel">
       <div className="backtest-panel-header">
-        <h3>回测 - {selectedPair}</h3>
+        <h3>{selectedPair}</h3>
+        <div className="backtest-info">
+           <div className="info-row">
+             <span className="info-item">
+               <span className="info-label">策略:</span>
+               <span className="info-value">{strategies[strategy]?.name || strategy || '未选择'}</span>
+             </span>
+             <span className="info-item">
+               <span className="info-label">周期:</span>
+               <span className="info-value">{timeframe}</span>
+             </span>
+           </div>
+           <div className="info-row">
+             <span className="info-item">
+               <span className="info-label">时间:</span>
+               <span className="info-value">{dateRange.startDate} ~ {dateRange.endDate}</span>
+             </span>
+           </div>
+         </div>
       </div>
 
       <div className="backtest-panel-content">
