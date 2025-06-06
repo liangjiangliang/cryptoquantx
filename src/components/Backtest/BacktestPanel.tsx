@@ -172,6 +172,20 @@ const BacktestPanel: React.FC = () => {
     }
   };
 
+  // 处理时间周期变更
+  const handleTimeframeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newTimeframe = e.target.value as '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M';
+    
+    // 更新Redux中的时间周期
+    dispatch(setTimeframe(newTimeframe));
+    
+    // 触发自定义事件，通知K线图组件更新数据
+    const event = new CustomEvent('timeframeChanged', {
+      detail: { timeframe: newTimeframe }
+    });
+    window.dispatchEvent(event);
+  };
+
   // 处理日期变更
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setDateRange(e.target.value, dateRange.endDate));
@@ -322,7 +336,7 @@ const BacktestPanel: React.FC = () => {
               <select
                 className="timeframe-selector"
                 value={timeframe}
-                onChange={(e) => dispatch(setTimeframe(e.target.value as '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M'))}
+                onChange={handleTimeframeChange}
               >
                 {TIMEFRAMES.map((tf: {value: string, label: string}) => (
                   <option key={tf.value} value={tf.value}>{tf.label}</option>

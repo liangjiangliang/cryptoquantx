@@ -648,6 +648,35 @@ const CandlestickChart: React.FC = () => {
     }
   }, [subIndicators]);
 
+  // 监听回测面板的时间周期变更事件
+  useEffect(() => {
+    const handleTimeframeChange = (event: CustomEvent) => {
+      const { timeframe: newTimeframe } = event.detail;
+      console.log('K线图接收到时间周期变更事件:', newTimeframe);
+      
+      // 清空当前K线数据
+      if (candleSeries.current && volumeSeries.current) {
+        candleSeries.current.setData([]);
+        volumeSeries.current.setData([]);
+        dispatch(updateCandlestickData([]));
+        clearIndicators();
+      }
+      
+      // 自动触发数据重新加载
+      setTimeout(() => {
+        handleQueryClick();
+      }, 100);
+    };
+
+    // 添加事件监听器
+    window.addEventListener('timeframeChanged', handleTimeframeChange as EventListener);
+
+    // 清理函数
+    return () => {
+      window.removeEventListener('timeframeChanged', handleTimeframeChange as EventListener);
+    };
+  }, [selectedPair, dateRange]); // 依赖项包括selectedPair和dateRange，确保在这些值变化时重新绑定事件
+
   // 同步所有图表的时间轴
   const syncTimeScales = () => {
     // 只在图表初始化时使用一次，后续由主图表控制
@@ -1014,6 +1043,11 @@ const CandlestickChart: React.FC = () => {
 
           // 清空指标
           clearIndicators();
+
+          // 自动重新加载数据
+          setTimeout(() => {
+            handleQueryClick();
+          }, 100);
         }
       }
     } catch (error) {
