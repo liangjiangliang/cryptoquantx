@@ -16,6 +16,7 @@
 .navbar-left {
   display: flex;
   align-items: center;
+  height: 100%;
 }
 
 .navbar-right {
@@ -37,4 +38,23 @@
 
 .nav-link:hover {
   background-color: #1e4bd8;
-} 
+}
+
+.backtest-nav-link {
+  margin-left: 15px;
+  background-color: #e91e63;
+  padding: 7px 14px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  height: 34px; /* 调整高度 */
+  align-self: center; /* 在flex容器中居中对齐 */
+  line-height: 1; /* 确保文本垂直居中 */
+}
+
+.backtest-nav-link:hover {
+  background-color: #c2185b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}

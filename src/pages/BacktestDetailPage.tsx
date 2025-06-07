@@ -6,6 +6,20 @@ import { formatPercentage } from '../utils/helpers';
 import BacktestDetailChart from '../components/Chart/BacktestDetailChart';
 import './BacktestDetailPage.css';
 
+// 策略名称的中英文映射
+const strategyNameMap: Record<string, string> = {
+  'ICHIMOKU': '一目均衡表',
+  'MACD': 'MACD指标',
+  'RSI': '相对强弱指标',
+  'BOLLINGER': '布林带',
+  'SMA': '简单移动平均线',
+  'EMA': '指数移动平均线',
+  'SUPERTREND': '超级趋势',
+  'STOCHASTIC': '随机指标',
+  'ADX': '平均方向指数',
+  'CCI': '商品通道指数'
+};
+
 // 每页显示的交易记录数量
 const TRADES_PER_PAGE = 14;
 
@@ -64,7 +78,12 @@ const BacktestDetailPage: React.FC = () => {
   };
 
   const formatDateTime = (dateTimeStr: string): string => {
-    return dateTimeStr.replace(' ', ' ');
+    // 将日期时间格式化为更紧凑的形式：YYYY-MM-DD
+    if (!dateTimeStr) return '';
+    const date = new Date(dateTimeStr);
+    return date.getFullYear() + '-' + 
+           String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+           String(date.getDate()).padStart(2, '0');
   };
 
   // 获取回测的开始和结束时间
@@ -113,12 +132,7 @@ const BacktestDetailPage: React.FC = () => {
     <div className="backtest-detail-page">
       <div className="backtest-detail-header">
         <div className="header-actions">
-          <Link to="/backtest-summaries" className="back-to-summary-button">
-            回测汇总
-          </Link>
-          <button onClick={() => loadBacktestDetail(backtestId || '')} className="refresh-button">
-            {loading ? '加载中...' : '刷新数据'}
-          </button>
+          {/* 按钮已移除 */}
         </div>
       </div>
 
@@ -131,21 +145,27 @@ const BacktestDetailPage: React.FC = () => {
       ) : (
         <div className="detail-info">
           <div className="strategy-info">
-            <div className="info-item">
-              <span className="label">策略名称:</span>
-              <span className="value">{tradeDetails[0].strategyName}</span>
-            </div>
-            <div className="info-item">
-              <span className="label">策略参数:</span>
-              <span className="value">{tradeDetails[0].strategyParams}</span>
-            </div>
-            <div className="info-item">
-              <span className="label">交易对:</span>
-              <span className="value">{tradeDetails[0].symbol}</span>
-            </div>
-            <div className="info-item">
-              <span className="label">回测ID:</span>
-              <span className="value">{tradeDetails[0].backtestId}</span>
+            <div className="info-item-row">
+              <div className="info-item">
+                <span className="label">策略名称:</span>
+                <span className="value">{strategyNameMap[tradeDetails[0].strategyName] || tradeDetails[0].strategyName}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">策略参数:</span>
+                <span className="value">{tradeDetails[0].strategyParams}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">交易对:</span>
+                <span className="value">{tradeDetails[0].symbol}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">回测周期:</span>
+                <span className="value">{intervalVal}</span>
+              </div>
+              <div className="info-item">
+                <span className="label">时间范围:</span>
+                <span className="value">{formatDateTime(startTime)} 至 {formatDateTime(endTime)}</span>
+              </div>
             </div>
           </div>
 

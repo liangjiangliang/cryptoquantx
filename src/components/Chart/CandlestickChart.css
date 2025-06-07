@@ -84,6 +84,27 @@
   background-color: #1e4bd8;
 }
 
+.header-backtest-button {
+  margin-left: 15px;
+  background-color: #e91e63;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.header-backtest-button:hover {
+  background-color: #c2185b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+.query-button:hover:not(:disabled), 
+.load-data-button:hover:not(:disabled), 
+.toggle-panels-button:hover:not(:disabled),
+.history-backtest-button:hover {
+  background-color: #1e4bd8;
+}
+
 .query-button:disabled, 
 .load-data-button:disabled, 
 .toggle-panels-button:disabled {
@@ -170,19 +191,14 @@
   min-height: 400px;
   flex: 4; /* 增加主图所占比例 */
   transition: flex 0.3s ease, height 0.3s ease;
-}
-
-/* 面板隐藏时，主图表可以占据更多空间 */
-.panels-hidden .main-chart {
-  flex: 5; /* 增加隐藏面板时的主图比例 */
-  min-height: 600px;
+  margin-bottom: -1px; /* 使边框重叠 */
 }
 
 .sub-chart {
   position: relative;
   height: 150px;
   min-height: 150px;
-  margin-top: 1px;
+  margin-top: 0; /* 紧贴主图 */
   border-top: 1px solid #2e3241;
   flex: 1;
 }

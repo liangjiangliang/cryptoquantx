@@ -10,6 +10,9 @@ const GlobalNavbar: React.FC = () => {
     <div className="global-navbar">
       <div className="navbar-left">
         <Logo />
+        <Link to="/backtest-summaries" className="nav-link backtest-nav-link">
+          历史回测
+        </Link>
       </div>
       <div className="navbar-right">
       </div>
@@ -17,4 +20,4 @@ const GlobalNavbar: React.FC = () => {
   );
 };
 
-export default GlobalNavbar; 
+export default GlobalNavbar;

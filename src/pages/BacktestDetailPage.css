@@ -12,7 +12,7 @@
   margin-bottom: 10px;
   padding: 0;
   border-bottom: 1px solid #2a2a3a;
-  height: 50px;
+  height: 30px; /* 减小高度，因为没有按钮了 */
 }
 
 .backtest-detail-header h2 {
@@ -24,6 +24,8 @@
 .header-actions {
   display: flex;
   gap: 10px;
+  /* 按钮已移除，保留样式以维持结构 */
+  min-height: 10px;
 }
 
 .back-button {
@@ -93,28 +95,41 @@
 }
 
 .strategy-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   background-color: #1a1a2e;
-  padding: 10px;
+  padding: 15px; /* 增加内边距 */
   border-radius: 8px;
+}
+
+.info-item-row {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 20px;
+  overflow-x: auto; /* 允许在小屏幕上水平滚动 */
 }
 
 .info-item {
   display: flex;
   align-items: center;
+  margin-bottom: 0;
+  flex-shrink: 0; /* 防止项目被压缩 */
 }
 
 .info-item .label {
   color: #8d8d8d;
-  margin-right: 8px;
+  margin-right: 8px; /* 减少标签和值之间的间距 */
+  font-weight: 500;
+  white-space: nowrap; /* 防止标签换行 */
 }
 
 .info-item .value {
   color: #e6e6e6;
   font-weight: 500;
+  white-space: nowrap; /* 防止值换行 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px; /* 增加最大宽度，确保时间范围能完整显示 */
 }
 
 .detail-info {

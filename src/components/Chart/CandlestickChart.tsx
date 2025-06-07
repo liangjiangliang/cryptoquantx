@@ -2675,9 +2675,6 @@ const CandlestickChart: React.FC = () => {
           <button className="load-data-button" onClick={handleLoadDataClick}>
             加载历史数据
           </button>
-          <Link to="/backtest-summaries" className="history-backtest-button">
-            历史回测
-          </Link>
           <button className="toggle-panels-button" onClick={togglePanels}>
             {showPanels ? '隐藏回测面板' : '显示回测面板'}
           </button>

@@ -4,6 +4,7 @@
   text-decoration: none;
   margin: 0;
   padding: 0;
+  height: 100%; /* 确保Logo容器高度与导航栏一致 */
 }
 
 .logo-icon {
@@ -11,6 +12,7 @@
   margin-right: 12px;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
   transition: all 0.3s ease;
+  align-items: center; /* 垂直居中 */
 }
 
 .logo-container:hover .logo-icon {
@@ -36,4 +38,4 @@
 .logo-text-x {
   color: #FFD700;
   font-weight: 900;
-} 
+}
