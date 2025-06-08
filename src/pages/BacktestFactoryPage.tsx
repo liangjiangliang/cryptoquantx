@@ -687,4 +687,4 @@ const BacktestFactoryPage: React.FC = () => {
   );
 };
 
-export default BacktestFactoryPage; 
+export default BacktestFactoryPage;

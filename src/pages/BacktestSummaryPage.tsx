@@ -94,6 +94,9 @@ const BacktestSummaryPage: React.FC = () => {
         if (storedIds) {
           const backtestIds = JSON.parse(storedIds);
           setBatchBacktestIds(backtestIds);
+          // 如果是从批量回测页面跳转过来的，设置默认排序为收益率降序
+          setSortField('totalReturn');
+          setSortDirection('desc');
         }
       } catch (err) {
         console.error('解析sessionStorage中的回测ID列表失败:', err);

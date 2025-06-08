@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchBatchBacktestStatistics } from '../services/api';
+import { fetchBatchBacktestStatistics, fetchBacktestStrategies } from '../services/api';
 import { formatPercentage } from '../utils/helpers';
 import './BatchBacktestPage.css';
 
@@ -19,16 +19,32 @@ interface BatchBacktestStatistics {
   backtest_ids: string[];
 }
 
+interface Strategy {
+  name: string;
+  description: string;
+  params: string;
+  category?: string;
+  default_params?: string;
+  strategy_code?: string;
+}
+
 const BatchBacktestPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [batchBacktests, setBatchBacktests] = useState<BatchBacktestStatistics[]>([]);
+  const [strategyMap, setStrategyMap] = useState<{[key: string]: Strategy}>({});
 
   useEffect(() => {
     const loadBatchBacktests = async () => {
       setLoading(true);
       try {
+        // 获取策略信息，用于显示中文名称
+        const strategiesResponse = await fetchBacktestStrategies();
+        if (strategiesResponse && strategiesResponse.data) {
+          setStrategyMap(strategiesResponse.data);
+        }
+        
         const statistics = await fetchBatchBacktestStatistics();
         setBatchBacktests(statistics);
       } catch (err) {
@@ -41,6 +57,14 @@ const BatchBacktestPage: React.FC = () => {
     
     loadBatchBacktests();
   }, []);
+
+  // 获取策略的中文显示名称
+  const getStrategyDisplayName = (strategyCode: string): string => {
+    if (strategyMap[strategyCode]) {
+      return strategyMap[strategyCode].name;
+    }
+    return strategyCode;
+  };
 
   // 跳转到批量回测详情页面
   const handleViewBatchDetails = (batchBacktestId: string, backtestIds: string[]) => {
@@ -97,7 +121,7 @@ const BatchBacktestPage: React.FC = () => {
                 <tr key={batch.batch_backtest_id}>
                   <td>{batch.batch_backtest_id.substring(0, 8)}...</td>
                   <td>{batch.symbol}</td>
-                  <td>{batch.strategy_name}</td>
+                  <td>{getStrategyDisplayName(batch.strategy_name)}</td>
                   <td>{batch.interval_val}</td>
                   <td>{formatDateTime(batch.start_time)}</td>
                   <td>{formatDateTime(batch.end_time)}</td>
@@ -128,4 +152,4 @@ const BatchBacktestPage: React.FC = () => {
   );
 };
 
-export default BatchBacktestPage; 
+export default BatchBacktestPage;

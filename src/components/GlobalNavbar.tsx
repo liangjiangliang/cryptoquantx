@@ -14,7 +14,7 @@ const GlobalNavbar: React.FC = () => {
           历史回测
         </Link>
         <Link to="/backtest-factory" className="nav-link backtest-nav-link">
-          回测工厂
+          策略工厂
         </Link>
         <Link to="/batch-backtest" className="nav-link backtest-nav-link batch-backtest-link">
           批量回测
