@@ -5,7 +5,7 @@ import { startBacktest, finishBacktest, setSelectedPair, setTimeframe, setDateRa
 import { formatDate, formatPrice, formatPercentage } from '../../utils/helpers';
 import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
@@ -60,8 +60,19 @@ const BacktestPanel: React.FC = () => {
         const data: StrategiesResponse = await response.json();
         if (data.code === 200 && data.data) {
           setStrategies(data.data);
-          // 设置默认策略为列表中的第一个
-          if (Object.keys(data.data).length > 0 && !strategy) {
+          
+          // 检查当前URL是否包含策略代码
+          const urlParams = new URLSearchParams(window.location.search);
+          const strategyFromUrl = urlParams.get('strategy');
+          
+          // 如果URL中有策略代码且该策略存在，则使用它
+          if (strategyFromUrl && data.data[strategyFromUrl]) {
+            setStrategy(strategyFromUrl);
+            // 清除可能存在的回测结果
+            dispatch(clearBacktestResults());
+          } 
+          // 否则使用第一个策略作为默认值
+          else if (Object.keys(data.data).length > 0 && !strategy) {
             setStrategy(Object.keys(data.data)[0]);
           }
         } else {
@@ -72,7 +83,7 @@ const BacktestPanel: React.FC = () => {
         setError(err instanceof Error ? err.message : '获取策略列表失败');
 
         // 添加模拟数据，以防API不可用
-        const mockStrategies = {
+        const mockStrategies: {[key: string]: Strategy} = {
           "SMA": {
             "name": "简单移动平均线策略",
             "description": "基于短期和长期移动平均线的交叉信号产生买卖信号",
@@ -95,7 +106,15 @@ const BacktestPanel: React.FC = () => {
           }
         };
         setStrategies(mockStrategies);
-        if (!strategy) {
+        
+        // 同样检查URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const strategyFromUrl = urlParams.get('strategy');
+        
+        if (strategyFromUrl && mockStrategies[strategyFromUrl]) {
+          setStrategy(strategyFromUrl);
+          dispatch(clearBacktestResults());
+        } else if (!strategy) {
           setStrategy(Object.keys(mockStrategies)[0]);
         }
       } finally {
@@ -104,7 +123,28 @@ const BacktestPanel: React.FC = () => {
     };
 
     fetchStrategies();
-  }, []);
+  }, [strategy, dispatch]);
+
+  // 监听setStrategy事件，接收从URL传递的策略代码
+  useEffect(() => {
+    const handleSetStrategy = (event: CustomEvent<{strategyCode: string}>) => {
+      const { strategyCode } = event.detail;
+      console.log('收到策略切换事件:', strategyCode, '当前可用策略:', Object.keys(strategies));
+      
+      if (strategyCode) {
+        // 即使当前strategies中没有该策略，也先设置，后面strategies加载完成后会再次检查
+        setStrategy(strategyCode);
+        // 无论之前是否有回测结果，都清除它们以显示配置面板
+        dispatch(clearBacktestResults());
+      }
+    };
+    
+    window.addEventListener('setStrategy', handleSetStrategy as EventListener);
+    
+    return () => {
+      window.removeEventListener('setStrategy', handleSetStrategy as EventListener);
+    };
+  }, [dispatch]); // 移除strategies依赖，防止事件处理器频繁重建
 
   // 运行回测
   const runBacktest = async () => {

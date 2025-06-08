@@ -413,7 +413,8 @@ const BacktestFactoryPage: React.FC = () => {
 
   // 跳转到策略详情/创建回测页面
   const handleViewStrategy = (strategyCode: string) => {
-    navigate(`/backtest-create/${strategyCode}`);
+    // 跳转到首页并在URL中传递策略代码参数
+    navigate(`/?strategy=${strategyCode}`);
   };
 
   // 处理搜索
@@ -525,22 +526,22 @@ const BacktestFactoryPage: React.FC = () => {
     return (
       <div className="strategy-header">
         <div 
-          className="strategy-cell code" 
-          onClick={() => handleSort('code')}
+          className="strategy-cell name" 
+          onClick={() => handleSort('name')}
         >
-          策略代码
-          {sortField === 'code' && (
+          策略名称
+          {sortField === 'name' && (
             <span className="sort-indicator">
               {sortDirection === 'asc' ? '↑' : '↓'}
             </span>
           )}
         </div>
         <div 
-          className="strategy-cell name" 
-          onClick={() => handleSort('name')}
+          className="strategy-cell code" 
+          onClick={() => handleSort('code')}
         >
-          策略名称
-          {sortField === 'name' && (
+          策略代码
+          {sortField === 'code' && (
             <span className="sort-indicator">
               {sortDirection === 'asc' ? '↑' : '↓'}
             </span>
@@ -588,8 +589,8 @@ const BacktestFactoryPage: React.FC = () => {
 
     return (
       <div key={strategyCode} className="strategy-row">
-        <div className="strategy-cell code">{strategyCode}</div>
         <div className="strategy-cell name">{strategy.name}</div>
+        <div className="strategy-cell code">{strategyCode}</div>
         <div className="strategy-cell category">{strategy.category}</div>
         <div className="strategy-cell description">{strategy.description}</div>
         <div className="strategy-cell default-params">{formattedParams}</div>

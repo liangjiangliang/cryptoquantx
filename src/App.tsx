@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Provider } from 'react-redux';
+import { Provider, useDispatch } from 'react-redux';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import store from './store';
 import CandlestickChart from './components/Chart/CandlestickChart';
@@ -12,12 +12,25 @@ import BacktestCreatePage from './pages/BacktestCreatePage';
 import DataLoader from './components/DataLoader';
 import GlobalNavbar from './components/GlobalNavbar';
 import Logo from './components/Logo';
+import { clearBacktestResults } from './store/actions';
 import './App.css';
 
 // 首页组件，用于包装首页内容
 const HomePage = () => {
   const [showPanels, setShowPanels] = useState<boolean>(true);
   const [showBacktestSummaries, setShowBacktestSummaries] = useState<boolean>(false);
+  const location = useLocation();
+  const dispatch = useDispatch();
+  
+  // 从URL参数中获取策略代码
+  const searchParams = new URLSearchParams(location.search);
+  const strategyCode = searchParams.get('strategy');
+  
+  // 在页面加载时清除回测结果
+  useEffect(() => {
+    // 确保页面加载时清除任何之前的回测结果
+    dispatch(clearBacktestResults());
+  }, [dispatch]);
   
   // 监听自定义事件以响应面板切换
   useEffect(() => {
@@ -31,6 +44,16 @@ const HomePage = () => {
       window.removeEventListener('togglePanels', handleTogglePanels as EventListener);
     };
   }, []);
+  
+  // 如果有策略代码，设置自定义事件通知BacktestPanel使用此策略
+  useEffect(() => {
+    if (strategyCode) {
+      const event = new CustomEvent('setStrategy', { 
+        detail: { strategyCode } 
+      });
+      window.dispatchEvent(event);
+    }
+  }, [strategyCode]);
   
   return (
     <div className="app">

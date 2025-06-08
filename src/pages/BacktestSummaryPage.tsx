@@ -31,39 +31,41 @@ type SortField =
   | 'maxDrawdown'
   | 'sharpeRatio';
 
-// 过滤器类型
+// 过滤条件类型
 interface Filters {
   symbol: string;
   intervalVal: string;
   strategyName: string;
 }
 
+// 策略类型
+interface Strategy {
+  name: string;
+  description: string;
+  params: string;
+  category?: string;
+  default_params?: string;
+  strategy_code?: string;
+}
+
 const BacktestSummaryPage: React.FC = () => {
   const dispatch = useDispatch();
   const backtestSummaries = useSelector((state: AppState) => state.backtestSummaries);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // 排序状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [sortField, setSortField] = useState<SortField>('createTime');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-
-  // 分页状态
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
-
-  // 过滤状态
-  const [filters, setFilters] = useState<Filters>({
-    symbol: '',
-    intervalVal: '',
-    strategyName: ''
-  });
-
-  // 过滤后的数据
   const [filteredData, setFilteredData] = useState<BacktestSummary[]>([]);
+  const [filters, setFilters] = useState<Filters>({ symbol: '', intervalVal: '', strategyName: '' });
+  // 存储策略名称映射
+  const [strategyMap, setStrategyMap] = useState<{[key: string]: Strategy}>({});
 
   useEffect(() => {
     loadBacktestSummaries();
+    // 加载策略列表
+    fetchStrategies();
   }, []);
 
   // 当原始数据或过滤条件变化时，更新过滤后的数据
@@ -83,6 +85,30 @@ const BacktestSummaryPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 获取策略列表
+  const fetchStrategies = async () => {
+    try {
+      const response = await fetch('/api/api/backtest/ta4j/strategies');
+      if (!response.ok) {
+        throw new Error('获取策略列表失败');
+      }
+      const data = await response.json();
+      if (data.code === 200 && data.data) {
+        setStrategyMap(data.data);
+      }
+    } catch (error) {
+      console.error('获取策略列表失败:', error);
+    }
+  };
+
+  // 获取策略的中文名称
+  const getStrategyDisplayName = (strategyCode: string): string => {
+    if (strategyMap[strategyCode]) {
+      return strategyMap[strategyCode].name;
+    }
+    return strategyCode;
   };
 
   const formatAmount = (amount: number): string => {
@@ -116,12 +142,10 @@ const BacktestSummaryPage: React.FC = () => {
     }
   };
 
-  // 处理过滤器变化
+  // 处理过滤条件变化
   const handleFilterChange = (field: keyof Filters, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFilters(prev => ({ ...prev, [field]: value }));
+    setCurrentPage(1); // 重置到第一页
   };
 
   // 过滤和排序数据
@@ -318,7 +342,7 @@ const BacktestSummaryPage: React.FC = () => {
           >
             <option value="">全部策略</option>
             {getUniqueValues('strategyName').map(value => (
-              <option key={value} value={value}>{value}</option>
+              <option key={value} value={value}>{getStrategyDisplayName(value)}</option>
             ))}
           </select>
         </div>
@@ -394,7 +418,7 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{summary.id}</td>
                   <td>{summary.symbol}</td>
                   <td>{summary.intervalVal}</td>
-                  <td>{summary.strategyName}</td>
+                  <td>{getStrategyDisplayName(summary.strategyName)}</td>
                   <td>{summary.strategyParams}</td>
                   <td>{summary.startTime.substring(0, 10)}</td>
                   <td>{summary.endTime.substring(0, 10)}</td>
