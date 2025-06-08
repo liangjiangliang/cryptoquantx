@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
 import { AppState, BacktestSummary } from '../store/types';
 import { setBacktestSummaries } from '../store/actions';
-import { fetchBacktestSummaries } from '../services/api';
+import { fetchBacktestSummaries, fetchBatchBacktestSummariesBatch } from '../services/api';
 import { formatPercentage } from '../utils/helpers';
 import Logo from '../components/Logo';
 import './BacktestSummaryPage.css';
@@ -55,7 +55,7 @@ const BacktestSummaryPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [sortField, setSortField] = useState<SortField>('createTime');
+  const [sortField, setSortField] = useState<SortField>('totalReturn');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filteredData, setFilteredData] = useState<BacktestSummary[]>([]);
   const [filters, setFilters] = useState<Filters>({ symbol: '', intervalVal: '', strategyName: '' });
@@ -65,28 +65,41 @@ const BacktestSummaryPage: React.FC = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const batchId = queryParams.get('batchId');
+  const batchBacktestId = queryParams.get('batch_backtest_id'); // 新增
   // 存储批次相关的回测ID列表
   const [batchBacktestIds, setBatchBacktestIds] = useState<string[]>([]);
 
   useEffect(() => {
+    if (batchBacktestId) {
+      // 新增：如果有 batch_backtest_id，直接请求批量回测汇总接口
+      setLoading(true);
+      setError(null);
+      fetchBatchBacktestSummariesBatch(batchBacktestId)
+        .then((summaries) => {
+          dispatch(setBacktestSummaries(summaries));
+        })
+        .catch((err) => {
+          setError('获取批量回测汇总数据失败，请稍后重试');
+          console.error('获取批量回测汇总数据失败:', err);
+        })
+        .finally(() => setLoading(false));
+      return;
+    }
     loadBacktestSummaries();
     // 加载策略列表
     fetchStrategies();
-    
-    // 如果URL中有批次ID参数，从sessionStorage中获取回测ID列表
     if (batchId) {
       try {
         const storedIds = sessionStorage.getItem('backtestIds');
         if (storedIds) {
           const backtestIds = JSON.parse(storedIds);
-          console.log('从sessionStorage获取批量回测IDs:', backtestIds);
           setBatchBacktestIds(backtestIds);
         }
       } catch (err) {
         console.error('解析sessionStorage中的回测ID列表失败:', err);
       }
     }
-  }, [batchId]);
+  }, [batchId, batchBacktestId]);
 
   // 当原始数据、过滤条件或批次回测ID列表变化时，更新过滤后的数据
   useEffect(() => {

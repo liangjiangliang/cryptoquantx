@@ -451,4 +451,29 @@ export const runAllBacktests = async (
       message: error instanceof Error ? error.message : '批量回测请求发生错误' 
     };
   }
-}; 
+};
+
+// 获取批量回测汇总
+export const fetchBatchBacktestSummariesBatch = async (batchBacktestId: string): Promise<BacktestSummary[]> => {
+  try {
+    const url = `/api/api/backtest/ta4j/summaries/batch/${batchBacktestId}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(`批量回测汇总API请求失败: ${response.status}`);
+      return [];
+    }
+    const data = await response.json();
+    if (data.code !== 200) {
+      console.warn(`API错误: ${data.message}`);
+      return [];
+    }
+    if (!data.data || data.data.length === 0) {
+      console.warn('API返回的批量回测汇总数据为空');
+      return [];
+    }
+    return data.data;
+  } catch (error) {
+    console.error('获取批量回测汇总数据失败:', error);
+    return [];
+  }
+};
