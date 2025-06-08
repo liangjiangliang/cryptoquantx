@@ -16,6 +16,9 @@ const GlobalNavbar: React.FC = () => {
         <Link to="/backtest-factory" className="nav-link backtest-nav-link">
           回测工厂
         </Link>
+        <Link to="/batch-backtest" className="nav-link backtest-nav-link batch-backtest-link">
+          批量回测
+        </Link>
       </div>
       <div className="navbar-right">
       </div>

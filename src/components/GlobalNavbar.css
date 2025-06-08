@@ -8,8 +8,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 20px;
-  background-color: #121620;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  background-color: #1a1a2e;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 1000;
 }
 
@@ -22,39 +22,41 @@
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 20px;
 }
 
 .nav-link {
-  color: #ffffff;
+  color: #e6e6e6;
   text-decoration: none;
+  margin-right: 10px;
   font-size: 14px;
-  font-weight: 500;
-  padding: 8px 16px;
+  padding: 5px 10px;
   border-radius: 4px;
-  background-color: #2962ff;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.3s;
 }
 
 .nav-link:hover {
-  background-color: #1e4bd8;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .backtest-nav-link {
-  margin-left: 15px;
   background-color: #e91e63;
-  padding: 7px 14px;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  color: white;
+  font-weight: 500;
+  padding: 8px 15px;
   display: flex;
   align-items: center;
-  height: 34px; /* 调整高度 */
-  align-self: center; /* 在flex容器中居中对齐 */
-  line-height: 1; /* 确保文本垂直居中 */
+  margin-left: 30px;
+  margin-right: 8px;
 }
 
 .backtest-nav-link:hover {
-  background-color: #c2185b;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  background-color: #d81b60;
+}
+
+.batch-backtest-link {
+  background-color: #ff9800;
+}
+
+.batch-backtest-link:hover {
+  background-color: #fb8c00;
 }

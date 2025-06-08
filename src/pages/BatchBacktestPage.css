@@ -1,0 +1,104 @@
+.batch-backtest-page {
+  padding: 20px;
+  background-color: #1a1a2e;
+  color: #e6e6e6;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin: 20px;
+  min-height: calc(100vh - 140px);
+}
+
+.page-header {
+  margin-bottom: 30px;
+}
+
+.page-header h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #e6e6e6;
+}
+
+.page-header p {
+  color: #a0a0a0;
+  font-size: 14px;
+}
+
+.error-message {
+  color: #ff6b6b;
+  background-color: rgba(255, 107, 107, 0.1);
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #e6e6e6;
+  font-size: 16px;
+}
+
+.no-data-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: #8d8d8d;
+  font-size: 16px;
+}
+
+.batch-table-container {
+  overflow-x: auto;
+}
+
+.batch-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #e6e6e6;
+  font-size: 14px;
+}
+
+.batch-table th,
+.batch-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #2a2a3a;
+}
+
+.batch-table th {
+  background-color: #16213e;
+  color: #8d8d8d;
+  font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.batch-table tbody tr:hover {
+  background-color: #1e1e30;
+}
+
+.positive {
+  color: #4caf50;
+}
+
+.negative {
+  color: #ff6b6b;
+}
+
+.view-details-btn {
+  background-color: #3a506b;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.3s;
+}
+
+.view-details-btn:hover {
+  background-color: #4a618b;
+} 

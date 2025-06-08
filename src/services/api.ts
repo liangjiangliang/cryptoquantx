@@ -373,4 +373,82 @@ export const createBacktest = async (
     console.error('创建回测失败:', error);
     return { success: false, message: '创建回测请求发生错误' };
   }
+};
+
+// 获取批量回测统计数据
+export const fetchBatchBacktestStatistics = async (): Promise<any> => {
+  try {
+    const url = `/api/api/backtest/ta4j/summaries/batch-statistics`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.warn(`获取批量回测统计失败: ${response.status}`);
+      return [];
+    }
+    
+    const data = await response.json();
+    
+    if (data.code !== 200) {
+      console.warn(`API错误: ${data.message}`);
+      return [];
+    }
+    
+    if (!data.data || data.data.length === 0) {
+      console.warn('API返回的批量回测统计数据为空');
+      return [];
+    }
+    
+    return data.data;
+  } catch (error) {
+    console.error('获取批量回测统计数据失败:', error);
+    return [];
+  }
+};
+
+// 执行批量回测
+export const runAllBacktests = async (
+  symbol: string = 'BTC-USDT',
+  interval: string = '1D',
+  startDate?: string,
+  endDate?: string,
+  initialAmount: number = 10000,
+  feeRatio: number = 0.001
+): Promise<any> => {
+  try {
+    // 格式化开始和结束时间
+    const formattedStartTime = startDate ? formatDateString(startDate) : undefined;
+    const formattedEndTime = endDate ? formatDateString(endDate) : undefined;
+    
+    // 构建API URL
+    const url = `/api/api/backtest/ta4j/run-all?startTime=${encodeURIComponent(formattedStartTime || '')}&endTime=${encodeURIComponent(formattedEndTime || '')}&initialAmount=${initialAmount}&symbol=${symbol}&interval=${interval}&saveResult=True&feeRatio=${feeRatio}`;
+
+    console.log('发送批量回测请求:', url);
+
+    // 发送请求
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('批量回测API返回数据:', data);
+
+    if (data.code === 200 && data.data) {
+      return {
+        success: true,
+        data: data.data,
+        batchBacktestId: data.data.batchBacktestId
+      };
+    } else {
+      throw new Error(data.message || '批量回测失败');
+    }
+  } catch (error) {
+    console.error('批量回测失败:', error);
+    return { 
+      success: false, 
+      message: error instanceof Error ? error.message : '批量回测请求发生错误' 
+    };
+  }
 }; 

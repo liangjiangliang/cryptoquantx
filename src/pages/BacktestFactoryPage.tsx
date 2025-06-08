@@ -664,8 +664,6 @@ const BacktestFactoryPage: React.FC = () => {
   return (
     <div className="backtest-factory-page">
       <div className="page-header">
-        <h1>回测工厂</h1>
-        <p>查看所有可用的策略模型</p>
       </div>
       
       {renderFilters()}
