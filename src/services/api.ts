@@ -291,4 +291,86 @@ export const fetchBacktestSummary = async (backtestId: string): Promise<any> => 
     console.error('获取回测摘要数据失败:', error);
     return null;
   }
+};
+
+// 获取回测策略列表
+export const fetchBacktestStrategies = async (): Promise<any> => {
+  try {
+    const url = `/api/api/backtest/ta4j/strategies`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.warn(`获取回测策略失败: ${response.status}`);
+      return { data: {} };
+    }
+    
+    const result = await response.json();
+    
+    if (result.code !== 200) {
+      console.warn(`API错误: ${result.message}`);
+      return { data: {} };
+    }
+    
+    if (!result.data) {
+      console.warn('API返回的回测策略数据为空');
+      return { data: {} };
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('获取回测策略数据失败:', error);
+    return { data: {} };
+  }
+};
+
+// 创建回测
+export const createBacktest = async (
+  symbol: string = 'BTC-USDT',
+  interval: string = '1D',
+  strategyCode: string,
+  params: any,
+  startDate?: string,
+  endDate?: string,
+  initialAmount: number = 10000
+): Promise<any> => {
+  try {
+    const url = `/api/api/backtest/ta4j/create`;
+    
+    // 构建请求体
+    const requestBody = {
+      symbol,
+      interval,
+      strategyCode,
+      strategyParams: JSON.stringify(params),
+      startTime: startDate ? formatDateString(startDate) : undefined,
+      endTime: endDate ? formatDateString(endDate) : undefined,
+      initialAmount
+    };
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+    
+    if (!response.ok) {
+      console.warn(`创建回测失败: ${response.status}`);
+      return { success: false, message: `创建回测失败，状态码: ${response.status}` };
+    }
+    
+    const result = await response.json();
+    
+    if (result.code !== 200) {
+      console.warn(`API错误: ${result.message}`);
+      return { success: false, message: result.message || '创建回测失败' };
+    }
+    
+    return { success: true, data: result.data };
+  } catch (error) {
+    console.error('创建回测失败:', error);
+    return { success: false, message: '创建回测请求发生错误' };
+  }
 }; 
