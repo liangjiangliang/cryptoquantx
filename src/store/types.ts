@@ -12,6 +12,7 @@ export interface CandlestickData {
 export interface BacktestSummary {
   averageProfit: number;
   backtestId: string;
+  batch_backtest_id?: string; // 批量回测ID
   createTime: string;
   endTime: string;
   finalAmount: number;

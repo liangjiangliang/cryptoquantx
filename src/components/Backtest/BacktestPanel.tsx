@@ -5,10 +5,11 @@ import { startBacktest, finishBacktest, setSelectedPair, setTimeframe, setDateRa
 import { formatDate, formatPrice, formatPercentage } from '../../utils/helpers';
 import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
+import { runAllBacktests } from '../../services/api';
 
 // 策略接口定义
 interface Strategy {
@@ -30,6 +31,7 @@ const TRADES_PER_PAGE = 13;
 
 const BacktestPanel: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const selectedPair = useSelector((state: AppState) => state.selectedPair);
   const timeframe = useSelector((state: AppState) => state.timeframe);
   const isBacktesting = useSelector((state: AppState) => state.isBacktesting);
@@ -45,6 +47,9 @@ const BacktestPanel: React.FC = () => {
 
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [runningBatchBacktest, setRunningBatchBacktest] = useState<boolean>(false);
+  const [batchStatusMessage, setBatchStatusMessage] = useState<string>('');
 
   // 获取可用策略列表
   useEffect(() => {
@@ -209,6 +214,45 @@ const BacktestPanel: React.FC = () => {
       console.error('回测失败:', error);
       alert(`回测失败: ${error instanceof Error ? error.message : '未知错误'}`);
       dispatch(finishBacktest(null as any)); // 重置回测状态
+    }
+  };
+
+  // 运行批量回测
+  const runBatchBacktest = async () => {
+    setRunningBatchBacktest(true);
+    setBatchStatusMessage('运行批量回测中...');
+
+    try {
+      // 使用与单个回测相同的参数
+      const result = await runAllBacktests(
+        selectedPair,
+        timeframe,
+        dateRange.startDate,
+        dateRange.endDate,
+        Number(initialCapital),
+        Number(feeRatio)
+      );
+
+      if (result.success) {
+        setBatchStatusMessage('批量回测完成!');
+        // 如果创建成功且返回了批量回测ID，跳转到批量回测详情页面
+        if (result.batchBacktestId) {
+          setTimeout(() => {
+            navigate(`/backtest-summaries?batch_backtest_id=${result.batchBacktestId}`);
+          }, 1500);
+        } else {
+          setTimeout(() => {
+            navigate('/backtest-summaries');
+          }, 1500);
+        }
+      } else {
+        setBatchStatusMessage(`批量回测失败: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('批量回测出错:', error);
+      setBatchStatusMessage('批量回测出错，请稍后重试');
+    } finally {
+      setRunningBatchBacktest(false);
     }
   };
 
@@ -387,10 +431,24 @@ const BacktestPanel: React.FC = () => {
             <button
               className="run-backtest-button"
               onClick={runBacktest}
-              disabled={isBacktesting || loading || !strategy}
+              disabled={isBacktesting || loading || !strategy || runningBatchBacktest}
             >
               {isBacktesting ? '运行中...' : '运行回测'}
             </button>
+            
+            <button
+              className="run-batch-backtest-button"
+              onClick={runBatchBacktest}
+              disabled={runningBatchBacktest || isBacktesting || loading || !strategy}
+            >
+              {runningBatchBacktest ? '批量回测运行中...' : '运行批量回测'}
+            </button>
+            
+            {batchStatusMessage && (
+              <div className={`batch-status-message ${runningBatchBacktest ? 'loading' : ''}`}>
+                {batchStatusMessage}
+              </div>
+            )}
           </div>
         ) : (
           <div className="backtest-results">

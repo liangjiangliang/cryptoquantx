@@ -20,12 +20,19 @@ const BacktestSummaries: React.FC = () => {
   const [sortField, setSortField] = useState<string>('totalReturn');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-  // 从URL和sessionStorage获取批次ID和回测ID列表
+  // 从URL获取批次ID和回测ID列表
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const batchId = queryParams.get('batchId');
+    const batch_backtest_id = queryParams.get('batch_backtest_id');
     
-    if (batchId) {
+    if (batch_backtest_id) {
+      // 如果有batch_backtest_id参数，优先使用它
+      setBatchBacktestId(batch_backtest_id);
+      setViewMode('batch');
+      loadBatchBacktests(batch_backtest_id);
+    } else if (batchId) {
+      // 向后兼容旧的batchId参数
       setBatchBacktestId(batchId);
       setViewMode('batch');
       
@@ -50,6 +57,34 @@ const BacktestSummaries: React.FC = () => {
       handleRefresh();
     }
   }, [location.search]);
+
+  // 加载批量回测数据的新方法，基于batch_backtest_id
+  const loadBatchBacktests = async (batchBacktestId: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const allSummaries = await fetchBacktestSummaries();
+      // 过滤出属于该批次的回测，根据batch_backtest_id字段
+      const batchSummaries = allSummaries.filter(summary => 
+        summary.batch_backtest_id === batchBacktestId
+      );
+      
+      if (batchSummaries && batchSummaries.length > 0) {
+        console.log(`找到${batchSummaries.length}条批量回测记录，批次ID: ${batchBacktestId}`);
+        dispatch(setBacktestSummaries(batchSummaries));
+      } else {
+        setError(`未找到批次ID为 ${batchBacktestId} 的回测数据`);
+        // 如果没有找到数据，仍然显示所有数据
+        dispatch(setBacktestSummaries(allSummaries));
+      }
+    } catch (err) {
+      setError('获取批量回测数据失败');
+      console.error('获取批量回测数据失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 当backtestSummaries变化时，根据当前视图模式和排序设置过滤和排序数据
   useEffect(() => {
@@ -128,12 +163,21 @@ const BacktestSummaries: React.FC = () => {
         console.log('批量回测IDs:', backtestIds);
         console.log('过滤后回测结果数量:', summaries.length);
       } else {
-        // 否则直接通过批次ID查询
-        summaries = await fetchBacktestSummaries();
-        // 过滤出属于该批次的回测
-        summaries = summaries.filter(summary => 
-          summary.backtestId === batchId
+        // 尝试通过batch_backtest_id过滤
+        const allSummaries = await fetchBacktestSummaries();
+        // 首先尝试通过batch_backtest_id过滤
+        let batchSummaries = allSummaries.filter(summary => 
+          summary.batch_backtest_id === batchId
         );
+        
+        // 如果找不到，再尝试通过backtestId匹配
+        if (batchSummaries.length === 0) {
+          batchSummaries = allSummaries.filter(summary => 
+            summary.backtestId === batchId
+          );
+        }
+        
+        summaries = batchSummaries;
       }
       
       if (summaries && summaries.length > 0) {

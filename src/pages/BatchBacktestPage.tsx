@@ -103,7 +103,9 @@ const BatchBacktestPage: React.FC = () => {
                   <td>{formatDateTime(batch.end_time)}</td>
                   <td>{formatDateTime(batch.create_time)}</td>
                   <td>{batch.backtest_count}</td>
-                  <td className="positive">{formatPercentValue(batch.max_return)}</td>
+                  <td className={batch.max_return >= 0 ? 'positive' : 'negative'}>
+                    {formatPercentValue(batch.max_return)}
+                  </td>
                   <td className={batch.avg_return >= 0 ? 'positive' : 'negative'}>
                     {formatPercentValue(batch.avg_return)}
                   </td>

@@ -207,11 +207,11 @@
 }
 
 .positive {
-  color: #4caf50;
+  color: #f44336;
 }
 
 .negative {
-  color: #f44336;
+  color: #4caf50;
 }
 
 .no-data-message {

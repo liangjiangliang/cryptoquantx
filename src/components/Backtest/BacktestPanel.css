@@ -116,6 +116,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-bottom: 10px;
 }
 
 .run-backtest-button:hover {
@@ -125,6 +126,42 @@
 .run-backtest-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.run-batch-backtest-button {
+  padding: 12px;
+  background-color: #ff9800;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.run-batch-backtest-button:hover {
+  background-color: #fb8c00;
+}
+
+.run-batch-backtest-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.batch-status-message {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 4px;
+  background-color: #2e3241;
+  color: #d9d9d9;
+  text-align: center;
+  font-size: 14px;
+}
+
+.batch-status-message.loading {
+  background-color: #ff9800;
+  color: white;
 }
 
 /* 回测结果 */
