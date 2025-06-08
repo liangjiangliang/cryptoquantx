@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { fetchBacktestDetail, fetchBacktestSummary } from '../services/api';
 import { BacktestTradeDetail } from '../store/types';
 import { formatPercentage } from '../utils/helpers';
@@ -17,7 +17,8 @@ const strategyNameMap: Record<string, string> = {
   'SUPERTREND': '超级趋势',
   'STOCHASTIC': '随机指标',
   'ADX': '平均方向指数',
-  'CCI': '商品通道指数'
+  'CCI': '商品通道指数',
+  'KDJ': 'KDJ指标'
 };
 
 // 每页显示的交易记录数量
@@ -70,7 +71,27 @@ const BacktestDetailPage: React.FC = () => {
     }
   };
 
-  const formatAmount = (amount: number): string => {
+  // 将策略参数格式化为中文显示，只显示值，用逗号拼接
+  const formatStrategyParams = (strategyCode: string, paramsStr: string): string => {
+    try {
+      // 如果策略参数为空或无效，直接返回原始值
+      if (!paramsStr) {
+        return paramsStr;
+      }
+
+      // 解析参数字符串为对象
+      const params = JSON.parse(paramsStr);
+      
+      // 返回参数值，用逗号拼接
+      return Object.values(params).join(', ');
+    } catch (err) {
+      console.error('解析策略参数失败:', err);
+      return paramsStr; // 解析失败时返回原始字符串
+    }
+  };
+
+  const formatAmount = (amount: number | null): string => {
+    if (amount === null) return '0.00';
     const isNegative = amount < 0;
     const absAmount = Math.abs(amount);
     const formattedValue = absAmount.toFixed(2);
@@ -144,27 +165,27 @@ const BacktestDetailPage: React.FC = () => {
         <div className="no-data-message">暂无交易详情数据</div>
       ) : (
         <div className="detail-info">
-          <div className="strategy-info">
-            <div className="info-item-row">
-              <div className="info-item">
-                <span className="label">策略名称:</span>
-                <span className="value">{strategyNameMap[tradeDetails[0].strategyName] || tradeDetails[0].strategyName}</span>
+          <div className="strategy-info" style={{ backgroundColor: '#1e222d', borderRadius: '8px', padding: '10px', marginBottom: '15px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' }}>
+            <div className="info-item-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              <div className="info-item" style={{ flex: 1, minWidth: '200px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
+                <span className="label" style={{ color: '#8d8d8d', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>策略名称:</span>
+                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '250px', whiteSpace: 'normal' }}>{strategyNameMap[tradeDetails[0].strategyName] || tradeDetails[0].strategyName}</span>
               </div>
-              <div className="info-item">
-                <span className="label">策略参数:</span>
-                <span className="value">{tradeDetails[0].strategyParams}</span>
+              <div className="info-item" style={{ flex: 1, minWidth: '200px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
+                <span className="label" style={{ color: '#8d8d8d', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>策略参数:</span>
+                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '250px', whiteSpace: 'normal' }}>{formatStrategyParams(tradeDetails[0].strategyName, tradeDetails[0].strategyParams)}</span>
               </div>
-              <div className="info-item">
-                <span className="label">交易对:</span>
-                <span className="value">{tradeDetails[0].symbol}</span>
+              <div className="info-item" style={{ flex: 1, minWidth: '200px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
+                <span className="label" style={{ color: '#8d8d8d', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>交易对:</span>
+                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '250px', whiteSpace: 'normal' }}>{tradeDetails[0].symbol}</span>
               </div>
-              <div className="info-item">
-                <span className="label">回测周期:</span>
-                <span className="value">{intervalVal}</span>
+              <div className="info-item" style={{ flex: 1, minWidth: '200px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
+                <span className="label" style={{ color: '#8d8d8d', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>回测周期:</span>
+                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '250px', whiteSpace: 'normal' }}>{intervalVal}</span>
               </div>
-              <div className="info-item">
-                <span className="label">时间范围:</span>
-                <span className="value">{formatDateTime(startTime)} 至 {formatDateTime(endTime)}</span>
+              <div className="info-item" style={{ flex: 1, minWidth: '200px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
+                <span className="label" style={{ color: '#8d8d8d', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>时间范围:</span>
+                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '250px', whiteSpace: 'normal' }}>{formatDateTime(startTime)} 至 {formatDateTime(endTime)}</span>
               </div>
             </div>
           </div>
@@ -199,72 +220,67 @@ const BacktestDetailPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {getCurrentPageTrades().map((trade) => (
-                  <tr key={trade.id}>
-                    <td>{trade.index}</td>
-                    <td className={trade.type === 'BUY' ? 'buy' : 'sell'}>
-                      {trade.type === 'BUY' ? '买入' : '卖出'}
-                    </td>
-                    <td>{formatDateTime(trade.entryTime)}</td>
-                    <td>{formatAmount(trade.entryPrice)}</td>
-                    <td>{formatAmount(trade.entryAmount)}</td>
-                    <td>{formatDateTime(trade.exitTime)}</td>
-                    <td>{formatAmount(trade.exitPrice)}</td>
-                    <td>{formatAmount(trade.exitAmount)}</td>
-                    <td>{trade.fee ? formatAmount(trade.fee) : '0.00'}</td>
-                    <td className={trade.profit >= 0 ? 'positive' : 'negative'}>
-                      {trade.profit >= 0 ? '+' : ''}{formatAmount(trade.profit)}
-                    </td>
-                    <td className={trade.profitPercentage >= 0 ? 'positive' : 'negative'}>
-                      {formatPercentage(trade.profitPercentage*100)}
-                    </td>
-                    <td>{formatAmount(trade.totalAssets)}</td>
-                    <td>{formatPercentage(trade.maxDrawdown)}</td>
-                  </tr>
-                ))}
+                {getCurrentPageTrades().map((trade, index) => {
+                  const actualIndex = (currentPage - 1) * TRADES_PER_PAGE + index + 1;
+                  const profit = trade.exitAmount - trade.entryAmount - (trade.fee || 0);
+                  const profitPercentage = (profit / trade.entryAmount) * 100;
+                  
+                  return (
+                    <tr key={index}>
+                      <td>{actualIndex}</td>
+                      <td className={trade.type === 'BUY' ? 'buy' : 'sell'}>{trade.type === 'BUY' ? '买入' : '卖出'}</td>
+                      <td>{trade.entryTime}</td>
+                      <td>{trade.entryPrice}</td>
+                      <td>{formatAmount(trade.entryAmount)}</td>
+                      <td>{trade.exitTime}</td>
+                      <td>{trade.exitPrice}</td>
+                      <td>{formatAmount(trade.exitAmount)}</td>
+                      <td>{formatAmount(trade.fee)}</td>
+                      <td className={profit >= 0 ? 'positive' : 'negative'}>{formatAmount(profit)}</td>
+                      <td className={profitPercentage >= 0 ? 'positive' : 'negative'}>{formatPercentage(profitPercentage)}</td>
+                      <td>{formatAmount(trade.totalAssets)}</td>
+                      <td>{formatPercentage(trade.maxDrawdown * 100)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
-
-            {/* 添加分页控制 */}
-            {tradeDetails.length > TRADES_PER_PAGE && (
-              <div className="pagination-container">
-                <button
-                  onClick={() => handlePageChange(1)}
-                  disabled={currentPage === 1}
-                  className="pagination-button"
-                >
-                  首页
-                </button>
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="pagination-button"
-                >
-                  上一页
-                </button>
-                <div className="pagination-info">
-                  {currentPage} / {getTotalPages()} 页 (共 {tradeDetails.length} 条记录)
-                </div>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === getTotalPages()}
-                  className="pagination-button"
-                >
-                  下一页
-                </button>
-                <button
-                  onClick={() => handlePageChange(getTotalPages())}
-                  disabled={currentPage === getTotalPages()}
-                  className="pagination-button"
-                >
-                  末页
-                </button>
-                <div className="page-size-selector">
-                  每页 {TRADES_PER_PAGE} 条
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* 分页控件 */}
+          {getTotalPages() > 1 && (
+            <div className="pagination">
+              <button 
+                onClick={() => handlePageChange(1)} 
+                disabled={currentPage === 1}
+                className="pagination-button"
+              >
+                首页
+              </button>
+              <button 
+                onClick={() => handlePageChange(currentPage - 1)} 
+                disabled={currentPage === 1}
+                className="pagination-button"
+              >
+                上一页
+              </button>
+              <span className="page-info">{currentPage} / {getTotalPages()}</span>
+              <button 
+                onClick={() => handlePageChange(currentPage + 1)} 
+                disabled={currentPage === getTotalPages()}
+                className="pagination-button"
+              >
+                下一页
+              </button>
+              <button 
+                onClick={() => handlePageChange(getTotalPages())} 
+                disabled={currentPage === getTotalPages()}
+                className="pagination-button"
+              >
+                末页
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -220,7 +220,7 @@ const BacktestPanel: React.FC = () => {
   // 运行批量回测
   const runBatchBacktest = async () => {
     setRunningBatchBacktest(true);
-    setBatchStatusMessage('运行批量回测中...');
+    setBatchStatusMessage('批量回测运行中...'); // 添加初始状态消息
 
     try {
       // 使用与单个回测相同的参数
@@ -234,16 +234,24 @@ const BacktestPanel: React.FC = () => {
       );
 
       if (result.success) {
-        setBatchStatusMessage('批量回测完成!');
-        // 如果创建成功且返回了批量回测ID，跳转到批量回测详情页面
+        // 批量回测完成后设置状态消息
         if (result.batchBacktestId) {
-          setTimeout(() => {
-            navigate(`/backtest-summaries?batch_backtest_id=${result.batchBacktestId}`);
-          }, 1500);
+          // 获取批量回测结果并在当前页面显示
+          try {
+            const { fetchBatchBacktestSummariesBatch } = await import('../../services/api');
+            const batchSummaries = await fetchBatchBacktestSummariesBatch(result.batchBacktestId);
+            if (batchSummaries && batchSummaries.length > 0) {
+              // 显示批量回测完成消息，包含结果数量
+              setBatchStatusMessage(`批量回测完成! 共${batchSummaries.length}个策略回测结果。批次ID: ${result.batchBacktestId}`);
+            } else {
+              setBatchStatusMessage(`批量回测完成! 批次ID: ${result.batchBacktestId}`);
+            }
+          } catch (err) {
+            console.error('获取批量回测结果失败:', err);
+            setBatchStatusMessage(`批量回测完成! 批次ID: ${result.batchBacktestId}`);
+          }
         } else {
-          setTimeout(() => {
-            navigate('/backtest-summaries');
-          }, 1500);
+          setBatchStatusMessage('批量回测完成!');
         }
       } else {
         setBatchStatusMessage(`批量回测失败: ${result.message}`);
@@ -444,9 +452,16 @@ const BacktestPanel: React.FC = () => {
               {runningBatchBacktest ? '批量回测运行中...' : '运行批量回测'}
             </button>
             
-            {batchStatusMessage && (
+            {(batchStatusMessage) && (
               <div className={`batch-status-message ${runningBatchBacktest ? 'loading' : ''}`}>
                 {batchStatusMessage}
+                {!runningBatchBacktest && batchStatusMessage.includes('批次ID:') && (
+                  <div className="batch-details-link">
+                    <Link to={`/backtest-summaries?batch_backtest_id=${batchStatusMessage.split('批次ID:')[1].trim()}`}>
+                      查看详细结果
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>

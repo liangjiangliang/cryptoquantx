@@ -151,17 +151,36 @@
 
 .batch-status-message {
   margin-top: 10px;
-  padding: 10px;
+  padding: 12px 16px;
+  background-color: rgba(255, 152, 0, 0.1);
+  border-left: 4px solid #ff9800;
+  color: #ff9800;
   border-radius: 4px;
-  background-color: #2e3241;
-  color: #d9d9d9;
-  text-align: center;
   font-size: 14px;
 }
 
 .batch-status-message.loading {
   background-color: #ff9800;
   color: white;
+}
+
+.batch-details-link {
+  margin-top: 8px;
+}
+
+.batch-details-link a {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: #ff9800;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.batch-details-link a:hover {
+  background-color: #fb8c00;
 }
 
 /* 回测结果 */
