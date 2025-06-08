@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AppState, BacktestSummary } from '../store/types';
 import { setBacktestSummaries } from '../store/actions';
 import { fetchBacktestSummaries } from '../services/api';
@@ -61,17 +61,37 @@ const BacktestSummaryPage: React.FC = () => {
   const [filters, setFilters] = useState<Filters>({ symbol: '', intervalVal: '', strategyName: '' });
   // 存储策略名称映射
   const [strategyMap, setStrategyMap] = useState<{[key: string]: Strategy}>({});
+  // 获取URL参数
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const batchId = queryParams.get('batchId');
+  // 存储批次相关的回测ID列表
+  const [batchBacktestIds, setBatchBacktestIds] = useState<string[]>([]);
 
   useEffect(() => {
     loadBacktestSummaries();
     // 加载策略列表
     fetchStrategies();
-  }, []);
+    
+    // 如果URL中有批次ID参数，从sessionStorage中获取回测ID列表
+    if (batchId) {
+      try {
+        const storedIds = sessionStorage.getItem('backtestIds');
+        if (storedIds) {
+          const backtestIds = JSON.parse(storedIds);
+          console.log('从sessionStorage获取批量回测IDs:', backtestIds);
+          setBatchBacktestIds(backtestIds);
+        }
+      } catch (err) {
+        console.error('解析sessionStorage中的回测ID列表失败:', err);
+      }
+    }
+  }, [batchId]);
 
-  // 当原始数据或过滤条件变化时，更新过滤后的数据
+  // 当原始数据、过滤条件或批次回测ID列表变化时，更新过滤后的数据
   useEffect(() => {
     filterAndSortData();
-  }, [backtestSummaries, sortField, sortDirection, filters]);
+  }, [backtestSummaries, sortField, sortDirection, filters, batchBacktestIds]);
 
   const loadBacktestSummaries = async () => {
     setLoading(true);
@@ -109,6 +129,25 @@ const BacktestSummaryPage: React.FC = () => {
       return strategyMap[strategyCode].name;
     }
     return strategyCode;
+  };
+
+  // 将策略参数格式化为只显示值，用逗号拼接
+  const formatStrategyParams = (strategyCode: string, paramsStr: string): string => {
+    try {
+      // 如果策略参数为空或无效，直接返回原始值
+      if (!paramsStr) {
+        return paramsStr;
+      }
+
+      // 解析参数字符串为对象
+      const params = JSON.parse(paramsStr);
+      
+      // 只展示参数值，不展示名称，用逗号拼接
+      return Object.values(params).join(', ');
+    } catch (err) {
+      console.error('解析策略参数失败:', err);
+      return paramsStr; // 解析失败时返回原始字符串
+    }
   };
 
   const formatAmount = (amount: number): string => {
@@ -152,6 +191,11 @@ const BacktestSummaryPage: React.FC = () => {
   const filterAndSortData = () => {
     // 先过滤
     let result = [...backtestSummaries];
+    
+    // 如果有批次ID和回测ID列表，只显示这些回测的摘要信息
+    if (batchId && batchBacktestIds.length > 0) {
+      result = result.filter(item => batchBacktestIds.includes(item.backtestId));
+    }
 
     if (filters.symbol) {
       result = result.filter(item =>
@@ -419,7 +463,7 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{summary.symbol}</td>
                   <td>{summary.intervalVal}</td>
                   <td>{getStrategyDisplayName(summary.strategyName)}</td>
-                  <td>{summary.strategyParams}</td>
+                  <td>{formatStrategyParams(summary.strategyName, summary.strategyParams)}</td>
                   <td>{summary.startTime.substring(0, 10)}</td>
                   <td>{summary.endTime.substring(0, 10)}</td>
                   <td>{formatAmount(summary.initialAmount)}</td>

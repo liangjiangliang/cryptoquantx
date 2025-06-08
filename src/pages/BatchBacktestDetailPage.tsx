@@ -1,15 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { BacktestSummary } from '../store/types';
-import { fetchBacktestSummaries } from '../services/api';
+import { fetchBacktestSummaries, fetchBacktestStrategies } from '../services/api';
 import { formatPercentage } from '../utils/helpers';
 import './BatchBacktestDetailPage.css';
+
+interface Strategy {
+  name: string;
+  description: string;
+  params: string;
+  category?: string;
+  default_params?: string;
+  strategy_code?: string;
+}
 
 const BatchBacktestDetailPage: React.FC = () => {
   const { batchId } = useParams<{ batchId: string }>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [backtestResults, setBacktestResults] = useState<BacktestSummary[]>([]);
+  const [strategyMap, setStrategyMap] = useState<{[key: string]: Strategy}>({});
   const [batchInfo, setBatchInfo] = useState({
     name: '',
     createdAt: '',
@@ -20,8 +30,13 @@ const BatchBacktestDetailPage: React.FC = () => {
     const loadBatchBacktestDetail = async () => {
       setLoading(true);
       try {
-        // 这里应该调用API获取批量回测详情数据，目前使用模拟数据
-        // 假设 fetchBacktestSummaries 返回所有的回测结果，然后我们通过批次ID筛选
+        // 获取策略信息，用于参数显示
+        const strategiesResponse = await fetchBacktestStrategies();
+        if (strategiesResponse && strategiesResponse.data) {
+          setStrategyMap(strategiesResponse.data);
+        }
+        
+        // 获取回测结果
         const allBacktests = await fetchBacktestSummaries();
         
         // 模拟批量回测详情数据
@@ -54,6 +69,41 @@ const BatchBacktestDetailPage: React.FC = () => {
       loadBatchBacktestDetail();
     }
   }, [batchId]);
+
+  // 将策略参数格式化为中文显示
+  const formatStrategyParams = (strategyCode: string, paramsStr: string): string => {
+    try {
+      // 如果策略参数为空或无效，直接返回原始值
+      if (!paramsStr) {
+        return paramsStr;
+      }
+
+      // 解析参数字符串为对象
+      const params = JSON.parse(paramsStr);
+      
+      // 如果没有策略信息或策略参数定义，返回原始格式的参数
+      if (!strategyMap[strategyCode] || !strategyMap[strategyCode].params) {
+        return Object.entries(params)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(', ');
+      }
+      
+      // 获取策略参数中文定义
+      const paramNames = JSON.parse(strategyMap[strategyCode].params);
+      
+      // 转换为中文显示格式
+      return Object.entries(params)
+        .map(([key, value]) => {
+          // 使用中文名称，如果不存在则使用原键名
+          const displayName = paramNames[key] || key;
+          return `${displayName}: ${value}`;
+        })
+        .join(', ');
+    } catch (err) {
+      console.error('解析策略参数失败:', err);
+      return paramsStr; // 解析失败时返回原始字符串
+    }
+  };
 
   const formatAmount = (amount: number): string => {
     // 处理负数
@@ -118,7 +168,7 @@ const BatchBacktestDetailPage: React.FC = () => {
                   <td>{result.symbol}</td>
                   <td>{result.intervalVal}</td>
                   <td>{result.strategyName}</td>
-                  <td>{result.strategyParams}</td>
+                  <td>{formatStrategyParams(result.strategyName, result.strategyParams)}</td>
                   <td>{formatAmount(result.initialAmount)}</td>
                   <td>{formatAmount(result.finalAmount)}</td>
                   <td>{formatAmount(result.totalProfit)}</td>
