@@ -9,6 +9,7 @@ export interface Strategy {
   params: string;
   category: string;
   strategy_code: string;
+  update_time?: string; // 更新时间字段
 }
 
 export interface StrategyMap {
@@ -17,4 +18,4 @@ export interface StrategyMap {
 
 export interface ParsedParams {
   [key: string]: any;
-} 
+}

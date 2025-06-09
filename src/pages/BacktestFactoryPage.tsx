@@ -32,8 +32,8 @@ const BacktestFactoryPage: React.FC = () => {
   
   // 过滤和排序
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [sortField, setSortField] = useState<string>('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<string>('updated_at');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [categories, setCategories] = useState<string[]>([]);
   
@@ -183,6 +183,11 @@ const BacktestFactoryPage: React.FC = () => {
           case 'category':
             valueA = strategyA.category;
             valueB = strategyB.category;
+            break;
+          case 'updated_at':
+            // 处理更新时间排序，如果没有更新时间则使用最小值
+            valueA = strategyA.update_time ? new Date(strategyA.update_time).getTime() : 0;
+            valueB = strategyB.update_time ? new Date(strategyB.update_time).getTime() : 0;
             break;
           default:
             valueA = strategyA.name;
@@ -679,6 +684,17 @@ const BacktestFactoryPage: React.FC = () => {
         </div>
         <div className="strategy-cell description">描述</div>
         <div className="strategy-cell default-params">默认参数</div>
+        <div 
+          className="strategy-cell updated-at" 
+          onClick={() => handleSort('updated_at')}
+        >
+          更新时间
+          {sortField === 'updated_at' && (
+            <span className="sort-indicator">
+              {sortDirection === 'asc' ? '↑' : '↓'}
+            </span>
+          )}
+        </div>
         <div className="strategy-cell action">操作</div>
       </div>
     );
@@ -713,6 +729,15 @@ const BacktestFactoryPage: React.FC = () => {
         <div className="strategy-cell category">{strategy.category}</div>
         <div className="strategy-cell description">{strategy.description}</div>
         <div className="strategy-cell default-params">{formattedParams}</div>
+        <div className="strategy-cell updated-at">
+          {strategy.update_time ? new Date(strategy.update_time).toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          }) : '未知'}
+        </div>
         <div className="strategy-cell action">
           <button 
             className="view-btn"
