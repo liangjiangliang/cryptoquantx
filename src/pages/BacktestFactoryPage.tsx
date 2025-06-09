@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchBacktestStrategies, createBacktest } from '../services/api';
+import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy } from '../services/api';
+import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
+import GenerateStrategyModal from '../components/GenerateStrategyModal/GenerateStrategyModal';
+import ResultModal from '../components/ResultModal/ResultModal';
 import { Strategy, StrategyMap, ParsedParams, StrategyParam } from '../types/strategy';
 import './BacktestFactoryPage.css';
 
@@ -37,6 +40,21 @@ const BacktestFactoryPage: React.FC = () => {
   // 缓存处理过的数据
   const [filteredStrategies, setFilteredStrategies] = useState<[string, Strategy][]>([]);
   
+  // 删除确认模态框状态
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteStrategyCode, setDeleteStrategyCode] = useState<string>('');
+  
+  // 生成策略相关状态
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [strategyDescription, setStrategyDescription] = useState('');
+  const [generatingStrategy, setGeneratingStrategy] = useState(false);
+  
+  // 结果弹窗状态
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [resultModalTitle, setResultModalTitle] = useState('');
+  const [resultModalMessage, setResultModalMessage] = useState('');
+  const [resultModalType, setResultModalType] = useState<'success' | 'error' | 'info'>('info');
+  
   // 设置默认日期范围（过去90天）
   useEffect(() => {
     const today = new Date();
@@ -51,58 +69,58 @@ const BacktestFactoryPage: React.FC = () => {
   }, []);
 
   // 加载策略列表
-  useEffect(() => {
-    const loadStrategies = async () => {
-      setLoading(true);
-      try {
-        const response = await fetchBacktestStrategies();
-        // API返回格式: { code: 200, data: { STRATEGY_CODE: { ... } }, message: "success" }
-        if (response && response.data) {
-          setStrategies(response.data);
+  const loadStrategies = async () => {
+    setLoading(true);
+    try {
+      const response = await fetchBacktestStrategies();
+      // API返回格式: { code: 200, data: { STRATEGY_CODE: { ... } }, message: "success" }
+      if (response && response.data) {
+        setStrategies(response.data);
+        
+        // 提取所有策略分类
+        const categorySet = new Set<string>();
+        Object.values(response.data).forEach((strategy: any) => {
+          if (strategy && typeof strategy === 'object' && 'category' in strategy && typeof strategy.category === 'string') {
+            categorySet.add(strategy.category);
+          }
+        });
+        setCategories(['全部', ...Array.from(categorySet)]);
+        
+        // 如果有策略，默认选择第一个
+        const strategyKeys = Object.keys(response.data);
+        if (strategyKeys.length > 0) {
+          const firstStrategy = strategyKeys[0];
+          setSelectedStrategy(firstStrategy);
           
-          // 提取所有策略分类
-          const categorySet = new Set<string>();
-          Object.values(response.data).forEach((strategy: any) => {
-            if (strategy && typeof strategy === 'object' && 'category' in strategy && typeof strategy.category === 'string') {
-              categorySet.add(strategy.category);
-            }
-          });
-          setCategories(['全部', ...Array.from(categorySet)]);
-          
-          // 如果有策略，默认选择第一个
-          const strategyKeys = Object.keys(response.data);
-          if (strategyKeys.length > 0) {
-            const firstStrategy = strategyKeys[0];
-            setSelectedStrategy(firstStrategy);
-            
-            // 设置默认参数值
-            if (response.data[firstStrategy] && response.data[firstStrategy].default_params) {
-              try {
-                // 检查default_params是否为undefined或空字符串
-                const defaultParamsStr = response.data[firstStrategy].default_params;
-                if (!defaultParamsStr) {
-                  setFormParams({});
-                } else {
-                  const defaultParams = JSON.parse(defaultParamsStr);
-                  setFormParams(defaultParams);
-                }
-              } catch (err) {
-                console.error('解析默认参数失败:', err);
+          // 设置默认参数值
+          if (response.data[firstStrategy] && response.data[firstStrategy].default_params) {
+            try {
+              // 检查default_params是否为undefined或空字符串
+              const defaultParamsStr = response.data[firstStrategy].default_params;
+              if (!defaultParamsStr) {
                 setFormParams({});
+              } else {
+                const defaultParams = JSON.parse(defaultParamsStr);
+                setFormParams(defaultParams);
               }
+            } catch (err) {
+              console.error('解析默认参数失败:', err);
+              setFormParams({});
             }
           }
-        } else {
-          setError('获取策略数据失败，API返回格式不正确');
         }
-      } catch (err) {
-        setError('加载回测策略失败，请稍后重试');
-        console.error('加载回测策略失败:', err);
-      } finally {
-        setLoading(false);
+      } else {
+        setError('获取策略数据失败，API返回格式不正确');
       }
-    };
-    
+    } catch (err) {
+      setError('加载回测策略失败，请稍后重试');
+      console.error('加载回测策略失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadStrategies();
   }, []);
 
@@ -417,6 +435,107 @@ const BacktestFactoryPage: React.FC = () => {
     navigate(`/?strategy=${strategyCode}`);
   };
 
+  // 删除策略
+  const handleDeleteStrategy = (strategyCode: string) => {
+    setDeleteStrategyCode(strategyCode);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteStrategy = async () => {
+    try {
+      const result = await deleteStrategy(deleteStrategyCode);
+      
+      if (result.success) {
+        setStatusMessage('策略删除成功!');
+        // 重新加载策略列表
+        loadStrategies();
+      } else {
+        setStatusMessage(`删除失败: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('删除策略出错:', error);
+      setStatusMessage('删除策略出错，请稍后重试');
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteStrategyCode('');
+    }
+  };
+
+  const cancelDeleteStrategy = () => {
+    setShowDeleteModal(false);
+    setDeleteStrategyCode('');
+  };
+
+  // 处理生成策略
+  const handleGenerateStrategy = async () => {
+    if (!strategyDescription.trim()) {
+      setStatusMessage('请输入策略描述');
+      return;
+    }
+
+    setGeneratingStrategy(true);
+    setStatusMessage('正在生成策略...');
+
+    try {
+      const result = await generateStrategy(strategyDescription);
+      
+      if (result.success) {
+        // 显示详细的返回信息
+        let message = '策略生成成功!';
+        if (result.data) {
+          // 如果有返回数据，显示详细信息
+          if (typeof result.data === 'string') {
+            message += `\n\n生成的策略:\n${result.data}`;
+          } else if (typeof result.data === 'object') {
+            message += `\n\n返回数据:\n${JSON.stringify(result.data, null, 2)}`;
+          }
+        }
+        if (result.message && result.message !== '策略生成成功') {
+          message += `\n\n服务器消息: ${result.message}`;
+        }
+        
+        // 使用ResultModal显示详细信息
+        showResult('策略生成成功', message, 'success');
+        
+        setStatusMessage('策略生成成功!');
+        setShowGenerateModal(false);
+        setStrategyDescription('');
+        // 重新加载策略列表
+        loadStrategies();
+      } else {
+        const errorMessage = `生成失败: ${result.message || '未知错误'}`;
+        setStatusMessage(errorMessage);
+        showResult('策略生成失败', errorMessage, 'error');
+      }
+    } catch (error) {
+      console.error('生成策略出错:', error);
+      const errorMessage = '生成策略出错，请稍后重试';
+      setStatusMessage(errorMessage);
+      showResult('策略生成错误', errorMessage, 'error');
+    } finally {
+      setGeneratingStrategy(false);
+    }
+  };
+
+  // 取消生成策略
+  const cancelGenerateStrategy = () => {
+    setShowGenerateModal(false);
+    setStrategyDescription('');
+  };
+
+  // 显示结果弹窗
+  const showResult = (title: string, message: string, type: 'success' | 'error' | 'info') => {
+    setResultModalTitle(title);
+    setResultModalMessage(message);
+    setResultModalType(type);
+    setShowResultModal(true);
+  };
+
+  // 关闭结果弹窗
+  const closeResultModal = () => {
+    setShowResultModal(false);
+  };
+
   // 处理搜索
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -601,6 +720,12 @@ const BacktestFactoryPage: React.FC = () => {
           >
             查看详情
           </button>
+          <button 
+            className="delete-btn"
+            onClick={() => handleDeleteStrategy(strategyCode)}
+          >
+            删除
+          </button>
         </div>
       </div>
     );
@@ -632,6 +757,16 @@ const BacktestFactoryPage: React.FC = () => {
               </button>
             ))}
           </div>
+        </div>
+        
+        <div className="generate-strategy-section">
+          <button
+            className="generate-strategy-btn"
+            onClick={() => setShowGenerateModal(true)}
+            disabled={generatingStrategy}
+          >
+            {generatingStrategy ? '生成中...' : '🤖 AI生成策略'}
+          </button>
         </div>
         
         <div className="page-size-selector">
@@ -683,6 +818,37 @@ const BacktestFactoryPage: React.FC = () => {
       </div>
       
       {renderPagination()}
+      
+      {/* 确认删除模态框 */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        title="确认删除策略"
+        message={`确定要删除策略 "${deleteStrategyCode}" 吗？此操作不可撤销，删除后将无法恢复。`}
+        confirmText="删除"
+        cancelText="取消"
+        type="danger"
+        onConfirm={confirmDeleteStrategy}
+        onCancel={cancelDeleteStrategy}
+      />
+      
+      {/* 生成策略模态框 */}
+      <GenerateStrategyModal
+        isOpen={showGenerateModal}
+        onClose={cancelGenerateStrategy}
+        onConfirm={handleGenerateStrategy}
+        description={strategyDescription}
+        onDescriptionChange={setStrategyDescription}
+        isGenerating={generatingStrategy}
+      />
+      
+      {/* 结果显示模态框 */}
+      <ResultModal
+        isOpen={showResultModal}
+        onClose={closeResultModal}
+        title={resultModalTitle}
+        message={resultModalMessage}
+        type={resultModalType}
+      />
     </div>
   );
 };

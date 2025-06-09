@@ -477,3 +477,79 @@ export const fetchBatchBacktestSummariesBatch = async (batchBacktestId: string):
     return [];
   }
 };
+
+// 删除策略
+export const deleteStrategy = async (strategyCode: string): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const url = `/api/api/backtest/ta4j/delete-strategy/${strategyCode}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('删除策略API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        message: data.message || '策略删除成功'
+      };
+    } else {
+      throw new Error(data.message || '删除策略失败');
+    }
+  } catch (error) {
+    console.error('删除策略失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '删除策略请求发生错误'
+    };
+  }
+};
+
+// 生成AI策略
+export const generateStrategy = async (description: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    // 使用相对路径，由React开发服务器代理到目标API
+    const url = '/api/api/backtest/ta4j/generate-strategy';
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ description })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('生成策略API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || '策略生成成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '生成策略失败'
+      };
+    }
+  } catch (error) {
+    console.error('生成策略失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '生成策略请求发生错误'
+    };
+  }
+};

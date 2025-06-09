@@ -104,6 +104,47 @@
   color: #e6e6e6;
 }
 
+.page-size-selector select:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+/* 生成策略按钮样式 */
+.generate-strategy-section {
+  display: flex;
+  align-items: center;
+}
+
+.generate-strategy-btn {
+  background: linear-gradient(135deg, #4a9eff 0%, #0066cc 100%);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.generate-strategy-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5aa7ff 0%, #0077dd 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+}
+
+.generate-strategy-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* 策略表格样式 */
 .strategy-table {
   flex: 1;
@@ -235,6 +276,24 @@
   background-color: #1e4bd8;
 }
 
+.delete-btn {
+  background-color: #ff4757;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  text-align: center;
+  display: inline-block;
+  margin-left: 8px;
+}
+
+.delete-btn:hover {
+  background-color: #ff3742;
+}
+
 .no-results {
   display: flex;
   justify-content: center;
@@ -342,4 +401,4 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   padding: 6px 8px;
-} 
+}
