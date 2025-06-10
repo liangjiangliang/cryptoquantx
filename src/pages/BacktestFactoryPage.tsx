@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy } from '../services/api';
+import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy, updateStrategy } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import GenerateStrategyModal from '../components/GenerateStrategyModal/GenerateStrategyModal';
 import ResultModal from '../components/ResultModal/ResultModal';
@@ -48,6 +48,11 @@ const BacktestFactoryPage: React.FC = () => {
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [strategyDescription, setStrategyDescription] = useState('');
   const [generatingStrategy, setGeneratingStrategy] = useState(false);
+  
+  // 修改策略相关状态
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateStrategyDescription, setUpdateStrategyDescription] = useState('');
+  const [updatingStrategy, setUpdatingStrategy] = useState(false);
   
   // 结果弹窗状态
   const [showResultModal, setShowResultModal] = useState(false);
@@ -528,6 +533,41 @@ const BacktestFactoryPage: React.FC = () => {
     setStrategyDescription('');
   };
 
+  // 处理修改策略
+  const handleUpdateStrategy = async () => {
+    if (!updateStrategyDescription.trim()) {
+      showResult('输入错误', '请输入策略描述', 'error');
+      return;
+    }
+
+    setUpdatingStrategy(true);
+    try {
+      const result = await updateStrategy(updateStrategyDescription);
+      
+      if (result.success) {
+        setShowUpdateModal(false);
+        setUpdateStrategyDescription('');
+        showResult('策略修改成功', result.message || '策略已成功修改', 'success');
+        // 刷新策略列表
+        await loadStrategies();
+      } else {
+        showResult('策略修改失败', result.message || '修改策略失败，请稍后重试', 'error');
+      }
+    } catch (error) {
+      console.error('修改策略出错:', error);
+      const errorMessage = '修改策略出错，请稍后重试';
+      showResult('策略修改错误', errorMessage, 'error');
+    } finally {
+      setUpdatingStrategy(false);
+    }
+  };
+
+  // 取消修改策略
+  const cancelUpdateStrategy = () => {
+    setShowUpdateModal(false);
+    setUpdateStrategyDescription('');
+  };
+
   // 显示结果弹窗
   const showResult = (title: string, message: string, type: 'success' | 'error' | 'info') => {
     setResultModalTitle(title);
@@ -746,6 +786,12 @@ const BacktestFactoryPage: React.FC = () => {
             查看详情
           </button>
           <button 
+            className="update-btn"
+            onClick={() => setShowUpdateModal(true)}
+          >
+            修改策略
+          </button>
+          <button 
             className="delete-btn"
             onClick={() => handleDeleteStrategy(strategyCode)}
           >
@@ -864,6 +910,19 @@ const BacktestFactoryPage: React.FC = () => {
         description={strategyDescription}
         onDescriptionChange={setStrategyDescription}
         isGenerating={generatingStrategy}
+      />
+      
+      {/* 修改策略模态框 */}
+      <GenerateStrategyModal
+        isOpen={showUpdateModal}
+        onClose={cancelUpdateStrategy}
+        onConfirm={handleUpdateStrategy}
+        description={updateStrategyDescription}
+        onDescriptionChange={setUpdateStrategyDescription}
+        isGenerating={updatingStrategy}
+        title="修改策略"
+        confirmText="修改策略"
+        loadingText="正在修改策略..."
       />
       
       {/* 结果显示模态框 */}

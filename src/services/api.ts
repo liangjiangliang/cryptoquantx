@@ -553,3 +553,43 @@ export const generateStrategy = async (description: string): Promise<{ success: 
     };
   }
 };
+
+// 修改策略
+export const updateStrategy = async (description: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    const url = '/api/api/backtest/ta4j/update-strategy';
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ description })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('修改策略API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || '策略修改成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '修改策略失败'
+      };
+    }
+  } catch (error) {
+    console.error('修改策略失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '修改策略请求发生错误'
+    };
+  }
+};

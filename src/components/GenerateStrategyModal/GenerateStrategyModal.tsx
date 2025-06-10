@@ -8,6 +8,9 @@ interface GenerateStrategyModalProps {
   description: string;
   onDescriptionChange: (value: string) => void;
   isGenerating: boolean;
+  title?: string;
+  confirmText?: string;
+  loadingText?: string;
 }
 
 const GenerateStrategyModal: React.FC<GenerateStrategyModalProps> = ({
@@ -16,7 +19,10 @@ const GenerateStrategyModal: React.FC<GenerateStrategyModalProps> = ({
   onConfirm,
   description,
   onDescriptionChange,
-  isGenerating
+  isGenerating,
+  title = '🤖 AI生成策略',
+  confirmText = '生成策略',
+  loadingText = '生成中...'
 }) => {
   if (!isOpen) return null;
 
@@ -35,7 +41,7 @@ const GenerateStrategyModal: React.FC<GenerateStrategyModalProps> = ({
     <div className="generate-strategy-modal-overlay" onClick={handleOverlayClick}>
       <div className="generate-strategy-modal">
         <div className="generate-strategy-modal-header">
-          <h3>🤖 AI生成策略</h3>
+          <h3>{title}</h3>
           <button 
             className="generate-strategy-modal-close" 
             onClick={onClose}
@@ -84,7 +90,7 @@ const GenerateStrategyModal: React.FC<GenerateStrategyModalProps> = ({
               className="generate-btn"
               disabled={isGenerating || !description.trim()}
             >
-              {isGenerating ? '生成中...' : '生成策略'}
+              {isGenerating ? loadingText : confirmText}
             </button>
           </div>
         </form>
