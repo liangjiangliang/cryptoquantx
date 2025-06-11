@@ -701,11 +701,11 @@ const BacktestFactoryPage: React.FC = () => {
           )}
         </div>
         <div 
-          className="strategy-cell code" 
-          onClick={() => handleSort('code')}
+          className="strategy-cell comments" 
+          onClick={() => handleSort('comments')}
         >
-          策略代码
-          {sortField === 'code' && (
+          评价
+          {sortField === 'comments' && (
             <span className="sort-indicator">
               {sortDirection === 'asc' ? '↑' : '↓'}
             </span>
@@ -765,7 +765,7 @@ const BacktestFactoryPage: React.FC = () => {
     return (
       <div key={strategyCode} className="strategy-row">
         <div className="strategy-cell name">{strategy.name}</div>
-        <div className="strategy-cell code">{strategyCode}</div>
+        <div className="strategy-cell comments">{strategy.comments || '暂无评价'}</div>
         <div className="strategy-cell category">{strategy.category}</div>
         <div className="strategy-cell description">{strategy.description}</div>
         <div className="strategy-cell default-params">{formattedParams}</div>

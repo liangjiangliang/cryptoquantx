@@ -203,9 +203,21 @@
   background-color: #1e1e30;
 }
 
-.strategy-cell.code {
-  width: 15%;
+.strategy-cell.comments {
+  width: 20%;
   cursor: pointer;
+  white-space: normal;
+  line-height: 1.4;
+  color: #d9d9d9;
+  font-size: 14px;
+  overflow-wrap: break-word;
+  padding: 6px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  max-height: 3.9em;
 }
 
 .strategy-cell.name {
@@ -379,8 +391,20 @@
 
 /* 响应式布局 */
 @media (max-width: 768px) {
-  .strategy-cell.code {
-    width: 15%;
+  .strategy-cell.comments {
+    width: 20%;
+    white-space: normal;
+    line-height: 1.4;
+    color: #d9d9d9;
+    font-size: 14px;
+    overflow-wrap: break-word;
+    padding: 6px 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    max-height: 2.6em;
   }
   
   .strategy-cell.name {
