@@ -3,6 +3,7 @@ export interface StrategyParam {
 }
 
 export interface Strategy {
+  id?: number; // 策略ID字段
   default_params: string;
   name: string;
   description: string;

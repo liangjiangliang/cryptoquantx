@@ -53,6 +53,7 @@ const BacktestFactoryPage: React.FC = () => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateStrategyDescription, setUpdateStrategyDescription] = useState('');
   const [updatingStrategy, setUpdatingStrategy] = useState(false);
+  const [currentStrategyId, setCurrentStrategyId] = useState<number | null>(null);
   
   // 结果弹窗状态
   const [showResultModal, setShowResultModal] = useState(false);
@@ -540,14 +541,28 @@ const BacktestFactoryPage: React.FC = () => {
       return;
     }
 
+    if (!currentStrategyId) {
+      showResult('错误', '未选择策略', 'error');
+      return;
+    }
+
     setUpdatingStrategy(true);
     try {
-      const result = await updateStrategy(updateStrategyDescription);
+      const result = await updateStrategy(currentStrategyId, updateStrategyDescription);
       
       if (result.success) {
         setShowUpdateModal(false);
         setUpdateStrategyDescription('');
-        showResult('策略修改成功', result.message || '策略已成功修改', 'success');
+        setCurrentStrategyId(null);
+        // 显示策略详细信息
+        const strategyData = result.data;
+        const detailMessage = `
+策略名称: ${strategyData.strategyName}
+分类: ${strategyData.category}
+描述: ${strategyData.description}
+评论: ${strategyData.comments}
+更新时间: ${strategyData.updateTime}`;
+        showResult('策略修改成功', detailMessage, 'success');
         // 刷新策略列表
         await loadStrategies();
       } else {
@@ -566,6 +581,13 @@ const BacktestFactoryPage: React.FC = () => {
   const cancelUpdateStrategy = () => {
     setShowUpdateModal(false);
     setUpdateStrategyDescription('');
+    setCurrentStrategyId(null);
+  };
+
+  // 打开修改策略模态框
+  const openUpdateModal = (strategyId: number) => {
+    setCurrentStrategyId(strategyId);
+    setShowUpdateModal(true);
   };
 
   // 显示结果弹窗
@@ -604,83 +626,80 @@ const BacktestFactoryPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // 生成分页控件
+  // 生成分页控件 - 与历史回测页面保持一致
   const renderPagination = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-    
-    // 首页和上一页按钮
-    pages.push(
-      <button 
-        key="first" 
-        onClick={() => setCurrentPage(1)} 
-        disabled={currentPage === 1}
-        className="page-btn"
-      >
-        首页
-      </button>
-    );
-    
-    pages.push(
-      <button 
-        key="prev" 
-        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
-        disabled={currentPage === 1}
-        className="page-btn"
-      >
-        上一页
-      </button>
-    );
-    
-    // 页码按钮
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button 
-          key={i} 
-          onClick={() => setCurrentPage(i)}
-          className={`page-btn ${currentPage === i ? 'active' : ''}`}
-        >
-          {i}
-        </button>
-      );
-    }
-    
-    // 下一页和末页按钮
-    pages.push(
-      <button 
-        key="next" 
-        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
-        disabled={currentPage === totalPages}
-        className="page-btn"
-      >
-        下一页
-      </button>
-    );
-    
-    pages.push(
-      <button 
-        key="last" 
-        onClick={() => setCurrentPage(totalPages)} 
-        disabled={currentPage === totalPages}
-        className="page-btn"
-      >
-        末页
-      </button>
-    );
+    // 计算总记录数
+    const totalRecords = Object.entries(strategies).filter(([code, strategy]) => {
+      // 应用相同的过滤逻辑
+      let matches = true;
+      
+      if (selectedCategory) {
+        matches = matches && strategy.category === selectedCategory;
+      }
+      
+      if (searchTerm) {
+        const searchTermLower = searchTerm.toLowerCase();
+        matches = matches && (
+          code.toLowerCase().includes(searchTermLower) || 
+          strategy.name.toLowerCase().includes(searchTermLower) ||
+          strategy.description.toLowerCase().includes(searchTermLower)
+        );
+      }
+      
+      return matches;
+    }).length;
     
     return (
-      <div className="pagination">
-        {pages}
-        <span className="page-info">
-          {currentPage} / {totalPages} 页，共 {Object.keys(strategies).length} 条
-        </span>
+      <div className="pagination-container">
+        <div className="pagination-buttons">
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="pagination-button"
+          >
+            首页
+          </button>
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="pagination-button"
+          >
+            上一页
+          </button>
+          <div className="pagination-info">
+            {currentPage} / {totalPages} 页 (共 {totalRecords} 条记录)
+          </div>
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="pagination-button"
+          >
+            下一页
+          </button>
+          <button
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+            className="pagination-button"
+          >
+            末页
+          </button>
+        </div>
+        <div className="page-size-selector">
+          每页
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+          条
+        </div>
       </div>
     );
   };
@@ -787,7 +806,7 @@ const BacktestFactoryPage: React.FC = () => {
           </button>
           <button 
             className="update-btn"
-            onClick={() => setShowUpdateModal(true)}
+            onClick={() => openUpdateModal(strategy.id || 0)}
           >
             修改策略
           </button>
@@ -838,22 +857,6 @@ const BacktestFactoryPage: React.FC = () => {
           >
             {generatingStrategy ? '生成中...' : '🤖 AI生成策略'}
           </button>
-        </div>
-        
-        <div className="page-size-selector">
-          <span>每页显示:</span>
-          <select 
-            value={itemsPerPage} 
-            onChange={(e) => {
-              setItemsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-          >
-            <option value="5">5条</option>
-            <option value="10">10条</option>
-            <option value="20">20条</option>
-            <option value="50">50条</option>
-          </select>
         </div>
       </div>
     );

@@ -555,15 +555,19 @@ export const generateStrategy = async (description: string): Promise<{ success: 
 };
 
 // 修改策略
-export const updateStrategy = async (description: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+export const updateStrategy = async (id :number,description: string): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
     const url = '/api/api/backtest/ta4j/update-strategy';
+    const formData = new URLSearchParams();
+    formData.append('id', id.toString());
+    formData.append('description', description);
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({ description })
+      body: formData
     });
 
     if (!response.ok) {

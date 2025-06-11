@@ -204,7 +204,7 @@
 }
 
 .strategy-cell.comments {
-  width: 20%;
+  width: 25%;
   cursor: pointer;
   white-space: normal;
   line-height: 1.4;
@@ -212,26 +212,27 @@
   font-size: 14px;
   overflow-wrap: break-word;
   padding: 6px 8px;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  max-height: 3.9em;
+  max-height: 5.6em;
 }
 
 .strategy-cell.name {
-  width: 20%;
-  cursor: pointer;
-}
-
-.strategy-cell.category {
   width: 15%;
   cursor: pointer;
 }
 
+.strategy-cell.category {
+  width: 10%;
+  cursor: pointer;
+}
+
 .strategy-cell.description {
-  width: 30%;
+  width: 25%;
   white-space: normal;
   line-height: 1.4;
   color: #d9d9d9;
@@ -241,13 +242,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
-  max-height: 3.9em;
+  max-height: 5.6em;
 }
 
 .strategy-cell.default-params {
-  width: 18%;
+  width: 20%;
   white-space: normal;
   line-height: 1.4;
   overflow: hidden;
@@ -263,7 +264,7 @@
 }
 
 .strategy-cell.updated-at {
-  width: 12%;
+  width: 10%;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -271,7 +272,7 @@
 }
 
 .strategy-cell.action {
-  width: 10%;
+  width: 15%;
   justify-content: center;
 }
 
@@ -341,39 +342,82 @@
   color: #8d8d8d;
 }
 
-/* 分页控件样式 */
-.pagination {
+/* 分页样式 - 与历史回测页面保持一致 */
+.pagination-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
   margin-top: 20px;
   padding: 10px;
-}
-
-.page-btn {
-  padding: 6px 12px;
-  background-color: #16213e;
-  border: 1px solid #2a2a3a;
+  background-color: #1e2233;
   border-radius: 4px;
-  cursor: pointer;
-  color: #e6e6e6;
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.page-btn.active {
-  background-color: #2962ff;
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pagination-button {
+  height: 36px;
+  box-sizing: border-box;
+  margin: 0;
+  background-color: rgb(41, 98, 255);
   color: white;
-  border-color: #2962ff;
+  border: none;
+  border-radius: 4px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  min-width: 60px;
 }
 
-.page-btn:disabled {
-  opacity: 0.5;
+.pagination-button:hover:not(:disabled) {
+  background-color: #1e4bd8;
+}
+
+.pagination-button:disabled {
+  background-color: rgb(41, 98, 255);
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
-.page-info {
-  margin-left: 15px;
-  color: #8d8d8d;
+.pagination-info {
+  margin: 0 10px;
+  font-size: 14px;
+  color: #e6e6e6;
+  white-space: nowrap;
+}
+
+.page-size-selector {
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #e6e6e6;
+  white-space: nowrap;
+}
+
+.page-size-selector select {
+  margin: 0 8px;
+  padding: 4px 8px;
+  background-color: #2a3042;
+  color: #e6e6e6;
+  border: 1px solid #3a4157;
+  border-radius: 4px;
 }
 
 .loading-container, .error-container {
@@ -392,7 +436,29 @@
 /* 响应式布局 */
 @media (max-width: 768px) {
   .strategy-cell.comments {
-    width: 20%;
+    width: 25%;
+    white-space: normal;
+    overflow-wrap: break-word;
+    padding: 6px 8px;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 5.6em;
+  }
+  
+  .strategy-cell.name {
+    width: 18%;
+  }
+  
+  .strategy-cell.category {
+    width: 12%;
+  }
+  
+  .strategy-cell.description {
+    width: 25%;
     white-space: normal;
     line-height: 1.4;
     color: #d9d9d9;
@@ -402,33 +468,21 @@
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
-    max-height: 2.6em;
-  }
-  
-  .strategy-cell.name {
-    width: 20%;
-  }
-  
-  .strategy-cell.category {
-    width: 15%;
-  }
-  
-  .strategy-cell.description {
-    width: 25%;
+    max-height: 5.6em;
   }
   
   .strategy-cell.default-params {
-    width: 13%;
+    width: 15%;
   }
   
   .strategy-cell.updated-at {
-    width: 12%;
+    width: 10%;
   }
   
   .strategy-cell.action {
-    width: 10%;
+    width: 15%;
   }
   
   .filters {
@@ -438,6 +492,31 @@
   
   .search-box, .category-filter, .page-size-selector {
     width: 100%;
+  }
+  
+  .pagination-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .pagination-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .pagination-buttons > button {
+    min-width: 80px;
+  }
+  
+  .pagination-info {
+    margin: 10px 0;
+    text-align: center;
+    order: -1;
+  }
+  
+  .page-size-selector {
+    margin-left: 0;
+    justify-content: center;
   }
 }
 
