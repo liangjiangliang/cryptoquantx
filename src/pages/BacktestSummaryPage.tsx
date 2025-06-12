@@ -54,7 +54,7 @@ const BacktestSummaryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(15);
   const [sortField, setSortField] = useState<SortField>('createTime');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filteredData, setFilteredData] = useState<BacktestSummary[]>([]);
@@ -553,7 +553,7 @@ const BacktestSummaryPage: React.FC = () => {
                 setCurrentPage(1);
               }}
             >
-              <option value={pageSize}>{pageSize}</option>
+              <option value={15}>15</option>
               <option value={20}>20</option>
               <option value={50}>50</option>
               <option value={100}>100</option>

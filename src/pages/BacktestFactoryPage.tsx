@@ -27,7 +27,7 @@ const BacktestFactoryPage: React.FC = () => {
 
   // 分页状态
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(9);
   const [totalPages, setTotalPages] = useState<number>(1);
   
   // 过滤和排序
@@ -802,13 +802,13 @@ const BacktestFactoryPage: React.FC = () => {
             className="view-btn"
             onClick={() => handleViewStrategy(strategyCode)}
           >
-            查看详情
+            执行
           </button>
           <button 
             className="update-btn"
             onClick={() => openUpdateModal(strategy.id || 0)}
           >
-            修改策略
+            更新
           </button>
           <button 
             className="delete-btn"
