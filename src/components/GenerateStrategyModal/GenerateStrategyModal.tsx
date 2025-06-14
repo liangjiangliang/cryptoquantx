@@ -42,15 +42,15 @@ const GenerateStrategyModal: React.FC<GenerateStrategyModalProps> = ({
       <div className="generate-strategy-modal">
         <div className="generate-strategy-modal-header">
           <h3>{title}</h3>
-          <button 
-            className="generate-strategy-modal-close" 
+          <button
+            className="generate-strategy-modal-close"
             onClick={onClose}
             disabled={isGenerating}
           >
             ×
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="generate-strategy-modal-body">
             <div className="description-input-section">
@@ -65,28 +65,28 @@ const GenerateStrategyModal: React.FC<GenerateStrategyModalProps> = ({
                 required
               />
             </div>
-            
+
             <div className="strategy-tips">
               <h4>💡 提示:</h4>
               <ul>
                 <li>请详细描述您的策略逻辑和指标要求</li>
-                <li>可以包含技术指标名称，如：RSI、MACD、布林带等</li>
-                <li>AI将根据您的描述生成相应的策略代码</li>
+                <li>可以包含技术指标名称，如：RSI、MACD、布林带等，AI将根据您的描述生成相应的策略代码</li>
+                <li>支持批量生成策略，每行生成一个，但是数量太多返回内容会截断，建议每次不超过10个</li>
               </ul>
             </div>
           </div>
-          
+
           <div className="generate-strategy-modal-footer">
-            <button 
-              type="button" 
-              className="cancel-btn" 
+            <button
+              type="button"
+              className="cancel-btn"
               onClick={onClose}
               disabled={isGenerating}
             >
               取消
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="generate-btn"
               disabled={isGenerating || !description.trim()}
             >

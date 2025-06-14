@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Provider, useDispatch } from 'react-redux';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { StagewiseToolbar } from '@stagewise/toolbar-react';
+import React, {useState, useEffect} from 'react';
+import {Provider, useDispatch} from 'react-redux';
+import {BrowserRouter as Router, Routes, Route, Link, useLocation} from 'react-router-dom';
+import {StagewiseToolbar} from '@stagewise/toolbar-react';
 import store from './store';
 import CandlestickChart from './components/Chart/CandlestickChart';
 import BacktestPanel from './components/Backtest/BacktestPanel';
@@ -15,122 +15,122 @@ import BatchBacktestDetailPage from './pages/BatchBacktestDetailPage';
 import DataLoader from './components/DataLoader';
 import GlobalNavbar from './components/GlobalNavbar';
 import Logo from './components/Logo';
-import { clearBacktestResults } from './store/actions';
+import {clearBacktestResults} from './store/actions';
 import './App.css';
 
 // 首页组件，用于包装首页内容
 const HomePage = () => {
-  const [showPanels, setShowPanels] = useState<boolean>(true);
-  const [showBacktestSummaries, setShowBacktestSummaries] = useState<boolean>(false);
-  const location = useLocation();
-  const dispatch = useDispatch();
-  
-  // 从URL参数中获取策略代码
-  const searchParams = new URLSearchParams(location.search);
-  const strategyCode = searchParams.get('strategy');
-  
-  // 在页面加载时清除回测结果
-  useEffect(() => {
-    // 确保页面加载时清除任何之前的回测结果
-    dispatch(clearBacktestResults());
-  }, [dispatch]);
-  
-  // 监听自定义事件以响应面板切换
-  useEffect(() => {
-    const handleTogglePanels = (event: CustomEvent<{show: boolean}>) => {
-      setShowPanels(event.detail.show);
-    };
-    
-    window.addEventListener('togglePanels', handleTogglePanels as EventListener);
-    
-    return () => {
-      window.removeEventListener('togglePanels', handleTogglePanels as EventListener);
-    };
-  }, []);
-  
-  // 如果有策略代码，设置自定义事件通知BacktestPanel使用此策略
-  useEffect(() => {
-    if (strategyCode) {
-      const event = new CustomEvent('setStrategy', { 
-        detail: { strategyCode } 
-      });
-      window.dispatchEvent(event);
-    }
-  }, [strategyCode]);
-  
-  return (
-    <div className="app">
-      <main className={`app-content-simplified ${showPanels ? '' : 'panels-hidden'}`}>
-        <div className="main-content">
-          <div className="chart-container">
-            <CandlestickChart />
-          </div>
+    const [showPanels, setShowPanels] = useState<boolean>(true);
+    const [showBacktestSummaries, setShowBacktestSummaries] = useState<boolean>(false);
+    const location = useLocation();
+    const dispatch = useDispatch();
+
+    // 从URL参数中获取策略代码
+    const searchParams = new URLSearchParams(location.search);
+    const strategyCode = searchParams.get('strategy');
+
+    // 在页面加载时清除回测结果
+    useEffect(() => {
+        // 确保页面加载时清除任何之前的回测结果
+        dispatch(clearBacktestResults());
+    }, [dispatch]);
+
+    // 监听自定义事件以响应面板切换
+    useEffect(() => {
+        const handleTogglePanels = (event: CustomEvent<{ show: boolean }>) => {
+            setShowPanels(event.detail.show);
+        };
+
+        window.addEventListener('togglePanels', handleTogglePanels as EventListener);
+
+        return () => {
+            window.removeEventListener('togglePanels', handleTogglePanels as EventListener);
+        };
+    }, []);
+
+    // 如果有策略代码，设置自定义事件通知BacktestPanel使用此策略
+    useEffect(() => {
+        if (strategyCode) {
+            const event = new CustomEvent('setStrategy', {
+                detail: {strategyCode}
+            });
+            window.dispatchEvent(event);
+        }
+    }, [strategyCode]);
+
+    return (
+        <div className="app">
+            <main className={`app-content-simplified ${showPanels ? '' : 'panels-hidden'}`}>
+                <div className="main-content">
+                    <div className="chart-container">
+                        <CandlestickChart/>
+                    </div>
+                </div>
+
+                {showPanels && (
+                    <div className="right-sidebar">
+                        <div className="sidebar-panel">
+                            <BacktestPanel/>
+                        </div>
+                    </div>
+                )}
+            </main>
+
+            <footer className="app-footer">
+                <p>© 2023 OKX 加密货币交易平台 - 模拟数据仅供演示</p>
+            </footer>
         </div>
-        
-        {showPanels && (
-          <div className="right-sidebar">
-            <div className="sidebar-panel">
-              <BacktestPanel />
-            </div>
-          </div>
-        )}
-      </main>
-      
-      <footer className="app-footer">
-        <p>© 2023 OKX 加密货币交易平台 - 模拟数据仅供演示</p>
-      </footer>
-    </div>
-  );
+    );
 };
 
 // 路由监听组件，用于在路由变化时触发数据加载
 const RouteChangeHandler = () => {
-  const location = useLocation();
-  
-  useEffect(() => {
-    // 当路由变化到首页时，触发数据重新加载
-    if (location.pathname === '/') {
-      // 给DataLoader一个小延时，确保组件已经挂载
-      setTimeout(() => {
-        const event = new Event('reload_data');
-        window.dispatchEvent(event);
-      }, 100);
-    }
-  }, [location]);
-  
-  return null;
+    const location = useLocation();
+
+    useEffect(() => {
+        // 当路由变化到首页时，触发数据重新加载
+        if (location.pathname === '/') {
+            // 给DataLoader一个小延时，确保组件已经挂载
+            setTimeout(() => {
+                const event = new Event('reload_data');
+                window.dispatchEvent(event);
+            }, 100);
+        }
+    }, [location]);
+
+    return null;
 };
 
 function App() {
-  return (
-    <Provider store={store}>
-      <Router>
-        <RouteChangeHandler />
-        <GlobalNavbar />
-        {/* Stagewise 开发工具栏 - 仅在开发模式下显示 */}
-        {process.env.NODE_ENV === 'development' && (
-          <StagewiseToolbar
-            config={{
-              plugins: [],
-            }}
-          />
-        )}
-        <div className="app-container">
-          <Routes>
-            <Route path="/backtest-summaries" element={<BacktestSummaryPage />} />
-            <Route path="/backtest-detail/:backtestId" element={<BacktestDetailPage />} />
-            <Route path="/backtest-factory" element={<BacktestFactoryPage />} />
-            <Route path="/backtest-create/:strategyCode" element={<BacktestCreatePage />} />
-            <Route path="/batch-backtest" element={<BatchBacktestPage />} />
-            <Route path="/batch-backtest-detail/:batchId" element={<BatchBacktestDetailPage />} />
-            <Route path="/" element={<HomePage />} />
-          </Routes>
-        </div>
-        {/* 数据加载器 */}
-        <DataLoader />
-      </Router>
-    </Provider>
-  );
+    return (
+        <Provider store={store}>
+            <Router>
+                <RouteChangeHandler/>
+                <GlobalNavbar/>
+                {/* Stagewise 开发工具栏 - 仅在开发模式下显示 */}
+                {/*{process.env.NODE_ENV === 'development' && (*/}
+                <StagewiseToolbar
+                    config={{
+                        plugins: [],
+                    }}
+                />
+                {/*)}*/}
+                <div className="app-container">
+                    <Routes>
+                        <Route path="/backtest-summaries" element={<BacktestSummaryPage/>}/>
+                        <Route path="/backtest-detail/:backtestId" element={<BacktestDetailPage/>}/>
+                        <Route path="/backtest-factory" element={<BacktestFactoryPage/>}/>
+                        <Route path="/backtest-create/:strategyCode" element={<BacktestCreatePage/>}/>
+                        <Route path="/batch-backtest" element={<BatchBacktestPage/>}/>
+                        <Route path="/batch-backtest-detail/:batchId" element={<BatchBacktestDetailPage/>}/>
+                        <Route path="/" element={<HomePage/>}/>
+                    </Routes>
+                </div>
+                {/* 数据加载器 */}
+                <DataLoader/>
+            </Router>
+        </Provider>
+    );
 }
 
 export default App;
