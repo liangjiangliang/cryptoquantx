@@ -1,7 +1,7 @@
 .backtest-factory-page {
   width: 100%;
   min-height: 100vh;
-  padding: 20px;
+  padding: 10px 20px;
   display: flex;
   flex-direction: column;
   background-color: #171b26;
@@ -10,7 +10,7 @@
 }
 
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   text-align: center;
   color: #e6e6e6;
 }
@@ -33,10 +33,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  margin-top: 5px;
   align-items: center;
   justify-content: space-between;
-  padding: 15px;
+  padding: 12px;
   background-color: #1a1a2e;
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -113,6 +114,40 @@
 .generate-strategy-section {
   display: flex;
   align-items: center;
+}
+
+/* 过滤按钮样式 */
+.buttons-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-buttons {
+  display: flex;
+  align-items: center;
+  margin-right: 0;
+}
+
+.filter-btn {
+  background-color: #16213e;
+  color: white;
+  border: 1px solid #2a2a3a;
+  padding: 8px 14px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background-color: #1e2846;
+}
+
+.filter-btn.active {
+  background-color: #2962ff;
+  border-color: #2962ff;
 }
 
 .generate-strategy-btn {
@@ -276,6 +311,23 @@
 .strategy-cell.action {
   width: 15%;
   justify-content: center;
+}
+
+.strategy-cell.max-return {
+  width: 10%;
+  text-align: center;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.strategy-cell.max-return.positive {
+  color: #ff5252;  /* 红色 - 正收益 */
+}
+
+.strategy-cell.max-return.negative {
+  color: #4caf50;  /* 绿色 - 负收益 */
 }
 
 .sort-indicator {
@@ -520,6 +572,10 @@
   .strategy-cell.action {
   width: 20%;
 }
+  
+  .strategy-cell.max-return {
+    width: 10%;
+  }
   
   .filters {
     flex-direction: column;

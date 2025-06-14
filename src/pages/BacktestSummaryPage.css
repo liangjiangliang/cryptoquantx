@@ -94,18 +94,20 @@
 .filters-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 5px;
   margin-bottom: 10px;
   padding: 10px;
   background-color: #1e2233;
   border-radius: 4px;
   border: 1px solid #2a2a3a;
+  justify-content: flex-start;
 }
 
 .filter-item {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  margin-right: 5px;
 }
 
 .filter-item label {
@@ -120,15 +122,16 @@
   color: #e6e6e6;
   padding: 6px 10px;
   font-size: 13px;
-  min-width: 150px;
+  min-width: 120px;
 }
 
 .search-item {
-  flex-grow: 1;
+  flex-grow: 0;
+  margin-right: 0;
 }
 
 .search-input {
-  width: 100%;
+  width: 150px;
 }
 
 .summary-table-container {

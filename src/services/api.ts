@@ -597,3 +597,38 @@ export const updateStrategy = async (id :number,description: string): Promise<{ 
     };
   }
 };
+
+// 获取每个策略的最高收益率
+export const fetchStrategyMaxReturns = async (): Promise<Record<string, number>> => {
+  try {
+    // 获取所有回测汇总数据
+    const summariesResponse = await fetchBacktestSummaries();
+    
+    if (!summariesResponse || !Array.isArray(summariesResponse)) {
+      console.warn('获取回测汇总数据失败或数据格式不正确');
+      return {};
+    }
+    
+    const summaries = summariesResponse;
+    const maxReturnsByStrategy: Record<string, number> = {};
+    
+    // 遍历所有回测记录，找出每个策略的最高收益率
+    summaries.forEach(summary => {
+      const { strategyName, totalReturn } = summary;
+      
+      if (!strategyName || typeof totalReturn !== 'number') {
+        return;
+      }
+      
+      // 如果当前策略尚未记录或当前收益率更高，则更新
+      if (!(strategyName in maxReturnsByStrategy) || totalReturn > maxReturnsByStrategy[strategyName]) {
+        maxReturnsByStrategy[strategyName] = totalReturn;
+      }
+    });
+    
+    return maxReturnsByStrategy;
+  } catch (error) {
+    console.error('计算策略最高收益率数据失败:', error);
+    return {};
+  }
+};

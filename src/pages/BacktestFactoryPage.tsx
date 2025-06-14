@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy, updateStrategy } from '../services/api';
+import { useNavigate } from 'react-router';
+import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy, updateStrategy, fetchStrategyMaxReturns } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import GenerateStrategyModal from '../components/GenerateStrategyModal/GenerateStrategyModal';
 import ResultModal from '../components/ResultModal/ResultModal';
@@ -37,6 +37,7 @@ const BacktestFactoryPage: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [categories, setCategories] = useState<string[]>([]);
+  const [hideUnavailable, setHideUnavailable] = useState<boolean>(false);
 
   // 缓存处理过的数据
   const [filteredStrategies, setFilteredStrategies] = useState<[string, Strategy][]>([]);
@@ -70,6 +71,10 @@ const BacktestFactoryPage: React.FC = () => {
   const [currentStrategyCode, setCurrentStrategyCode] = useState('');
   const [currentStrategySourceCode, setCurrentStrategySourceCode] = useState('');
   const [currentStrategyLoadError, setCurrentStrategyLoadError] = useState('');
+
+  // 策略最高收益率相关状态
+  const [strategyMaxReturns, setStrategyMaxReturns] = useState<Record<string, number>>({});
+  const [isLoadingReturns, setIsLoadingReturns] = useState<boolean>(false);
 
   // 设置默认日期范围（过去90天）
   useEffect(() => {
@@ -136,8 +141,22 @@ const BacktestFactoryPage: React.FC = () => {
     }
   };
 
+  // 加载策略最高收益率
+  const loadStrategyMaxReturns = async () => {
+    setIsLoadingReturns(true);
+    try {
+      const maxReturns = await fetchStrategyMaxReturns();
+      setStrategyMaxReturns(maxReturns);
+    } catch (error) {
+      console.error('加载策略最高收益率失败:', error);
+    } finally {
+      setIsLoadingReturns(false);
+    }
+  };
+
   useEffect(() => {
     loadStrategies();
+    loadStrategyMaxReturns();
   }, []);
 
   // 当选择的策略变化时，更新表单参数
@@ -170,6 +189,11 @@ const BacktestFactoryPage: React.FC = () => {
         result = result.filter(([_, strategy]) => strategy.category === selectedCategory);
       }
 
+      // 过滤不可用的策略
+      if (hideUnavailable) {
+        result = result.filter(([_, strategy]) => strategy.available !== false);
+      }
+
       // 再按搜索词过滤
       if (searchTerm) {
         const searchTermLower = searchTerm.toLowerCase();
@@ -199,6 +223,11 @@ const BacktestFactoryPage: React.FC = () => {
           case 'category':
             valueA = strategyA.category;
             valueB = strategyB.category;
+            break;
+          case 'max_return':
+            // 处理最高收益率排序
+            valueA = strategyA.best_return || 0;
+            valueB = strategyB.best_return || 0;
             break;
           case 'updated_at':
             // 处理更新时间排序，如果没有更新时间则使用最小值
@@ -235,7 +264,7 @@ const BacktestFactoryPage: React.FC = () => {
     };
 
     getFilteredAndSortedStrategies();
-  }, [strategies, searchTerm, sortField, sortDirection, selectedCategory, itemsPerPage, currentPage]);
+  }, [strategies, searchTerm, sortField, sortDirection, selectedCategory, itemsPerPage, currentPage, hideUnavailable]);
 
   // 解析JSON字符串为对象
   const parseJsonString = (jsonString: string): any => {
@@ -784,6 +813,17 @@ const BacktestFactoryPage: React.FC = () => {
         <div className="strategy-cell description">描述</div>
         <div className="strategy-cell default-params">默认参数</div>
         <div
+          className="strategy-cell max-return"
+          onClick={() => handleSort('max_return')}
+        >
+          最高收益率
+          {sortField === 'max_return' && (
+            <span className="sort-indicator">
+              {sortDirection === 'asc' ? '↑' : '↓'}
+            </span>
+          )}
+        </div>
+        <div
           className="strategy-cell updated-at"
           onClick={() => handleSort('updated_at')}
         >
@@ -821,6 +861,17 @@ const BacktestFactoryPage: React.FC = () => {
       formattedParams = "参数解析失败";
     }
 
+    // 使用接口返回的best_return字段
+    const bestReturn = strategy.best_return !== undefined ? strategy.best_return : 0;
+    const bestReturnDisplay = `${(bestReturn * 100).toFixed(2)}%`;
+    
+    // 根据收益率设置样式
+    const bestReturnClass = bestReturn > 0 
+      ? 'positive' 
+      : bestReturn < 0 
+        ? 'negative' 
+        : '';
+
     return (
       <div key={strategyCode} className="strategy-row">
         <div className="strategy-cell name">{strategy.name}</div>
@@ -828,6 +879,7 @@ const BacktestFactoryPage: React.FC = () => {
         <div className="strategy-cell category">{strategy.category}</div>
         <div className="strategy-cell description">{strategy.description}</div>
         <div className="strategy-cell default-params">{formattedParams}</div>
+        <div className={`strategy-cell max-return ${bestReturnClass}`}>{bestReturnDisplay}</div>
         <div className="strategy-cell updated-at">
           {strategy.update_time ? new Date(strategy.update_time).toLocaleString('zh-CN', {
             year: 'numeric',
@@ -896,14 +948,25 @@ const BacktestFactoryPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="generate-strategy-section">
-          <button
-            className="generate-strategy-btn"
-            onClick={() => setShowGenerateModal(true)}
-            disabled={generatingStrategy}
-          >
-            {generatingStrategy ? '生成中...' : '🤖 AI生成策略'}
-          </button>
+        <div className="buttons-container">
+          <div className="filter-buttons">
+            <button
+              className={`filter-btn ${hideUnavailable ? 'active' : ''}`}
+              onClick={() => setHideUnavailable(!hideUnavailable)}
+            >
+              {hideUnavailable ? '显示全部策略' : '隐藏不可用策略'}
+            </button>
+          </div>
+
+          <div className="generate-strategy-section">
+            <button
+              className="generate-strategy-btn"
+              onClick={() => setShowGenerateModal(true)}
+              disabled={generatingStrategy}
+            >
+              {generatingStrategy ? '生成中...' : '🤖 AI生成策略'}
+            </button>
+          </div>
         </div>
       </div>
     );
