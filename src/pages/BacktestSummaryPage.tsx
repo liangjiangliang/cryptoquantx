@@ -38,6 +38,9 @@ interface Filters {
   strategyName: string;
 }
 
+// 聚合维度类型
+type AggregationDimension = '' | 'symbol' | 'intervalVal' | 'strategyName';
+
 // 策略类型
 interface Strategy {
   name: string;
@@ -59,6 +62,12 @@ const BacktestSummaryPage: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filteredData, setFilteredData] = useState<BacktestSummary[]>([]);
   const [filters, setFilters] = useState<Filters>({ symbol: '', intervalVal: '', strategyName: '' });
+  // 添加关键词搜索状态
+  const [searchKeyword, setSearchKeyword] = useState<string>('');
+  // 聚合维度
+  const [aggregationDimension, setAggregationDimension] = useState<AggregationDimension>('');
+  // 聚合后的数据
+  const [aggregatedData, setAggregatedData] = useState<BacktestSummary[]>([]);
   // 存储策略名称映射
   const [strategyMap, setStrategyMap] = useState<{[key: string]: Strategy}>({});
   // 获取URL参数
@@ -107,7 +116,7 @@ const BacktestSummaryPage: React.FC = () => {
   // 当原始数据、过滤条件或批次回测ID列表变化时，更新过滤后的数据
   useEffect(() => {
     filterAndSortData();
-  }, [backtestSummaries, sortField, sortDirection, filters, batchBacktestIds]);
+  }, [backtestSummaries, sortField, sortDirection, filters, batchBacktestIds, aggregationDimension, searchKeyword]);
 
   const loadBacktestSummaries = async () => {
     setLoading(true);
@@ -230,6 +239,25 @@ const BacktestSummaryPage: React.FC = () => {
         item.strategyName.toLowerCase().includes(filters.strategyName.toLowerCase())
       );
     }
+    
+    // 关键词搜索过滤
+    if (searchKeyword) {
+      const keyword = searchKeyword.toLowerCase();
+      result = result.filter(item => {
+        // 在多个字段中搜索关键词
+        return (
+          item.symbol.toLowerCase().includes(keyword) ||
+          item.intervalVal.toLowerCase().includes(keyword) ||
+          item.strategyName.toLowerCase().includes(keyword) ||
+          (strategyMap[item.strategyName] && strategyMap[item.strategyName].name.toLowerCase().includes(keyword))
+        );
+      });
+    }
+    
+    // 如果选择了聚合维度，进行数据聚合
+    if (aggregationDimension) {
+      result = aggregateData(result, aggregationDimension);
+    }
 
     // 再排序
     result.sort((a, b) => {
@@ -339,6 +367,64 @@ const BacktestSummaryPage: React.FC = () => {
       : <span className="sort-icon active">↓</span>;
   };
 
+  // 数据聚合函数
+  const aggregateData = (data: BacktestSummary[], dimension: AggregationDimension): BacktestSummary[] => {
+    if (!dimension) return data;
+    
+    // 按维度分组
+    const groups: { [key: string]: BacktestSummary[] } = {};
+    data.forEach(item => {
+      // 获取分组键
+      let key = item[dimension] as string;
+      
+      // 确保键存在
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(item);
+    });
+    
+    // 计算每组的平均值
+    return Object.entries(groups).map(([key, items]) => {
+      const count = items.length;
+      
+      // 创建聚合结果
+      const aggregated: BacktestSummary = {
+        ...items[0], // 保留第一个项目的基本信息
+        id: 0, // 使用0表示这是聚合数据
+        backtestId: `aggregated_${key}`,
+        numberOfTrades: Math.round(items.reduce((sum, item) => sum + item.numberOfTrades, 0) / count),
+        initialAmount: items.reduce((sum, item) => sum + item.initialAmount, 0) / count,
+        finalAmount: items.reduce((sum, item) => sum + item.finalAmount, 0) / count,
+        totalProfit: items.reduce((sum, item) => sum + item.totalProfit, 0) / count,
+        totalReturn: items.reduce((sum, item) => sum + item.totalReturn, 0) / count,
+        totalFee: items.reduce((sum, item) => sum + item.totalFee, 0) / count,
+        winRate: items.reduce((sum, item) => sum + item.winRate, 0) / count,
+        maxDrawdown: items.reduce((sum, item) => sum + item.maxDrawdown, 0) / count,
+        sharpeRatio: items.reduce((sum, item) => sum + item.sharpeRatio, 0) / count,
+      };
+      
+      // 根据聚合维度设置显示名称
+      switch (dimension) {
+        case 'symbol':
+          aggregated.strategyName = `${key}的平均值 (${count}个回测)`;
+          break;
+        case 'intervalVal':
+          aggregated.strategyName = `${key}周期的平均值 (${count}个回测)`;
+          break;
+        case 'strategyName':
+          // 策略聚合时，保留原始策略代码，但在显示时使用策略名称
+          aggregated.strategyName = key; // 保留原始策略代码
+          aggregated.strategyParams = JSON.stringify({
+            aggregated: `${getStrategyDisplayName(key)}的平均值 (${count}个回测)`
+          });
+          break;
+      }
+      
+      return aggregated;
+    });
+  };
+
   // 获取唯一的筛选选项
   const getUniqueValues = (field: keyof BacktestSummary) => {
     const values = new Set<string>();
@@ -347,7 +433,18 @@ const BacktestSummaryPage: React.FC = () => {
         values.add(item[field] as string);
       }
     });
-    return Array.from(values).sort();
+    // 自然排序
+    return Array.from(values).sort((a, b) => {
+      // 如果是策略代码，尝试提取数字部分进行排序
+      if (field === 'strategyName') {
+        const numA = a.match(/\d+/);
+        const numB = b.match(/\d+/);
+        if (numA && numB) {
+          return parseInt(numA[0]) - parseInt(numB[0]);
+        }
+      }
+      return a.localeCompare(b, 'zh-CN');
+    });
   };
 
   // 页面处理函数
@@ -370,6 +467,17 @@ const BacktestSummaryPage: React.FC = () => {
 
       {/* 过滤器 */}
       <div className="filters-container">
+        {/* 关键词搜索框 */}
+        <div className="filter-item search-item">
+          <label>关键词搜索:</label>
+          <input
+            type="text"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            placeholder="输入关键词搜索..."
+            className="search-input"
+          />
+        </div>
         <div className="filter-item">
           <label>交易对:</label>
           <select
@@ -404,6 +512,19 @@ const BacktestSummaryPage: React.FC = () => {
             {getUniqueValues('strategyName').map(value => (
               <option key={value} value={value}>{getStrategyDisplayName(value)}</option>
             ))}
+          </select>
+        </div>
+        <div className="filter-item">
+          <label>聚合维度:</label>
+          <select
+            value={aggregationDimension}
+            onChange={(e) => setAggregationDimension(e.target.value as AggregationDimension)}
+          >
+            <option value="">不聚合</option>
+            <option value="strategyName">按策略聚合</option>
+            <option value="symbol">按交易对聚合</option>
+            <option value="intervalVal">按时间周期聚合</option>
+        
           </select>
         </div>
       </div>
@@ -474,14 +595,16 @@ const BacktestSummaryPage: React.FC = () => {
             </thead>
             <tbody>
               {currentPageData.map((summary) => (
-                <tr key={summary.id}>
-                  <td>{summary.id}</td>
+                <tr key={summary.id || summary.backtestId} className={summary.id === 0 ? 'aggregated-row' : ''}>
+                  <td>{summary.id || '聚合'}</td>
                   <td>{summary.symbol}</td>
                   <td>{summary.intervalVal}</td>
-                  <td>{getStrategyDisplayName(summary.strategyName)}</td>
-                  <td>{formatStrategyParams(summary.strategyName, summary.strategyParams)}</td>
-                  <td>{summary.startTime.substring(0, 10)}</td>
-                  <td>{summary.endTime.substring(0, 10)}</td>
+                  <td>{summary.id === 0 && summary.strategyParams && JSON.parse(summary.strategyParams).aggregated ? 
+                      JSON.parse(summary.strategyParams).aggregated : 
+                      getStrategyDisplayName(summary.strategyName)}</td>
+                  <td>{summary.id === 0 ? '-' : formatStrategyParams(summary.strategyName, summary.strategyParams)}</td>
+                  <td>{summary.id === 0 ? '-' : summary.startTime.substring(0, 10)}</td>
+                  <td>{summary.id === 0 ? '-' : summary.endTime.substring(0, 10)}</td>
                   <td>{formatAmount(summary.initialAmount)}</td>
                   <td>{formatAmount(summary.finalAmount)}</td>
                   <td>{formatAmount(summary.totalProfit)}</td>
@@ -494,14 +617,16 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{(summary.winRate * 100).toFixed(2)}%</td>
                   <td>{(summary.maxDrawdown * 100).toFixed(2)}%</td>
                   <td>{summary.sharpeRatio.toFixed(2)}</td>
-                  <td>{summary.createTime.substring(0, 10)}</td>
+                  <td>{summary.id === 0 ? '-' : summary.createTime.substring(0, 10)}</td>
                   <td>
-                    <Link
-                      to={`/backtest-detail/${summary.backtestId}`}
-                      className="detail-button"
-                    >
-                      交易详情
-                    </Link>
+                    {summary.id !== 0 && (
+                      <Link
+                        to={`/backtest-detail/${summary.backtestId}`}
+                        className="detail-button"
+                      >
+                        交易详情
+                      </Link>
+                    )}
                   </td>
                 </tr>
               ))}

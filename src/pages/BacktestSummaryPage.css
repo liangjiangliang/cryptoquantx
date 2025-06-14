@@ -123,6 +123,14 @@
   min-width: 150px;
 }
 
+.search-item {
+  flex-grow: 1;
+}
+
+.search-input {
+  width: 100%;
+}
+
 .summary-table-container {
   overflow-y: auto;
   flex-grow: 1;
@@ -190,6 +198,16 @@
 
 .summary-table tbody tr:hover {
   background-color: #1e1e30;
+}
+
+/* 聚合行样式 */
+.aggregated-row {
+  background-color: #1a2548;
+  font-weight: 500;
+}
+
+.aggregated-row:hover {
+  background-color: #1e2d5a;
 }
 
 .positive {
