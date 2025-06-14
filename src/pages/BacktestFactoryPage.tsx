@@ -562,14 +562,42 @@ const BacktestFactoryPage: React.FC = () => {
       if (result.success) {
         // 显示详细的返回信息
         let message = '策略生成成功!';
+        
         if (result.data) {
-          // 如果有返回数据，显示详细信息
-          if (typeof result.data === 'string') {
-            message += `\n\n生成的策略:\n${result.data}`;
-          } else if (typeof result.data === 'object') {
-            message += `\n\n返回数据:\n${JSON.stringify(result.data, null, 2)}`;
+          try {
+            let strategyData;
+            
+            // 解析数据
+            if (typeof result.data === 'string') {
+              strategyData = JSON.parse(result.data);
+            } else if (Array.isArray(result.data)) {
+              strategyData = result.data[0]; // 取第一个策略
+            } else if (typeof result.data === 'object') {
+              strategyData = result.data;
+            }
+            
+            // 检查是否有加载错误
+            if (strategyData && strategyData.loadError) {
+              message = `策略生成失败!\n\n错误信息: ${strategyData.loadError}`;
+              showResult('策略生成失败', message, 'error');
+              return;
+            }
+            
+            // 格式化显示策略信息，去掉id和sourceCode字段
+            if (strategyData) {
+              const { id, sourceCode, source_code, ...displayData } = strategyData;
+              message += `\n\n返回数据:\n${JSON.stringify(displayData, null, 2)}`;
+            }
+          } catch (error) {
+            console.error('解析策略数据出错:', error);
+            if (typeof result.data === 'string') {
+              message += `\n\n生成的策略:\n${result.data}`;
+            } else {
+              message += `\n\n返回数据:\n${JSON.stringify(result.data, null, 2)}`;
+            }
           }
         }
+        
         if (result.message && result.message !== '策略生成成功') {
           message += `\n\n服务器消息: ${result.message}`;
         }
