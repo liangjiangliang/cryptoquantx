@@ -49,7 +49,7 @@ const BacktestFactoryPage: React.FC = () => {
   const [strategyDescription, setStrategyDescription] = useState('');
   const [generatingStrategy, setGeneratingStrategy] = useState(false);
 
-  // 修改策略相关状态
+  // 更新策略相关状态
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateStrategyDescription, setUpdateStrategyDescription] = useState('');
   const [updatingStrategy, setUpdatingStrategy] = useState(false);
@@ -546,7 +546,7 @@ const BacktestFactoryPage: React.FC = () => {
     setStrategyDescription('');
   };
 
-  // 处理修改策略
+  // 处理更新策略
   const handleUpdateStrategy = async () => {
     if (!updateStrategyDescription.trim()) {
       showResult('输入错误', '请输入策略描述', 'error');
@@ -574,29 +574,29 @@ const BacktestFactoryPage: React.FC = () => {
 描述: ${strategyData.description}
 评论: ${strategyData.comments}
 更新时间: ${strategyData.updateTime}`;
-        showResult('策略修改成功', detailMessage, 'success');
+        showResult('策略更新成功', detailMessage, 'success');
         // 刷新策略列表
         await loadStrategies();
       } else {
-        showResult('策略修改失败', result.message || '修改策略失败，请稍后重试', 'error');
+        showResult('策略更新失败', result.message || '更新策略失败，请稍后重试', 'error');
       }
     } catch (error) {
-      console.error('修改策略出错:', error);
-      const errorMessage = '修改策略出错，请稍后重试';
-      showResult('策略修改错误', errorMessage, 'error');
+      console.error('更新策略出错:', error);
+      const errorMessage = '更新策略出错，请稍后重试';
+      showResult('策略更新错误', errorMessage, 'error');
     } finally {
       setUpdatingStrategy(false);
     }
   };
 
-  // 取消修改策略
+  // 取消更新策略
   const cancelUpdateStrategy = () => {
     setShowUpdateModal(false);
     setUpdateStrategyDescription('');
     setCurrentStrategyId(null);
   };
 
-  // 打开修改策略模态框
+  // 打开更新策略模态框
   const openUpdateModal = (strategyId: number) => {
     setCurrentStrategyId(strategyId);
     setShowUpdateModal(true);
@@ -928,7 +928,7 @@ const BacktestFactoryPage: React.FC = () => {
         isGenerating={generatingStrategy}
       />
 
-      {/* 修改策略模态框 */}
+      {/* 更新策略模态框 */}
       <GenerateStrategyModal
         isOpen={showUpdateModal}
         onClose={cancelUpdateStrategy}
@@ -936,9 +936,9 @@ const BacktestFactoryPage: React.FC = () => {
         description={updateStrategyDescription}
         onDescriptionChange={setUpdateStrategyDescription}
         isGenerating={updatingStrategy}
-        title="修改策略"
-        confirmText="修改策略"
-        loadingText="正在修改策略..."
+        title="更新策略"
+        confirmText="更新策略"
+        loadingText="正在更新策略..."
       />
 
       {/* 结果显示模态框 */}

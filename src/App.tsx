@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Provider, useDispatch } from 'react-redux';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { StagewiseToolbar } from '@stagewise/toolbar-react';
 import store from './store';
 import CandlestickChart from './components/Chart/CandlestickChart';
 import BacktestPanel from './components/Backtest/BacktestPanel';
@@ -106,6 +107,14 @@ function App() {
       <Router>
         <RouteChangeHandler />
         <GlobalNavbar />
+        {/* Stagewise 开发工具栏 - 仅在开发模式下显示 */}
+        {process.env.NODE_ENV === 'development' && (
+          <StagewiseToolbar
+            config={{
+              plugins: [],
+            }}
+          />
+        )}
         <div className="app-container">
           <Routes>
             <Route path="/backtest-summaries" element={<BacktestSummaryPage />} />

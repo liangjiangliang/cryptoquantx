@@ -6,6 +6,7 @@ import { formatDate, formatPrice, formatPercentage } from '../../utils/helpers';
 import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import ConfirmModal from '../ConfirmModal/ConfirmModal';
 
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
@@ -50,6 +51,11 @@ const BacktestPanel: React.FC = () => {
 
   const [runningBatchBacktest, setRunningBatchBacktest] = useState<boolean>(false);
   const [batchStatusMessage, setBatchStatusMessage] = useState<string>('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState<string>('');
+  const [modalMessage, setModalMessage] = useState<string>('');
+  const [modalType, setModalType] = useState<'danger' | 'warning' | 'info'>('info');
 
   // 获取可用策略列表
   useEffect(() => {
@@ -85,7 +91,9 @@ const BacktestPanel: React.FC = () => {
         }
       } catch (err) {
         console.error('获取策略列表失败:', err);
-        setError(err instanceof Error ? err.message : '获取策略列表失败');
+        const errorMessage = err instanceof Error ? err.message : '获取策略列表失败';
+        setError(errorMessage);
+        showErrorDialog('获取策略列表失败', errorMessage);
 
         // 添加模拟数据，以防API不可用
         const mockStrategies: {[key: string]: Strategy} = {
@@ -212,7 +220,8 @@ const BacktestPanel: React.FC = () => {
       }
     } catch (error) {
       console.error('回测失败:', error);
-      alert(`回测失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      showErrorDialog('回测失败', `回测失败: ${errorMessage}`);
       dispatch(finishBacktest(null as any)); // 重置回测状态
     }
   };
@@ -242,23 +251,35 @@ const BacktestPanel: React.FC = () => {
             const batchSummaries = await fetchBatchBacktestSummariesBatch(result.batchBacktestId);
             if (batchSummaries && batchSummaries.length > 0) {
               // 显示批量回测完成消息，包含结果数量
-              setBatchStatusMessage(`批量回测完成! 共${batchSummaries.length}个策略回测结果。批次ID: ${result.batchBacktestId}`);
+              const successMessage = `批量回测完成! 共${batchSummaries.length}个策略回测结果。批次ID: ${result.batchBacktestId}`;
+            setBatchStatusMessage(successMessage);
+            showStatusDialog('批量回测完成', successMessage, 'info');
             } else {
-              setBatchStatusMessage(`批量回测完成! 批次ID: ${result.batchBacktestId}`);
+              const successMessage = `批量回测完成! 批次ID: ${result.batchBacktestId}`;
+              setBatchStatusMessage(successMessage);
+              showStatusDialog('批量回测完成', successMessage, 'info');
             }
           } catch (err) {
             console.error('获取批量回测结果失败:', err);
-            setBatchStatusMessage(`批量回测完成! 批次ID: ${result.batchBacktestId}`);
+            const successMessage = `批量回测完成! 批次ID: ${result.batchBacktestId}`;
+            setBatchStatusMessage(successMessage);
+            showStatusDialog('批量回测完成', successMessage, 'info');
           }
         } else {
-          setBatchStatusMessage('批量回测完成!');
+          const successMessage = '批量回测完成!';
+          setBatchStatusMessage(successMessage);
+          showStatusDialog('批量回测完成', successMessage, 'info');
         }
       } else {
-        setBatchStatusMessage(`批量回测失败: ${result.message}`);
+        const errorMessage = `批量回测失败: ${result.message}`;
+        setBatchStatusMessage(errorMessage);
+        showErrorDialog('批量回测失败', errorMessage);
       }
     } catch (error) {
       console.error('批量回测出错:', error);
-      setBatchStatusMessage('批量回测出错，请稍后重试');
+      const errorMessage = '批量回测出错，请稍后重试';
+      setBatchStatusMessage(errorMessage);
+      showErrorDialog('批量回测错误', errorMessage);
     } finally {
       setRunningBatchBacktest(false);
     }
@@ -312,6 +333,22 @@ const BacktestPanel: React.FC = () => {
   const handleClearResults = () => {
     setCurrentPage(1);
     dispatch(clearBacktestResults());
+  };
+
+  // 显示错误弹窗
+  const showErrorDialog = (title: string, message: string) => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setModalType('danger');
+    setShowErrorModal(true);
+  };
+
+  // 显示状态弹窗
+  const showStatusDialog = (title: string, message: string, type: 'danger' | 'warning' | 'info' = 'info') => {
+    setModalTitle(title);
+    setModalMessage(message);
+    setModalType(type);
+    setShowStatusModal(true);
   };
 
   return (
@@ -388,7 +425,7 @@ const BacktestPanel: React.FC = () => {
               {loading ? (
                 <div className="loading-strategies">加载策略中...</div>
               ) : error ? (
-                <div className="error-message">{error}</div>
+                <div className="error-message">策略加载失败，请刷新重试</div>
               ) : (
                 <select
                   value={strategy}
@@ -452,16 +489,9 @@ const BacktestPanel: React.FC = () => {
               {runningBatchBacktest ? '批量回测运行中...' : '运行批量回测'}
             </button>
             
-            {(batchStatusMessage) && (
-              <div className={`batch-status-message ${runningBatchBacktest ? 'loading' : ''}`}>
-                {batchStatusMessage}
-                {!runningBatchBacktest && batchStatusMessage.includes('批次ID:') && (
-                  <div className="batch-details-link">
-                    <Link to={`/backtest-summaries?batch_backtest_id=${batchStatusMessage.split('批次ID:')[1].trim()}`}>
-                      查看详细结果
-                    </Link>
-                  </div>
-                )}
+            {runningBatchBacktest && (
+              <div className="batch-status-message loading">
+                批量回测运行中...
               </div>
             )}
           </div>
@@ -603,6 +633,37 @@ const BacktestPanel: React.FC = () => {
           </div>
         )}
       </div>
+      
+      {/* 错误信息弹窗 */}
+      <ConfirmModal
+        isOpen={showErrorModal}
+        onCancel={() => setShowErrorModal(false)}
+        onConfirm={() => setShowErrorModal(false)}
+        title={modalTitle}
+        message={modalMessage}
+        confirmText="确定"
+        cancelText="取消"
+        type={modalType}
+      />
+      
+      {/* 状态信息弹窗 */}
+      <ConfirmModal
+        isOpen={showStatusModal}
+        onCancel={() => setShowStatusModal(false)}
+        onConfirm={() => {
+          setShowStatusModal(false);
+          // 如果是批量回测完成且包含批次ID，跳转到详情页
+          if (modalMessage.includes('批次ID:')) {
+            const batchId = modalMessage.split('批次ID:')[1].trim();
+            window.open(`/backtest-summaries?batch_backtest_id=${batchId}`, '_blank');
+          }
+        }}
+        title={modalTitle}
+        message={modalMessage}
+        confirmText={modalMessage.includes('批次ID:') ? '查看详细结果' : '确定'}
+        cancelText="关闭"
+        type={modalType}
+      />
     </div>
   );
 };
