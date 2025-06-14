@@ -6,7 +6,8 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   margin: 20px;
   min-height: calc(100vh - 140px);
-  padding-bottom: 80px; /* 为分页组件预留空间 */
+  padding-bottom: 100px; /* 为分页组件预留更多空间 */
+  position: relative; /* 添加相对定位 */
 }
 
 .page-header {
@@ -115,14 +116,17 @@
   padding: 15px;
   background-color: #1e2233;
   border-radius: 4px;
-  width: 100%;
+  width: calc(100% - 40px); /* 考虑父容器的 padding */
   box-sizing: border-box;
   flex-wrap: wrap;
   gap: 10px;
-  position: sticky;
-  bottom: 0;
-  z-index: 100;
+  position: fixed; /* 改为固定定位 */
+  bottom: 20px; /* 距离底部20px */
+  left: 50%;
+  transform: translateX(-50%); /* 水平居中 */
+  z-index: 1000;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+  max-width: calc(100vw - 80px); /* 最大宽度不超过视窗 */
 }
 
 .pagination-buttons {

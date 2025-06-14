@@ -1,11 +1,9 @@
 import React, {useState, useEffect} from 'react';
 import {Provider, useDispatch} from 'react-redux';
-import {BrowserRouter as Router, Routes, Route, Link, useLocation} from 'react-router-dom';
-import {StagewiseToolbar} from '@stagewise/toolbar-react';
+import {BrowserRouter as Router, Routes, Route, useLocation} from 'react-router-dom';
 import store from './store';
 import CandlestickChart from './components/Chart/CandlestickChart';
 import BacktestPanel from './components/Backtest/BacktestPanel';
-import BacktestSummaries from './components/Backtest/BacktestSummaries';
 import BacktestSummaryPage from './pages/BacktestSummaryPage';
 import BacktestDetailPage from './pages/BacktestDetailPage';
 import BacktestFactoryPage from './pages/BacktestFactoryPage';
@@ -14,14 +12,12 @@ import BatchBacktestPage from './pages/BatchBacktestPage';
 import BatchBacktestDetailPage from './pages/BatchBacktestDetailPage';
 import DataLoader from './components/DataLoader';
 import GlobalNavbar from './components/GlobalNavbar';
-import Logo from './components/Logo';
 import {clearBacktestResults} from './store/actions';
 import './App.css';
 
 // 首页组件，用于包装首页内容
 const HomePage = () => {
     const [showPanels, setShowPanels] = useState<boolean>(true);
-    const [showBacktestSummaries, setShowBacktestSummaries] = useState<boolean>(false);
     const location = useLocation();
     const dispatch = useDispatch();
 
@@ -107,14 +103,6 @@ function App() {
             <Router>
                 <RouteChangeHandler/>
                 <GlobalNavbar/>
-                {/* Stagewise 开发工具栏 - 仅在开发模式下显示 */}
-                {/*{process.env.NODE_ENV === 'development' && (*/}
-                <StagewiseToolbar
-                    config={{
-                        plugins: [],
-                    }}
-                />
-                {/*)}*/}
                 <div className="app-container">
                     <Routes>
                         <Route path="/backtest-summaries" element={<BacktestSummaryPage/>}/>

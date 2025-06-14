@@ -4,6 +4,7 @@ import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrate
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import GenerateStrategyModal from '../components/GenerateStrategyModal/GenerateStrategyModal';
 import ResultModal from '../components/ResultModal/ResultModal';
+import CodeModal from '../components/CodeModal/CodeModal';
 import { Strategy, StrategyMap, ParsedParams, StrategyParam } from '../types/strategy';
 import './BacktestFactoryPage.css';
 
@@ -63,6 +64,12 @@ const BacktestFactoryPage: React.FC = () => {
 
   // 编译失败提示弹窗状态
   const [showCompileErrorModal, setShowCompileErrorModal] = useState(false);
+
+  // 代码模态框状态
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [currentStrategyCode, setCurrentStrategyCode] = useState('');
+  const [currentStrategySourceCode, setCurrentStrategySourceCode] = useState('');
+  const [currentStrategyLoadError, setCurrentStrategyLoadError] = useState('');
 
   // 设置默认日期范围（过去90天）
   useEffect(() => {
@@ -489,6 +496,27 @@ const BacktestFactoryPage: React.FC = () => {
     setDeleteStrategyCode('');
   };
 
+  // 处理查看代码
+  const handleViewCode = (strategyCode: string) => {
+    const strategy = strategies[strategyCode];
+    if (strategy && strategy.source_code) {
+      setCurrentStrategyCode(strategyCode);
+      setCurrentStrategySourceCode(strategy.source_code);
+      setCurrentStrategyLoadError(strategy.load_error || '');
+      setShowCodeModal(true);
+    } else {
+      showResult('代码不可用', '该策略暂无可用的源代码', 'error');
+    }
+  };
+
+  // 关闭代码模态框
+  const closeCodeModal = () => {
+    setShowCodeModal(false);
+    setCurrentStrategyCode('');
+    setCurrentStrategySourceCode('');
+    setCurrentStrategyLoadError('');
+  };
+
   // 处理生成策略
   const handleGenerateStrategy = async () => {
     if (!strategyDescription.trim()) {
@@ -811,6 +839,12 @@ const BacktestFactoryPage: React.FC = () => {
         </div>
         <div className="strategy-cell action">
           <button
+            className="code-btn"
+            onClick={() => handleViewCode(strategyCode)}
+          >
+            代码
+          </button>
+          <button
             className={`view-btn ${strategy.available === false ? 'disabled' : ''}`}
             onClick={() => handleViewStrategy(strategyCode)}
             disabled={strategy.available === false}
@@ -948,6 +982,16 @@ const BacktestFactoryPage: React.FC = () => {
         title={resultModalTitle}
         message={resultModalMessage}
         type={resultModalType}
+      />
+
+      {/* 代码展示模态框 */}
+      <CodeModal
+        isOpen={showCodeModal}
+        onClose={closeCodeModal}
+        title={`策略代码 - ${strategies[currentStrategyCode]?.name || currentStrategyCode}`}
+        code={currentStrategySourceCode}
+        language="java"
+        loadError={currentStrategyLoadError}
       />
 
       {/* 编译失败提示模态框 */}

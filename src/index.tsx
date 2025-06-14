@@ -4,27 +4,34 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-// 1. Import the toolbar using dynamic import to avoid TypeScript module resolution issues
-// 2. Define your toolbar configuration 
-const stagewiseConfig = { 
-  plugins: [], 
-}; 
-
-// 3. Initialize the toolbar when your app starts 
+// Initialize the toolbar when your app starts 
 // Framework-agnostic approach - call this when your app initializes 
 function setupStagewise() { 
   // Only initialize once and only in development mode 
   if (process.env.NODE_ENV === 'development') { 
+    console.log('Initializing Stagewise toolbar...');
+    
     // Use dynamic import to load the toolbar at runtime
-    // @ts-ignore - Skip TypeScript module resolution for optional dependency
-    import('@stagewise/toolbar')
-      .then((module: any) => {
-        if (module && module.initToolbar) {
-          module.initToolbar(stagewiseConfig);
+    Promise.all([
+      // @ts-ignore - Skip TypeScript module resolution for optional dependency
+      import('@stagewise/toolbar'),
+      // @ts-ignore - Skip TypeScript module resolution for optional dependency  
+      import('@stagewise-plugins/react')
+    ])
+      .then(([toolbarModule, reactPluginModule]: any[]) => {
+        if (toolbarModule && toolbarModule.initToolbar) {
+          // Add React plugin if available
+          const config = { 
+            plugins: reactPluginModule?.ReactPlugin ? [reactPluginModule.ReactPlugin] : [],
+          };
+          
+          console.log('Stagewise config:', config);
+          toolbarModule.initToolbar(config);
+          console.log('Stagewise toolbar initialized successfully');
         }
       })
       .catch((error) => {
-        console.log('Stagewise toolbar not available:', error);
+        console.log('Stagewise toolbar not available:', error.message);
       });
   } 
 } 
