@@ -299,6 +299,18 @@
   background-color: #1e4bd8;
 }
 
+.view-btn.disabled,
+.view-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.view-btn.disabled:hover,
+.view-btn:disabled:hover {
+  background-color: #6c757d;
+}
+
 .delete-btn {
   background-color: #ff4757;
   color: white;

@@ -17,7 +17,7 @@ const BacktestFactoryPage: React.FC = () => {
   const [formParams, setFormParams] = useState<{[key: string]: any}>({});
   const [creatingBacktest, setCreatingBacktest] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>('');
-  
+
   // 回测配置
   const [symbol, setSymbol] = useState<string>('BTC-USDT');
   const [interval, setInterval] = useState<string>('1D');
@@ -29,47 +29,50 @@ const BacktestFactoryPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(9);
   const [totalPages, setTotalPages] = useState<number>(1);
-  
+
   // 过滤和排序
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortField, setSortField] = useState<string>('updated_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [categories, setCategories] = useState<string[]>([]);
-  
+
   // 缓存处理过的数据
   const [filteredStrategies, setFilteredStrategies] = useState<[string, Strategy][]>([]);
-  
+
   // 删除确认模态框状态
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteStrategyCode, setDeleteStrategyCode] = useState<string>('');
-  
+
   // 生成策略相关状态
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [strategyDescription, setStrategyDescription] = useState('');
   const [generatingStrategy, setGeneratingStrategy] = useState(false);
-  
+
   // 修改策略相关状态
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateStrategyDescription, setUpdateStrategyDescription] = useState('');
   const [updatingStrategy, setUpdatingStrategy] = useState(false);
   const [currentStrategyId, setCurrentStrategyId] = useState<number | null>(null);
-  
+
   // 结果弹窗状态
   const [showResultModal, setShowResultModal] = useState(false);
   const [resultModalTitle, setResultModalTitle] = useState('');
   const [resultModalMessage, setResultModalMessage] = useState('');
   const [resultModalType, setResultModalType] = useState<'success' | 'error' | 'info'>('info');
-  
+
+  // 编译失败提示弹窗状态
+  const [showCompileErrorModal, setShowCompileErrorModal] = useState(false);
+
   // 设置默认日期范围（过去90天）
   useEffect(() => {
     const today = new Date();
     const endDateStr = today.toISOString().split('T')[0];
-    
+
     const startDay = new Date();
     startDay.setDate(today.getDate() - 90);
     const startDateStr = startDay.toISOString().split('T')[0];
-    
+
     setStartDate(startDateStr);
     setEndDate(endDateStr);
   }, []);
@@ -82,7 +85,7 @@ const BacktestFactoryPage: React.FC = () => {
       // API返回格式: { code: 200, data: { STRATEGY_CODE: { ... } }, message: "success" }
       if (response && response.data) {
         setStrategies(response.data);
-        
+
         // 提取所有策略分类
         const categorySet = new Set<string>();
         Object.values(response.data).forEach((strategy: any) => {
@@ -91,13 +94,13 @@ const BacktestFactoryPage: React.FC = () => {
           }
         });
         setCategories(['全部', ...Array.from(categorySet)]);
-        
+
         // 如果有策略，默认选择第一个
         const strategyKeys = Object.keys(response.data);
         if (strategyKeys.length > 0) {
           const firstStrategy = strategyKeys[0];
           setSelectedStrategy(firstStrategy);
-          
+
           // 设置默认参数值
           if (response.data[firstStrategy] && response.data[firstStrategy].default_params) {
             try {
@@ -154,29 +157,29 @@ const BacktestFactoryPage: React.FC = () => {
   useEffect(() => {
     const getFilteredAndSortedStrategies = () => {
       let result = Object.entries(strategies);
-      
+
       // 先按分类过滤
       if (selectedCategory) {
         result = result.filter(([_, strategy]) => strategy.category === selectedCategory);
       }
-      
+
       // 再按搜索词过滤
       if (searchTerm) {
         const searchTermLower = searchTerm.toLowerCase();
-        result = result.filter(([code, strategy]) => 
-          code.toLowerCase().includes(searchTermLower) || 
+        result = result.filter(([code, strategy]) =>
+          code.toLowerCase().includes(searchTermLower) ||
           strategy.name.toLowerCase().includes(searchTermLower) ||
           strategy.description.toLowerCase().includes(searchTermLower)
         );
       }
-      
+
       // 按字段排序
       result.sort((a, b) => {
         const strategyA = a[1];
         const strategyB = b[1];
-        
+
         let valueA: any, valueB: any;
-        
+
         switch (sortField) {
           case 'code':
             valueA = a[0];
@@ -199,31 +202,31 @@ const BacktestFactoryPage: React.FC = () => {
             valueA = strategyA.name;
             valueB = strategyB.name;
         }
-        
+
         if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
         if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
         return 0;
       });
-      
+
       // 计算总页数，但不在这里设置状态，避免循环
       const calculatedTotalPages = Math.ceil(result.length / itemsPerPage);
-      
+
       // 检查当前页是否超出新的总页数
       const newCurrentPage = Math.min(currentPage, Math.max(1, calculatedTotalPages));
-      
+
       // 返回分页结果
       const startIndex = (newCurrentPage - 1) * itemsPerPage;
-      
+
       // 保存结果和元数据
       setFilteredStrategies(result.slice(startIndex, startIndex + itemsPerPage));
       setTotalPages(calculatedTotalPages);
-      
+
       // 如果当前页超出新的总页数，更新当前页
       if (currentPage !== newCurrentPage) {
         setCurrentPage(newCurrentPage);
       }
     };
-    
+
     getFilteredAndSortedStrategies();
   }, [strategies, searchTerm, sortField, sortDirection, selectedCategory, itemsPerPage, currentPage]);
 
@@ -252,20 +255,20 @@ const BacktestFactoryPage: React.FC = () => {
   // 处理创建回测
   const handleCreateBacktest = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedStrategy) {
       setStatusMessage('请选择策略');
       return;
     }
-    
+
     if (!startDate || !endDate) {
       setStatusMessage('请设置开始和结束日期');
       return;
     }
-    
+
     setCreatingBacktest(true);
     setStatusMessage('创建回测中...');
-    
+
     try {
       const result = await createBacktest(
         symbol,
@@ -276,7 +279,7 @@ const BacktestFactoryPage: React.FC = () => {
         endDate,
         initialAmount
       );
-      
+
       if (result.success) {
         setStatusMessage('回测创建成功!');
         // 如果创建成功，跳转到回测汇总页面
@@ -297,9 +300,9 @@ const BacktestFactoryPage: React.FC = () => {
   // 渲染策略卡片
   const renderStrategyCard = (strategyCode: string, strategy: Strategy) => {
     const isSelected = selectedStrategy === strategyCode;
-    
+
     return (
-      <div 
+      <div
         key={strategyCode}
         className={`strategy-card ${isSelected ? 'selected' : ''}`}
         onClick={() => setSelectedStrategy(strategyCode)}
@@ -316,24 +319,24 @@ const BacktestFactoryPage: React.FC = () => {
     if (!selectedStrategy || !strategies[selectedStrategy]) {
       return null;
     }
-    
+
     const strategy = strategies[selectedStrategy];
     const params = parseJsonString(strategy.params);
-    
+
     return (
       <div className="strategy-params">
         <h3>{strategy.name} - 参数配置</h3>
         <p>{strategy.description}</p>
-        
+
         <form className="params-form" onSubmit={handleCreateBacktest}>
           <div className="backtest-config-section">
             <h4>回测配置</h4>
-            
+
             <div className="param-group">
               <label htmlFor="symbol">交易对:</label>
-              <select 
-                id="symbol" 
-                value={symbol} 
+              <select
+                id="symbol"
+                value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
               >
                 <option value="BTC-USDT">BTC-USDT</option>
@@ -341,12 +344,12 @@ const BacktestFactoryPage: React.FC = () => {
                 <option value="BNB-USDT">BNB-USDT</option>
               </select>
             </div>
-            
+
             <div className="param-group">
               <label htmlFor="interval">K线周期:</label>
-              <select 
-                id="interval" 
-                value={interval} 
+              <select
+                id="interval"
+                value={interval}
                 onChange={(e) => setInterval(e.target.value)}
               >
                 <option value="1m">1分钟</option>
@@ -359,63 +362,63 @@ const BacktestFactoryPage: React.FC = () => {
                 <option value="1W">周线</option>
               </select>
             </div>
-            
+
             <div className="param-group">
               <label htmlFor="startDate">开始日期:</label>
-              <input 
-                type="date" 
-                id="startDate" 
-                value={startDate} 
+              <input
+                type="date"
+                id="startDate"
+                value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
               />
             </div>
-            
+
             <div className="param-group">
               <label htmlFor="endDate">结束日期:</label>
-              <input 
-                type="date" 
-                id="endDate" 
+              <input
+                type="date"
+                id="endDate"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
-            
+
             <div className="param-group">
               <label htmlFor="initialAmount">初始资金:</label>
-              <input 
-                type="number" 
-                id="initialAmount" 
+              <input
+                type="number"
+                id="initialAmount"
                 value={initialAmount}
                 onChange={(e) => setInitialAmount(Number(e.target.value))}
                 min="1000"
               />
             </div>
           </div>
-          
+
           <div className="strategy-params-section">
             <h4>策略参数</h4>
             {Object.entries(params).map(([key, description]) => (
               <div key={key} className="param-group">
                 <label htmlFor={key}>{String(description)}:</label>
-                <input 
-                  type="number" 
-                  id={key} 
-                  name={key} 
-                  value={formParams[key] || ''} 
+                <input
+                  type="number"
+                  id={key}
+                  name={key}
+                  value={formParams[key] || ''}
                   onChange={(e) => handleParamChange(key, e.target.value)}
                 />
               </div>
             ))}
           </div>
-          
+
           {statusMessage && (
             <div className={`status-message ${creatingBacktest ? 'loading' : ''}`}>
               {statusMessage}
             </div>
           )}
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="create-backtest-btn"
             disabled={creatingBacktest}
           >
@@ -442,6 +445,15 @@ const BacktestFactoryPage: React.FC = () => {
 
   // 跳转到策略详情/创建回测页面
   const handleViewStrategy = (strategyCode: string) => {
+    const strategy = strategies[strategyCode];
+
+    // 检查策略是否可用（将字符串转换为布尔值）
+    if (strategy && strategy.available === false ) {
+      // 如果策略不可用，显示编译失败提示弹窗
+      setShowCompileErrorModal(true);
+      return;
+    }
+
     // 跳转到首页并在URL中传递策略代码参数
     navigate(`/?strategy=${strategyCode}`);
   };
@@ -455,7 +467,7 @@ const BacktestFactoryPage: React.FC = () => {
   const confirmDeleteStrategy = async () => {
     try {
       const result = await deleteStrategy(deleteStrategyCode);
-      
+
       if (result.success) {
         setStatusMessage('策略删除成功!');
         // 重新加载策略列表
@@ -489,7 +501,7 @@ const BacktestFactoryPage: React.FC = () => {
 
     try {
       const result = await generateStrategy(strategyDescription);
-      
+
       if (result.success) {
         // 显示详细的返回信息
         let message = '策略生成成功!';
@@ -504,10 +516,10 @@ const BacktestFactoryPage: React.FC = () => {
         if (result.message && result.message !== '策略生成成功') {
           message += `\n\n服务器消息: ${result.message}`;
         }
-        
+
         // 使用ResultModal显示详细信息
         showResult('策略生成成功', message, 'success');
-        
+
         setStatusMessage('策略生成成功!');
         setShowGenerateModal(false);
         setStrategyDescription('');
@@ -549,7 +561,7 @@ const BacktestFactoryPage: React.FC = () => {
     setUpdatingStrategy(true);
     try {
       const result = await updateStrategy(currentStrategyId, updateStrategyDescription);
-      
+
       if (result.success) {
         setShowUpdateModal(false);
         setUpdateStrategyDescription('');
@@ -632,23 +644,23 @@ const BacktestFactoryPage: React.FC = () => {
     const totalRecords = Object.entries(strategies).filter(([code, strategy]) => {
       // 应用相同的过滤逻辑
       let matches = true;
-      
+
       if (selectedCategory) {
         matches = matches && strategy.category === selectedCategory;
       }
-      
+
       if (searchTerm) {
         const searchTermLower = searchTerm.toLowerCase();
         matches = matches && (
-          code.toLowerCase().includes(searchTermLower) || 
+          code.toLowerCase().includes(searchTermLower) ||
           strategy.name.toLowerCase().includes(searchTermLower) ||
           strategy.description.toLowerCase().includes(searchTermLower)
         );
       }
-      
+
       return matches;
     }).length;
-    
+
     return (
       <div className="pagination-container">
         <div className="pagination-buttons">
@@ -708,8 +720,8 @@ const BacktestFactoryPage: React.FC = () => {
   const renderTableHeader = () => {
     return (
       <div className="strategy-header">
-        <div 
-          className="strategy-cell name" 
+        <div
+          className="strategy-cell name"
           onClick={() => handleSort('name')}
         >
           策略名称
@@ -719,8 +731,8 @@ const BacktestFactoryPage: React.FC = () => {
             </span>
           )}
         </div>
-        <div 
-          className="strategy-cell comments" 
+        <div
+          className="strategy-cell comments"
           onClick={() => handleSort('comments')}
         >
           评价
@@ -730,8 +742,8 @@ const BacktestFactoryPage: React.FC = () => {
             </span>
           )}
         </div>
-        <div 
-          className="strategy-cell category" 
+        <div
+          className="strategy-cell category"
           onClick={() => handleSort('category')}
         >
           分类
@@ -743,8 +755,8 @@ const BacktestFactoryPage: React.FC = () => {
         </div>
         <div className="strategy-cell description">描述</div>
         <div className="strategy-cell default-params">默认参数</div>
-        <div 
-          className="strategy-cell updated-at" 
+        <div
+          className="strategy-cell updated-at"
           onClick={() => handleSort('updated_at')}
         >
           更新时间
@@ -767,7 +779,7 @@ const BacktestFactoryPage: React.FC = () => {
       if (strategy.default_params && strategy.params) {
         const defaultParams = JSON.parse(strategy.default_params);
         const paramNames = JSON.parse(strategy.params);
-        
+
         formattedParams = Object.entries(defaultParams)
           .map(([key, value]) => {
             // 使用params中的中文名称，如果不存在则使用原键名
@@ -798,19 +810,20 @@ const BacktestFactoryPage: React.FC = () => {
           }) : '未知'}
         </div>
         <div className="strategy-cell action">
-          <button 
-            className="view-btn"
+          <button
+            className={`view-btn ${strategy.available === false ? 'disabled' : ''}`}
             onClick={() => handleViewStrategy(strategyCode)}
+            disabled={strategy.available === false}
           >
             执行
           </button>
-          <button 
+          <button
             className="update-btn"
             onClick={() => openUpdateModal(strategy.id || 0)}
           >
             更新
           </button>
-          <button 
+          <button
             className="delete-btn"
             onClick={() => handleDeleteStrategy(strategyCode)}
           >
@@ -833,7 +846,7 @@ const BacktestFactoryPage: React.FC = () => {
             onChange={handleSearch}
           />
         </div>
-        
+
         <div className="category-filter">
           <span>分类筛选:</span>
           <div className="category-buttons">
@@ -848,7 +861,7 @@ const BacktestFactoryPage: React.FC = () => {
             ))}
           </div>
         </div>
-        
+
         <div className="generate-strategy-section">
           <button
             className="generate-strategy-btn"
@@ -874,15 +887,15 @@ const BacktestFactoryPage: React.FC = () => {
     <div className="backtest-factory-page">
       <div className="page-header">
       </div>
-      
+
       {renderFilters()}
-      
+
       <div className="strategy-table">
         {renderTableHeader()}
-        
+
         <div className="strategy-body">
           {filteredStrategies.length > 0 ? (
-            filteredStrategies.map(([code, strategy]) => 
+            filteredStrategies.map(([code, strategy]) =>
               renderStrategyRow(code, strategy)
             )
           ) : (
@@ -890,9 +903,9 @@ const BacktestFactoryPage: React.FC = () => {
           )}
         </div>
       </div>
-      
+
       {renderPagination()}
-      
+
       {/* 确认删除模态框 */}
       <ConfirmModal
         isOpen={showDeleteModal}
@@ -904,7 +917,7 @@ const BacktestFactoryPage: React.FC = () => {
         onConfirm={confirmDeleteStrategy}
         onCancel={cancelDeleteStrategy}
       />
-      
+
       {/* 生成策略模态框 */}
       <GenerateStrategyModal
         isOpen={showGenerateModal}
@@ -914,7 +927,7 @@ const BacktestFactoryPage: React.FC = () => {
         onDescriptionChange={setStrategyDescription}
         isGenerating={generatingStrategy}
       />
-      
+
       {/* 修改策略模态框 */}
       <GenerateStrategyModal
         isOpen={showUpdateModal}
@@ -927,7 +940,7 @@ const BacktestFactoryPage: React.FC = () => {
         confirmText="修改策略"
         loadingText="正在修改策略..."
       />
-      
+
       {/* 结果显示模态框 */}
       <ResultModal
         isOpen={showResultModal}
@@ -935,6 +948,17 @@ const BacktestFactoryPage: React.FC = () => {
         title={resultModalTitle}
         message={resultModalMessage}
         type={resultModalType}
+      />
+
+      {/* 编译失败提示模态框 */}
+      <ConfirmModal
+        isOpen={showCompileErrorModal}
+        onCancel={() => setShowCompileErrorModal(false)}
+        onConfirm={() => setShowCompileErrorModal(false)}
+        title="策略不可执行"
+        message="代码编译失败，策略当前不可执行，请检查策略代码后重试。"
+        confirmText="确定"
+        cancelText="取消"
       />
     </div>
   );
