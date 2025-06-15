@@ -263,9 +263,9 @@ const BacktestPanel: React.FC = () => {
   <tr><td>最高收益率</td><td>${formatPercentage(maxReturn * 100)}</td></tr>
   <tr><td>最佳策略</td><td>${maxReturnStrategy}</td></tr>
 </table>`;
-          
-          setBatchStatusMessage(successMessage);
-          showStatusDialog('批量回测完成', successMessage, 'info', result.data.batch_backtest_id);
+            
+            setBatchStatusMessage(successMessage);
+            showStatusDialog('批量回测完成', successMessage, 'info', result.data.batch_backtest_id);
         } else {
           const successMessage = '批量回测完成';
           setBatchStatusMessage(successMessage);

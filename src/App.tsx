@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, lazy, Suspense} from 'react';
 import {Provider, useDispatch} from 'react-redux';
 import {BrowserRouter as Router, Routes, Route, useLocation} from 'react-router-dom';
 import store from './store';
@@ -14,6 +14,13 @@ import DataLoader from './components/DataLoader';
 import GlobalNavbar from './components/GlobalNavbar';
 import {clearBacktestResults} from './store/actions';
 import './App.css';
+
+// 懒加载StagewiseToolbar组件
+const StagewiseToolbar = lazy(() => 
+  import('@stagewise/toolbar-react').then(module => ({
+    default: module.StagewiseToolbar
+  }))
+);
 
 // 首页组件，用于包装首页内容
 const HomePage = () => {
@@ -98,6 +105,9 @@ const RouteChangeHandler = () => {
 };
 
 function App() {
+    // 只在开发环境下显示工具栏
+    const [showToolbar, setShowToolbar] = useState(process.env.NODE_ENV === 'development');
+
     return (
         <Provider store={store}>
             <Router>
@@ -116,6 +126,13 @@ function App() {
                 </div>
                 {/* 数据加载器 */}
                 <DataLoader/>
+                
+                {/* Stagewise工具栏 - 只在开发环境下显示 */}
+                {showToolbar && (
+                    <Suspense fallback={<div>Loading toolbar...</div>}>
+                        <StagewiseToolbar />
+                    </Suspense>
+                )}
             </Router>
         </Provider>
     );

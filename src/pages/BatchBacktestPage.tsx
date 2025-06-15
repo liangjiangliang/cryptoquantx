@@ -14,6 +14,7 @@ interface BatchBacktestStatistics {
   create_time: string;
   max_return: number;
   avg_return: number;
+  avg_annual_return: number;
   avg_trade_num: number;
   interval_val: string;
   backtest_ids: string[];
@@ -132,6 +133,7 @@ const BatchBacktestPage: React.FC = () => {
                 <th>回测数量</th>
                 <th>最佳收益率</th>
                 <th>平均收益率</th>
+                <th>平均年化收益</th>
                 <th>平均交易次数</th>
                 <th>操作</th>
               </tr>
@@ -152,6 +154,9 @@ const BatchBacktestPage: React.FC = () => {
                   </td>
                   <td className={batch.avg_return >= 0 ? 'positive' : 'negative'}>
                     {formatPercentValue(batch.avg_return)}
+                  </td>
+                  <td className={batch.avg_annual_return >= 0 ? 'positive' : 'negative'}>
+                    {formatPercentValue(batch.avg_annual_return)}
                   </td>
                   <td>{batch.avg_trade_num}</td>
                   <td>
