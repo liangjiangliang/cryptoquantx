@@ -45,11 +45,6 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </div>
         
         <div className="confirm-modal-body">
-          <div className={`confirm-modal-icon ${type}`}>
-            {type === 'danger' && '⚠️'}
-            {type === 'warning' && '⚠️'}
-            {type === 'info' && 'ℹ️'}
-          </div>
           <p className="confirm-modal-message">{message}</p>
         </div>
         

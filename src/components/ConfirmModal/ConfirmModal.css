@@ -70,7 +70,6 @@
   padding: 24px;
   display: flex;
   align-items: flex-start;
-  gap: 16px;
 }
 
 .confirm-modal-icon {
@@ -97,6 +96,7 @@
   font-size: 15px;
   line-height: 1.5;
   flex: 1;
+  white-space: pre-line;
 }
 
 .confirm-modal-footer {

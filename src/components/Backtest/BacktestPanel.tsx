@@ -253,15 +253,15 @@ const BacktestPanel: React.FC = () => {
           const maxReturnStrategy = result.data.max_return_strategy || '-';
           const maxReturn = result.data.max_return || 0;
 
-          // 构建成功消息
-          const successMessage = `批量回测完成! 总结果: ${totalStrategies}个策略\n成功: ${successfulBacktests}个策略\n失败: ${failedBacktests}个策略\n平均收益率: ${result.data.avg_return ? formatPercentage(result.data.avg_return * 100) : '0.00%'}\n最高收益率: ${formatPercentage(maxReturn * 100)}\n最佳策略: ${maxReturnStrategy}`;
-          
-          setBatchStatusMessage(successMessage);
+                      // 构建成功消息
+            const successMessage = `批量回测完成\n总结果: ${totalStrategies}个策略\n成功: ${successfulBacktests}个策略\n失败: ${failedBacktests}个策略\n平均收益率: ${result.data.avg_return ? formatPercentage(result.data.avg_return * 100) : '0.00%'}\n最高收益率: ${formatPercentage(maxReturn * 100)}\n最佳策略: ${maxReturnStrategy}`;
+            
+            setBatchStatusMessage(successMessage);
           showStatusDialog('批量回测完成', successMessage, 'info', result.data.batch_backtest_id);
-        } else {
-          const successMessage = '批量回测完成!';
-          setBatchStatusMessage(successMessage);
-          showStatusDialog('批量回测完成', successMessage, 'info');
+                  } else {
+            const successMessage = '批量回测完成';
+            setBatchStatusMessage(successMessage);
+            showStatusDialog('批量回测完成', successMessage, 'info');
         }
       } else {
         const errorMessage = `批量回测失败: ${result.message}`;
