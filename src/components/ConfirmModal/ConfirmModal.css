@@ -99,6 +99,31 @@
   white-space: pre-line;
 }
 
+/* 批量回测结果表格样式 */
+.batch-result-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #d9d9d9;
+  margin: 0;
+}
+
+.batch-result-table td {
+  padding: 6px 10px;
+  border: 1px solid #2e3241;
+}
+
+.batch-result-table tr td:first-child {
+  font-weight: 500;
+  width: 40%;
+  text-align: right;
+  background-color: #2e3241;
+}
+
+.batch-result-table tr td:last-child {
+  width: 60%;
+  text-align: left;
+}
+
 .confirm-modal-footer {
   padding: 16px 24px 24px;
   display: flex;

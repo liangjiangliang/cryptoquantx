@@ -45,7 +45,10 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         </div>
         
         <div className="confirm-modal-body">
-          <p className="confirm-modal-message">{message}</p>
+          <div 
+            className="confirm-modal-message"
+            dangerouslySetInnerHTML={{ __html: message }}
+          />
         </div>
         
         <div className="confirm-modal-footer">
