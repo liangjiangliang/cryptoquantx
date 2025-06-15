@@ -436,10 +436,13 @@ export const runAllBacktests = async (
     console.log('批量回测API返回数据:', data);
 
     if (data.code === 200 && data.data) {
+      // 保存最近一次的批次ID到静态属性，以便其他组件可以访问
+      const batchBacktestId = data.data.batch_backtest_id || '';
+      (runAllBacktests as any).lastBatchId = batchBacktestId;
+      
       return {
         success: true,
-        data: data.data,
-        batchBacktestId: data.data.batchBacktestId
+        data: data.data
       };
     } else {
       throw new Error(data.message || '批量回测失败');

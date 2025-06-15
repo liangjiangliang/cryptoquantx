@@ -25,6 +25,7 @@ export interface BacktestSummary {
   sharpeRatio: number;
   startTime: string;
   strategyName: string;
+  strategyCode: string;
   strategyParams: string;
   symbol: string;
   totalProfit: number;
@@ -32,6 +33,7 @@ export interface BacktestSummary {
   unprofitableTrades: number;
   winRate: number;
   totalFee: number;
+  success?: boolean; // 策略是否成功执行
 }
 
 // 订单簿数据类型
@@ -156,4 +158,4 @@ export interface BacktestTradeDetail {
   totalAssets: number;
   type: string;
   volume: number | null;
-} 
+}

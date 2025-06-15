@@ -560,6 +560,9 @@ const BacktestFactoryPage: React.FC = () => {
       const result = await generateStrategy(strategyDescription);
 
       if (result.success) {
+        // 策略生成成功，先关闭生成策略弹窗
+        setShowGenerateModal(false);
+        
         // 显示详细的返回信息
         let message = '策略生成成功!';
         
@@ -568,11 +571,11 @@ const BacktestFactoryPage: React.FC = () => {
             let strategyData;
             
             // 解析数据
-            if (typeof result.data === 'string') {
+          if (typeof result.data === 'string') {
               strategyData = JSON.parse(result.data);
             } else if (Array.isArray(result.data)) {
               strategyData = result.data[0]; // 取第一个策略
-            } else if (typeof result.data === 'object') {
+          } else if (typeof result.data === 'object') {
               strategyData = result.data;
             }
             
@@ -593,9 +596,9 @@ const BacktestFactoryPage: React.FC = () => {
             if (typeof result.data === 'string') {
               message += `\n\n生成的策略:\n${result.data}`;
             } else {
-              message += `\n\n返回数据:\n${JSON.stringify(result.data, null, 2)}`;
-            }
+            message += `\n\n返回数据:\n${JSON.stringify(result.data, null, 2)}`;
           }
+        }
         }
         
         if (result.message && result.message !== '策略生成成功') {
@@ -606,7 +609,6 @@ const BacktestFactoryPage: React.FC = () => {
         showResult('策略生成成功', message, 'success');
 
         setStatusMessage('策略生成成功!');
-        setShowGenerateModal(false);
         setStrategyDescription('');
         // 重新加载策略列表
         loadStrategies();
@@ -980,20 +982,25 @@ const BacktestFactoryPage: React.FC = () => {
           <div className="filter-buttons">
             <button
               className={`filter-btn ${hideUnavailable ? 'active' : ''}`}
-              onClick={() => setHideUnavailable(!hideUnavailable)}
+              onClick={() => {
+                // 切换状态并强制重新计算过滤结果
+                setHideUnavailable(prev => !prev);
+                // 重置到第一页，确保状态变化后能看到结果
+                setCurrentPage(1);
+              }}
             >
               {hideUnavailable ? '显示全部策略' : '隐藏不可用策略'}
             </button>
-          </div>
+        </div>
 
-          <div className="generate-strategy-section">
-            <button
-              className="generate-strategy-btn"
-              onClick={() => setShowGenerateModal(true)}
-              disabled={generatingStrategy}
-            >
-              {generatingStrategy ? '生成中...' : '🤖 AI生成策略'}
-            </button>
+        <div className="generate-strategy-section">
+          <button
+            className="generate-strategy-btn"
+            onClick={() => setShowGenerateModal(true)}
+            disabled={generatingStrategy}
+          >
+            {generatingStrategy ? '生成中...' : '🤖 AI生成策略'}
+          </button>
           </div>
         </div>
       </div>

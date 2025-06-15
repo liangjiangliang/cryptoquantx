@@ -5,7 +5,7 @@ import { startBacktest, finishBacktest, setSelectedPair, setTimeframe, setDateRa
 import { formatDate, formatPrice, formatPercentage } from '../../utils/helpers';
 import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import ConfirmModal from '../ConfirmModal/ConfirmModal';
 
 // 导入与CandlestickChart相同的常量
@@ -17,6 +17,7 @@ interface Strategy {
   name: string;
   description: string;
   params: string;
+  available?: boolean;  // 添加available字段，表示策略是否可用
 }
 
 interface StrategiesResponse {
@@ -32,7 +33,6 @@ const TRADES_PER_PAGE = 13;
 
 const BacktestPanel: React.FC = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const selectedPair = useSelector((state: AppState) => state.selectedPair);
   const timeframe = useSelector((state: AppState) => state.timeframe);
   const isBacktesting = useSelector((state: AppState) => state.isBacktesting);
@@ -244,26 +244,64 @@ const BacktestPanel: React.FC = () => {
 
       if (result.success) {
         // 批量回测完成后设置状态消息
-        if (result.batchBacktestId) {
+        if (result.data && result.data.batch_backtest_id) {
+          // 获取策略执行结果
+          const strategyResults = result.data.results || [];
+          
+          // 计算成功和失败的策略数量
+          const successCount = strategyResults.filter((s: {success: boolean}) => s.success === true).length;
+          const failedCount = strategyResults.length - successCount;
+          
           // 获取批量回测结果并在当前页面显示
           try {
             const { fetchBatchBacktestSummariesBatch } = await import('../../services/api');
-            const batchSummaries = await fetchBatchBacktestSummariesBatch(result.batchBacktestId);
-            if (batchSummaries && batchSummaries.length > 0) {
-              // 显示批量回测完成消息，包含结果数量
-              const successMessage = `批量回测完成! 共${batchSummaries.length}个策略回测结果。批次ID: ${result.batchBacktestId}`;
+            const batchSummaries = await fetchBatchBacktestSummariesBatch(result.data.batch_backtest_id);
+            
+            // 只处理成功的策略
+            const successStrategies = batchSummaries.filter(summary => {
+              // 在strategyResults中查找对应的策略结果
+              const strategyResult = strategyResults.find((s: {strategyCode: string; success: boolean}) => s.strategyCode === summary.strategyCode);
+              return strategyResult && strategyResult.success === true;
+            });
+            
+            // 计算平均收益率
+            const totalReturns = successStrategies.reduce((sum, summary) => 
+              sum + (summary.totalReturn || 0), 0);
+            const avgReturn = successCount > 0 ? totalReturns / successCount : 0;
+            
+            // 找出最高收益率及其策略
+            let maxReturn = -Infinity;
+            let bestStrategy = '';
+            
+            successStrategies.forEach(summary => {
+              if (summary.totalReturn > maxReturn) {
+                maxReturn = summary.totalReturn;
+                bestStrategy = summary.strategyName;
+              }
+            });
+            
+            // 格式化消息
+            const successMessage = `批量回测完成!\n\n` +
+              `总结果: ${strategyResults.length}个策略\n` +
+              `成功: ${successCount}个策略\n` +
+              `失败: ${failedCount}个策略\n` +
+              `平均收益率: ${(avgReturn * 100).toFixed(2)}%\n` +
+              `最高收益率: ${maxReturn !== -Infinity ? (maxReturn * 100).toFixed(2) : '0.00'}%\n` +
+              `最佳策略: ${bestStrategy ? `${bestStrategy} - ${strategies[bestStrategy]?.name || ''}` : '-'}`;
+            
             setBatchStatusMessage(successMessage);
-            showStatusDialog('批量回测完成', successMessage, 'info');
-            } else {
-              const successMessage = `批量回测完成! 批次ID: ${result.batchBacktestId}`;
-              setBatchStatusMessage(successMessage);
-              showStatusDialog('批量回测完成', successMessage, 'info');
-            }
+            showStatusDialog('批量回测完成', successMessage, 'info', result.data.batch_backtest_id);
           } catch (err) {
             console.error('获取批量回测结果失败:', err);
-            const successMessage = `批量回测完成! 批次ID: ${result.batchBacktestId}`;
+            
+            // 即使获取详细数据失败，也显示基本的成功/失败信息
+            const successMessage = `批量回测完成!\n\n` +
+              `总结果: ${strategyResults.length}个策略\n` +
+              `成功: ${successCount}个策略\n` +
+              `失败: ${failedCount}个策略`;
+            
             setBatchStatusMessage(successMessage);
-            showStatusDialog('批量回测完成', successMessage, 'info');
+            showStatusDialog('批量回测完成', successMessage, 'info', result.data.batch_backtest_id);
           }
         } else {
           const successMessage = '批量回测完成!';
@@ -344,11 +382,16 @@ const BacktestPanel: React.FC = () => {
   };
 
   // 显示状态弹窗
-  const showStatusDialog = (title: string, message: string, type: 'danger' | 'warning' | 'info' = 'info') => {
+  const showStatusDialog = (title: string, message: string, type: 'danger' | 'warning' | 'info' = 'info', batchId?: string) => {
     setModalTitle(title);
     setModalMessage(message);
     setModalType(type);
     setShowStatusModal(true);
+    
+    // 如果有批次ID，保存到状态中
+    if (batchId) {
+      setBatchStatusMessage(prevMessage => prevMessage + `\n\n批次ID: ${batchId}`);
+    }
   };
 
   return (
@@ -488,12 +531,6 @@ const BacktestPanel: React.FC = () => {
             >
               {runningBatchBacktest ? '批量回测运行中...' : '运行批量回测'}
             </button>
-            
-            {runningBatchBacktest && (
-              <div className="batch-status-message loading">
-                批量回测运行中...
-              </div>
-            )}
           </div>
         ) : (
           <div className="backtest-results">
@@ -652,15 +689,26 @@ const BacktestPanel: React.FC = () => {
         onCancel={() => setShowStatusModal(false)}
         onConfirm={() => {
           setShowStatusModal(false);
-          // 如果是批量回测完成且包含批次ID，跳转到详情页
-          if (modalMessage.includes('批次ID:')) {
-            const batchId = modalMessage.split('批次ID:')[1].trim();
-            window.open(`/backtest-summaries?batch_backtest_id=${batchId}`, '_blank');
+          // 如果是批量回测完成且包含批次ID，跳转到历史回测页面
+          if (modalMessage.includes('批量回测完成')) {
+            // 提取批次ID
+            const batchIdMatch = modalMessage.match(/批次ID:\s*([^\s]+)/);
+            if (batchIdMatch && batchIdMatch[1]) {
+              const batchId = batchIdMatch[1];
+              // 跳转到历史回测页面并传递batchId参数
+              window.location.href = `/backtest-summaries?batch_backtest_id=${batchId}`;
+            } else {
+              // 从API返回中提取批次ID
+              const batchIdFromAPI = (runAllBacktests as any).lastBatchId;
+              if (batchIdFromAPI) {
+                window.location.href = `/backtest-summaries?batch_backtest_id=${batchIdFromAPI}`;
+              }
+            }
           }
         }}
         title={modalTitle}
         message={modalMessage}
-        confirmText={modalMessage.includes('批次ID:') ? '查看详细结果' : '确定'}
+        confirmText={modalMessage.includes('批量回测完成') ? '查看详情' : '确定'}
         cancelText="关闭"
         type={modalType}
       />
