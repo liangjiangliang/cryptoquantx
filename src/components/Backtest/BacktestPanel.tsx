@@ -245,64 +245,19 @@ const BacktestPanel: React.FC = () => {
       if (result.success) {
         // 批量回测完成后设置状态消息
         if (result.data && result.data.batch_backtest_id) {
-          // 获取策略执行结果
+          // 获取策略执行结果和统计数据
           const strategyResults = result.data.results || [];
+          const totalStrategies = result.data.total_strategies || strategyResults.length || 0;
+          const successfulBacktests = result.data.successful_backtests || 0;
+          const failedBacktests = result.data.failed_backtests || (totalStrategies - successfulBacktests);
+          const maxReturnStrategy = result.data.max_return_strategy || '-';
+          const maxReturn = result.data.max_return || 0;
+
+          // 构建成功消息
+          const successMessage = `批量回测完成! 总结果: ${totalStrategies}个策略\n成功: ${successfulBacktests}个策略\n失败: ${failedBacktests}个策略\n平均收益率: ${result.data.avg_return ? formatPercentage(result.data.avg_return * 100) : '0.00%'}\n最高收益率: ${formatPercentage(maxReturn * 100)}\n最佳策略: ${maxReturnStrategy}`;
           
-          // 计算成功和失败的策略数量
-          const successCount = strategyResults.filter((s: {success: boolean}) => s.success === true).length;
-          const failedCount = strategyResults.length - successCount;
-          
-          // 获取批量回测结果并在当前页面显示
-          try {
-            const { fetchBatchBacktestSummariesBatch } = await import('../../services/api');
-            const batchSummaries = await fetchBatchBacktestSummariesBatch(result.data.batch_backtest_id);
-            
-            // 只处理成功的策略
-            const successStrategies = batchSummaries.filter(summary => {
-              // 在strategyResults中查找对应的策略结果
-              const strategyResult = strategyResults.find((s: {strategyCode: string; success: boolean}) => s.strategyCode === summary.strategyCode);
-              return strategyResult && strategyResult.success === true;
-            });
-            
-            // 计算平均收益率
-            const totalReturns = successStrategies.reduce((sum, summary) => 
-              sum + (summary.totalReturn || 0), 0);
-            const avgReturn = successCount > 0 ? totalReturns / successCount : 0;
-            
-            // 找出最高收益率及其策略
-            let maxReturn = -Infinity;
-            let bestStrategy = '';
-            
-            successStrategies.forEach(summary => {
-              if (summary.totalReturn > maxReturn) {
-                maxReturn = summary.totalReturn;
-                bestStrategy = summary.strategyName;
-              }
-            });
-            
-            // 格式化消息
-            const successMessage = `批量回测完成!\n\n` +
-              `总结果: ${strategyResults.length}个策略\n` +
-              `成功: ${successCount}个策略\n` +
-              `失败: ${failedCount}个策略\n` +
-              `平均收益率: ${(avgReturn * 100).toFixed(2)}%\n` +
-              `最高收益率: ${maxReturn !== -Infinity ? (maxReturn * 100).toFixed(2) : '0.00'}%\n` +
-              `最佳策略: ${bestStrategy ? `${bestStrategy} - ${strategies[bestStrategy]?.name || ''}` : '-'}`;
-            
-            setBatchStatusMessage(successMessage);
-            showStatusDialog('批量回测完成', successMessage, 'info', result.data.batch_backtest_id);
-          } catch (err) {
-            console.error('获取批量回测结果失败:', err);
-            
-            // 即使获取详细数据失败，也显示基本的成功/失败信息
-            const successMessage = `批量回测完成!\n\n` +
-              `总结果: ${strategyResults.length}个策略\n` +
-              `成功: ${successCount}个策略\n` +
-              `失败: ${failedCount}个策略`;
-            
-            setBatchStatusMessage(successMessage);
-            showStatusDialog('批量回测完成', successMessage, 'info', result.data.batch_backtest_id);
-          }
+          setBatchStatusMessage(successMessage);
+          showStatusDialog('批量回测完成', successMessage, 'info', result.data.batch_backtest_id);
         } else {
           const successMessage = '批量回测完成!';
           setBatchStatusMessage(successMessage);

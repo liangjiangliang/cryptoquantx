@@ -4,49 +4,41 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-// Initialize the toolbar when your app starts 
-// Framework-agnostic approach - call this when your app initializes 
-function setupStagewise() { 
-  // Only initialize once and only in development mode 
-  if (process.env.NODE_ENV === 'development') { 
-    console.log('Initializing Stagewise toolbar...');
-    
-    // Use dynamic import to load the toolbar at runtime
-    Promise.all([
-      // @ts-ignore - Skip TypeScript module resolution for optional dependency
-      import('@stagewise/toolbar'),
-      // @ts-ignore - Skip TypeScript module resolution for optional dependency  
-      import('@stagewise-plugins/react')
-    ])
-      .then(([toolbarModule, reactPluginModule]: any[]) => {
-        if (toolbarModule && toolbarModule.initToolbar) {
-          // Add React plugin if available
-          const config = { 
-            plugins: reactPluginModule?.ReactPlugin ? [reactPluginModule.ReactPlugin] : [],
-          };
-          
-          console.log('Stagewise config:', config);
-          toolbarModule.initToolbar(config);
-          console.log('Stagewise toolbar initialized successfully');
-        }
-      })
-      .catch((error) => {
-        console.log('Stagewise toolbar not available:', error.message);
-      });
-  } 
-} 
+// 创建一个包含App的组件
+const AppWrapper = () => {
+  return (
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+};
 
-// Call the setup function when appropriate for your framework 
-setupStagewise();
+// 初始化工具栏（与React渲染分开）
+const initStagewiseToolbar = async () => {
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      // 动态导入工具栏
+      const toolbarModule = await import('@stagewise/toolbar');
+      const { initToolbar } = toolbarModule;
+      
+      if (initToolbar) {
+        // 使用默认配置初始化
+        initToolbar();
+        console.log('Stagewise toolbar initialized successfully');
+      }
+    } catch (error) {
+      console.error('Failed to initialize Stagewise toolbar:', error);
+    }
+  }
+};
+
+// 初始化工具栏
+initStagewiseToolbar();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+root.render(<AppWrapper />);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
