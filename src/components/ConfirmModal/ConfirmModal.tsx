@@ -10,6 +10,9 @@ interface ConfirmModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   type?: 'danger' | 'warning' | 'info';
+  showDetailButton?: boolean;
+  onViewDetail?: () => void;
+  detailButtonText?: string;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -20,7 +23,10 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelText = '取消',
   onConfirm,
   onCancel,
-  type = 'danger'
+  type = 'danger',
+  showDetailButton = false,
+  onViewDetail,
+  detailButtonText = '查看明细'
 }) => {
   if (!isOpen) return null;
 
@@ -58,6 +64,14 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           >
             {cancelText}
           </button>
+          {showDetailButton && onViewDetail && (
+            <button 
+              className="confirm-modal-btn confirm-modal-btn-confirm info"
+              onClick={onViewDetail}
+            >
+              {detailButtonText}
+            </button>
+          )}
           <button 
             className={`confirm-modal-btn confirm-modal-btn-confirm ${type}`}
             onClick={onConfirm}

@@ -182,6 +182,17 @@
   z-index: 1;
 }
 
+/* 添加排序列的样式 */
+.detail-table th[style*="cursor: pointer"] {
+  user-select: none;
+  position: relative;
+}
+
+.detail-table th[style*="cursor: pointer"]:hover {
+  color: #e6e6e6;
+  background-color: #1c2649;
+}
+
 .detail-table tbody tr:hover {
   background-color: #1e1e30;
 }

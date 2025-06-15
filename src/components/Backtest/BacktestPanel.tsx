@@ -671,9 +671,28 @@ const BacktestPanel: React.FC = () => {
         }}
         title={modalTitle}
         message={modalMessage}
-        confirmText={modalMessage.includes('批量回测完成') ? '查看详情' : '确定'}
+        confirmText={modalMessage.includes('批量回测完成') ? '确定' : '确定'}
         cancelText="关闭"
         type={modalType}
+        // 添加查看明细按钮
+        showDetailButton={modalMessage.includes('批量回测完成')}
+        onViewDetail={() => {
+          setShowStatusModal(false);
+          // 提取批次ID
+          const batchIdMatch = modalMessage.match(/批次ID:\s*([^\s]+)/);
+          if (batchIdMatch && batchIdMatch[1]) {
+            const batchId = batchIdMatch[1];
+            // 跳转到历史回测页面并传递batchId参数
+            window.location.href = `/backtest-summaries?batch_backtest_id=${batchId}`;
+          } else {
+            // 从API返回中提取批次ID
+            const batchIdFromAPI = (runAllBacktests as any).lastBatchId;
+            if (batchIdFromAPI) {
+              window.location.href = `/backtest-summaries?batch_backtest_id=${batchIdFromAPI}`;
+            }
+          }
+        }}
+        detailButtonText="查看明细"
       />
     </div>
   );

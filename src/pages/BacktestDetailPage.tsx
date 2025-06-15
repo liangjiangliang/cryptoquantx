@@ -24,6 +24,10 @@ const strategyNameMap: Record<string, string> = {
 // 每页显示的交易记录数量
 const TRADES_PER_PAGE = 14;
 
+// 排序类型
+type SortField = 'profit' | 'profitPercentage' | 'totalAssets' | 'maxDrawdown' | null;
+type SortOrder = 'asc' | 'desc';
+
 const BacktestDetailPage: React.FC = () => {
   const { backtestId } = useParams<{ backtestId: string }>();
   const [tradeDetails, setTradeDetails] = useState<BacktestTradeDetail[]>([]);
@@ -33,6 +37,9 @@ const BacktestDetailPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   // 添加时间周期状态
   const [intervalVal, setIntervalVal] = useState<string>('1D');
+  // 添加排序状态
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   useEffect(() => {
     if (backtestId) {
@@ -69,6 +76,26 @@ const BacktestDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 处理排序
+  const handleSort = (field: SortField) => {
+    // 如果点击的是当前排序字段，则切换排序顺序
+    if (field === sortField) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 否则设置新的排序字段，默认降序（从大到小）
+      setSortField(field);
+      setSortOrder('desc');
+    }
+    // 重置到第一页
+    setCurrentPage(1);
+  };
+
+  // 获取排序图标
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return '⇅';
+    return sortOrder === 'asc' ? '↑' : '↓';
   };
 
   // 将策略参数格式化为中文显示，只显示值，用逗号拼接
@@ -135,11 +162,47 @@ const BacktestDetailPage: React.FC = () => {
     return Math.ceil(tradeDetails.length / TRADES_PER_PAGE);
   };
 
+  // 获取排序后的交易记录
+  const getSortedTrades = () => {
+    // 创建交易记录的副本
+    const sortedTrades = [...tradeDetails];
+
+    // 根据排序字段排序
+    if (sortField) {
+      sortedTrades.sort((a, b) => {
+        let aValue: number = 0;
+        let bValue: number = 0;
+
+        if (sortField === 'profit') {
+          aValue = (a.exitAmount - a.entryAmount - (a.fee || 0));
+          bValue = (b.exitAmount - b.entryAmount - (b.fee || 0));
+        } else if (sortField === 'profitPercentage') {
+          const aProfit = (a.exitAmount - a.entryAmount - (a.fee || 0));
+          const bProfit = (b.exitAmount - b.entryAmount - (b.fee || 0));
+          aValue = (aProfit / a.entryAmount) * 100;
+          bValue = (bProfit / b.entryAmount) * 100;
+        } else if (sortField === 'totalAssets') {
+          aValue = a.totalAssets || 0;
+          bValue = b.totalAssets || 0;
+        } else if (sortField === 'maxDrawdown') {
+          aValue = a.maxDrawdown || 0;
+          bValue = b.maxDrawdown || 0;
+        }
+
+        // 根据排序顺序返回比较结果
+        return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      });
+    }
+
+    return sortedTrades;
+  };
+
   // 获取当前页的交易记录
   const getCurrentPageTrades = () => {
+    const sortedTrades = getSortedTrades();
     const startIndex = (currentPage - 1) * TRADES_PER_PAGE;
     const endIndex = startIndex + TRADES_PER_PAGE;
-    return tradeDetails.slice(startIndex, endIndex);
+    return sortedTrades.slice(startIndex, endIndex);
   };
 
   // 处理页面变更
@@ -213,10 +276,18 @@ const BacktestDetailPage: React.FC = () => {
                   <th>出场价格</th>
                   <th>出场金额</th>
                   <th>手续费</th>
-                  <th>盈亏</th>
-                  <th>收益率</th>
-                  <th>总资产</th>
-                  <th>最大回撤</th>
+                  <th onClick={() => handleSort('profit')} style={{ cursor: 'pointer' }}>
+                    盈亏 {getSortIcon('profit')}
+                  </th>
+                  <th onClick={() => handleSort('profitPercentage')} style={{ cursor: 'pointer' }}>
+                    收益率 {getSortIcon('profitPercentage')}
+                  </th>
+                  <th onClick={() => handleSort('totalAssets')} style={{ cursor: 'pointer' }}>
+                    总资产 {getSortIcon('totalAssets')}
+                  </th>
+                  <th onClick={() => handleSort('maxDrawdown')} style={{ cursor: 'pointer' }}>
+                    最大回撤 {getSortIcon('maxDrawdown')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
