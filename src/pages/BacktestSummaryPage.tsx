@@ -29,7 +29,8 @@ type SortField =
   | 'numberOfTrades'
   | 'winRate'
   | 'maxDrawdown'
-  | 'sharpeRatio';
+  | 'sharpeRatio'
+  | 'annualizedReturn';
 
 // 过滤条件类型
 interface Filters {
@@ -58,7 +59,7 @@ const BacktestSummaryPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
-  const [sortField, setSortField] = useState<SortField>('createTime');
+  const [sortField, setSortField] = useState<SortField>('annualizedReturn');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filteredData, setFilteredData] = useState<BacktestSummary[]>([]);
   const [filters, setFilters] = useState<Filters>({ symbol: '', intervalVal: '', strategyName: '' });
@@ -334,6 +335,10 @@ const BacktestSummaryPage: React.FC = () => {
           valueA = a.sharpeRatio;
           valueB = b.sharpeRatio;
           break;
+        case 'annualizedReturn':
+          valueA = a.annualizedReturn;
+          valueB = b.annualizedReturn;
+          break;
         default:
           valueA = a.id;
           valueB = b.id;
@@ -402,6 +407,7 @@ const BacktestSummaryPage: React.FC = () => {
         winRate: items.reduce((sum, item) => sum + item.winRate, 0) / count,
         maxDrawdown: items.reduce((sum, item) => sum + item.maxDrawdown, 0) / count,
         sharpeRatio: items.reduce((sum, item) => sum + item.sharpeRatio, 0) / count,
+        annualizedReturn: items.reduce((sum, item) => sum + (item.annualizedReturn || 0), 0) / count,
       };
       
       // 根据聚合维度设置显示名称
@@ -569,6 +575,9 @@ const BacktestSummaryPage: React.FC = () => {
                 <th onClick={() => handleSort('totalReturn')} className="sortable-header">
                   收益率 {renderSortIcon('totalReturn')}
                 </th>
+                <th onClick={() => handleSort('annualizedReturn')} className="sortable-header">
+                  年化收益率 {renderSortIcon('annualizedReturn')}
+                </th>
                 <th onClick={() => handleSort('totalFee')} className="sortable-header">
                   手续费 {renderSortIcon('totalFee')}
                 </th>
@@ -611,6 +620,7 @@ const BacktestSummaryPage: React.FC = () => {
                   <td className={summary.totalReturn >= 0 ? 'positive' : 'negative'}>
                     {formatPercentage(summary.totalReturn * 100)}
                   </td>
+                  <td>{summary.annualizedReturn !== null && summary.annualizedReturn !== undefined ? formatPercentage(summary.annualizedReturn * 100) : ''}</td>
                   <td>{formatAmount(summary.totalFee)}</td>
                   <td>{((summary.totalFee / summary.initialAmount) * 100).toFixed(2)}%</td>
                   <td>{summary.numberOfTrades}</td>

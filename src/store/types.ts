@@ -30,6 +30,7 @@ export interface BacktestSummary {
   symbol: string;
   totalProfit: number;
   totalReturn: number;
+  annualizedReturn?: number; // 年化收益率
   unprofitableTrades: number;
   winRate: number;
   totalFee: number;
