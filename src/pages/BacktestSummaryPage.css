@@ -325,3 +325,45 @@ body {
 html {
   overflow: hidden;
 }
+
+/* 缩小策略字段宽度 */
+.summary-table th:nth-child(4),
+.summary-table td:nth-child(4) {
+  max-width: 120px;
+  width: 120px;
+}
+
+/* 信息图标样式 */
+.sortable-header {
+  position: relative;
+}
+
+.info-icon {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: inline-block;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  text-align: center;
+  line-height: 14px;
+  background-color: rgba(0, 123, 255, 0.1);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.info-icon:hover {
+  background-color: rgba(0, 123, 255, 0.2);
+  transform: scale(1.1);
+}
+
+/* 悬浮窗样式 */
+.tooltip {
+  word-wrap: break-word;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}

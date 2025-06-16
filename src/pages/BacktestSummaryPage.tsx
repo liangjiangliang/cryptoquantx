@@ -8,6 +8,18 @@ import { formatPercentage } from '../utils/helpers';
 import Logo from '../components/Logo';
 import './BacktestSummaryPage.css';
 
+// 指标说明
+const INDICATOR_DESCRIPTIONS = {
+  annualizedReturn: '年化收益率：将投资期间的收益率转换为年化形式，便于比较不同时间长度的投资表现',
+  maxDrawdown: '最大回撤：投资组合从最高点到最低点的最大跌幅，衡量投资风险',
+  sharpeRatio: '夏普比率：衡量每单位风险所获得的超额回报，数值越高表示风险调整后收益越好',
+  calmarRatio: '卡玛比率：年化收益率与最大回撤的比值，数值越高表示策略越优秀',
+  sortinoRatio: '索提诺比率：类似夏普比率，但只考虑下行风险，更关注负收益的波动性',
+  averageProfit: '平均收益：每笔交易的平均盈利金额',
+  volatility: '波动率：价格变化的标准差，衡量投资的不确定性和风险程度',
+  maximumLoss: '最大损失：单笔交易的最大亏损金额'
+};
+
 // 排序方向类型
 type SortDirection = 'asc' | 'desc';
 
@@ -30,7 +42,14 @@ type SortField =
   | 'winRate'
   | 'maxDrawdown'
   | 'sharpeRatio'
-  | 'annualizedReturn';
+  | 'annualizedReturn'
+  | 'calmarRatio'
+  | 'sortinoRatio'
+  | 'averageProfit'
+  | 'volatility'
+  | 'profitableTrades'
+  | 'unprofitableTrades'
+  | 'maximumLoss';
 
 // 过滤条件类型
 interface Filters {
@@ -58,7 +77,7 @@ const BacktestSummaryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSize] = useState(14);
   const [sortField, setSortField] = useState<SortField>('annualizedReturn');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filteredData, setFilteredData] = useState<BacktestSummary[]>([]);
@@ -78,6 +97,18 @@ const BacktestSummaryPage: React.FC = () => {
   const batchBacktestId = queryParams.get('batch_backtest_id'); // 新增
   // 存储批次相关的回测ID列表
   const [batchBacktestIds, setBatchBacktestIds] = useState<string[]>([]);
+  // 悬浮窗状态
+  const [tooltip, setTooltip] = useState<{
+    visible: boolean;
+    content: string;
+    x: number;
+    y: number;
+  }>({
+    visible: false,
+    content: '',
+    x: 0,
+    y: 0
+  });
 
   useEffect(() => {
     if (batchBacktestId) {
@@ -167,7 +198,7 @@ const BacktestSummaryPage: React.FC = () => {
 
       // 解析参数字符串为对象
       const params = JSON.parse(paramsStr);
-      
+
       // 只展示参数值，不展示名称，用逗号拼接
       return Object.values(params).join(', ');
     } catch (err) {
@@ -217,7 +248,7 @@ const BacktestSummaryPage: React.FC = () => {
   const filterAndSortData = () => {
     // 先过滤
     let result = [...backtestSummaries];
-    
+
     // 如果有批次ID和回测ID列表，只显示这些回测的摘要信息
     if (batchId && batchBacktestIds.length > 0) {
       result = result.filter(item => batchBacktestIds.includes(item.backtestId));
@@ -240,7 +271,7 @@ const BacktestSummaryPage: React.FC = () => {
         item.strategyName.toLowerCase().includes(filters.strategyName.toLowerCase())
       );
     }
-    
+
     // 关键词搜索过滤
     if (searchKeyword) {
       const keyword = searchKeyword.toLowerCase();
@@ -254,7 +285,7 @@ const BacktestSummaryPage: React.FC = () => {
         );
       });
     }
-    
+
     // 如果选择了聚合维度，进行数据聚合
     if (aggregationDimension) {
       result = aggregateData(result, aggregationDimension);
@@ -339,6 +370,34 @@ const BacktestSummaryPage: React.FC = () => {
           valueA = a.annualizedReturn;
           valueB = b.annualizedReturn;
           break;
+        case 'calmarRatio':
+          valueA = a.calmarRatio || 0;
+          valueB = b.calmarRatio || 0;
+          break;
+        case 'sortinoRatio':
+          valueA = a.sortinoRatio || 0;
+          valueB = b.sortinoRatio || 0;
+          break;
+        case 'averageProfit':
+          valueA = a.averageProfit;
+          valueB = b.averageProfit;
+          break;
+        case 'volatility':
+          valueA = a.volatility || 0;
+          valueB = b.volatility || 0;
+          break;
+        case 'profitableTrades':
+          valueA = a.profitableTrades;
+          valueB = b.profitableTrades;
+          break;
+        case 'unprofitableTrades':
+          valueA = a.unprofitableTrades;
+          valueB = b.unprofitableTrades;
+          break;
+        case 'maximumLoss':
+          valueA = a.maximumLoss || 0;
+          valueB = b.maximumLoss || 0;
+          break;
         default:
           valueA = a.id;
           valueB = b.id;
@@ -362,6 +421,25 @@ const BacktestSummaryPage: React.FC = () => {
     setFilteredData(result);
   };
 
+  // 显示指标说明悬浮窗
+  const showTooltip = (field: keyof typeof INDICATOR_DESCRIPTIONS, event: React.MouseEvent) => {
+    const description = INDICATOR_DESCRIPTIONS[field];
+    if (description) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      setTooltip({
+        visible: true,
+        content: description,
+        x: rect.right + 10,
+        y: rect.top
+      });
+    }
+  };
+
+  // 隐藏悬浮窗
+  const hideTooltip = () => {
+    setTooltip(prev => ({ ...prev, visible: false }));
+  };
+
   // 渲染排序图标
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
@@ -375,24 +453,24 @@ const BacktestSummaryPage: React.FC = () => {
   // 数据聚合函数
   const aggregateData = (data: BacktestSummary[], dimension: AggregationDimension): BacktestSummary[] => {
     if (!dimension) return data;
-    
+
     // 按维度分组
     const groups: { [key: string]: BacktestSummary[] } = {};
     data.forEach(item => {
       // 获取分组键
       let key = item[dimension] as string;
-      
+
       // 确保键存在
       if (!groups[key]) {
         groups[key] = [];
       }
       groups[key].push(item);
     });
-    
+
     // 计算每组的平均值
     return Object.entries(groups).map(([key, items]) => {
       const count = items.length;
-      
+
       // 创建聚合结果
       const aggregated: BacktestSummary = {
         ...items[0], // 保留第一个项目的基本信息
@@ -408,8 +486,16 @@ const BacktestSummaryPage: React.FC = () => {
         maxDrawdown: items.reduce((sum, item) => sum + item.maxDrawdown, 0) / count,
         sharpeRatio: items.reduce((sum, item) => sum + item.sharpeRatio, 0) / count,
         annualizedReturn: items.reduce((sum, item) => sum + (item.annualizedReturn || 0), 0) / count,
+        // 新增字段的聚合计算
+        calmarRatio: items.reduce((sum, item) => sum + (item.calmarRatio || 0), 0) / count,
+        sortinoRatio: items.reduce((sum, item) => sum + (item.sortinoRatio || 0), 0) / count,
+        averageProfit: items.reduce((sum, item) => sum + item.averageProfit, 0) / count,
+        volatility: items.reduce((sum, item) => sum + (item.volatility || 0), 0) / count,
+        profitableTrades: Math.round(items.reduce((sum, item) => sum + item.profitableTrades, 0) / count),
+        unprofitableTrades: Math.round(items.reduce((sum, item) => sum + item.unprofitableTrades, 0) / count),
+        maximumLoss: items.reduce((sum, item) => sum + (item.maximumLoss || 0), 0) / count,
       };
-      
+
       // 根据聚合维度设置显示名称
       switch (dimension) {
         case 'symbol':
@@ -426,7 +512,7 @@ const BacktestSummaryPage: React.FC = () => {
           });
           break;
       }
-      
+
       return aggregated;
     });
   };
@@ -530,7 +616,7 @@ const BacktestSummaryPage: React.FC = () => {
             <option value="strategyName">按策略聚合</option>
             <option value="symbol">按交易对聚合</option>
             <option value="intervalVal">按时间周期聚合</option>
-        
+
           </select>
         </div>
       </div>
@@ -556,7 +642,6 @@ const BacktestSummaryPage: React.FC = () => {
                 <th onClick={() => handleSort('strategyName')} className="sortable-header">
                   策略 {renderSortIcon('strategyName')}
                 </th>
-                <th>参数</th>
                 <th onClick={() => handleSort('startTime')} className="sortable-header">
                   开始时间 {renderSortIcon('startTime')}
                 </th>
@@ -577,6 +662,13 @@ const BacktestSummaryPage: React.FC = () => {
                 </th>
                 <th onClick={() => handleSort('annualizedReturn')} className="sortable-header">
                   年化收益率 {renderSortIcon('annualizedReturn')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('annualizedReturn', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
                 </th>
                 <th onClick={() => handleSort('totalFee')} className="sortable-header">
                   手续费 {renderSortIcon('totalFee')}
@@ -592,9 +684,73 @@ const BacktestSummaryPage: React.FC = () => {
                 </th>
                 <th onClick={() => handleSort('maxDrawdown')} className="sortable-header">
                   最大回撤 {renderSortIcon('maxDrawdown')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('maxDrawdown', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
                 </th>
                 <th onClick={() => handleSort('sharpeRatio')} className="sortable-header">
                   夏普比率 {renderSortIcon('sharpeRatio')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('sharpeRatio', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('calmarRatio')} className="sortable-header">
+                  卡玛比率 {renderSortIcon('calmarRatio')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('calmarRatio', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('sortinoRatio')} className="sortable-header">
+                  索提诺比率 {renderSortIcon('sortinoRatio')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('sortinoRatio', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('averageProfit')} className="sortable-header">
+                  平均收益 {renderSortIcon('averageProfit')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('averageProfit', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('volatility')} className="sortable-header">
+                  波动率 {renderSortIcon('volatility')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('volatility', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('maximumLoss')} className="sortable-header">
+                  最大损失 {renderSortIcon('maximumLoss')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('maximumLoss', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
                 </th>
                 <th onClick={() => handleSort('createTime')} className="sortable-header">
                   创建时间 {renderSortIcon('createTime')}
@@ -608,25 +764,29 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{summary.id || '聚合'}</td>
                   <td>{summary.symbol}</td>
                   <td>{summary.intervalVal}</td>
-                  <td>{summary.id === 0 && summary.strategyParams && JSON.parse(summary.strategyParams).aggregated ? 
-                      JSON.parse(summary.strategyParams).aggregated : 
+                  <td>{summary.id === 0 && summary.strategyParams && JSON.parse(summary.strategyParams).aggregated ?
+                      JSON.parse(summary.strategyParams).aggregated :
                       getStrategyDisplayName(summary.strategyName)}</td>
-                  <td>{summary.id === 0 ? '-' : formatStrategyParams(summary.strategyName, summary.strategyParams)}</td>
                   <td>{summary.id === 0 ? '-' : summary.startTime.substring(0, 10)}</td>
                   <td>{summary.id === 0 ? '-' : summary.endTime.substring(0, 10)}</td>
                   <td>{formatAmount(summary.initialAmount)}</td>
                   <td>{formatAmount(summary.finalAmount)}</td>
                   <td>{formatAmount(summary.totalProfit)}</td>
-                  <td className={summary.totalReturn >= 0 ? 'positive' : 'negative'}>
+                  <td>
                     {formatPercentage(summary.totalReturn * 100)}
                   </td>
-                  <td>{summary.annualizedReturn !== null && summary.annualizedReturn !== undefined ? formatPercentage(summary.annualizedReturn * 100) : ''}</td>
+                  <td className="positive">{summary.annualizedReturn !== null && summary.annualizedReturn !== undefined ? formatPercentage(summary.annualizedReturn * 100) : ''}</td>
                   <td>{formatAmount(summary.totalFee)}</td>
                   <td>{((summary.totalFee / summary.initialAmount) * 100).toFixed(2)}%</td>
                   <td>{summary.numberOfTrades}</td>
                   <td>{(summary.winRate * 100).toFixed(2)}%</td>
                   <td>{(summary.maxDrawdown * 100).toFixed(2)}%</td>
                   <td>{summary.sharpeRatio.toFixed(2)}</td>
+                  <td>{summary.calmarRatio ? summary.calmarRatio.toFixed(2) : '-'}</td>
+                  <td>{summary.sortinoRatio ? summary.sortinoRatio.toFixed(2) : '-'}</td>
+                  <td>{summary.averageProfit.toFixed(2)}</td>
+                  <td>{summary.volatility ? summary.volatility.toFixed(2) : '-'}</td>
+                  <td>{summary.maximumLoss ? summary.maximumLoss.toFixed(2) : '-'}</td>
                   <td>{summary.id === 0 ? '-' : summary.createTime.substring(0, 10)}</td>
                   <td>
                     {summary.id !== 0 && (
@@ -634,7 +794,7 @@ const BacktestSummaryPage: React.FC = () => {
                         to={`/backtest-detail/${summary.backtestId}`}
                         className="detail-button"
                       >
-                        交易详情
+                        详情
                       </Link>
                     )}
                   </td>
@@ -695,6 +855,29 @@ const BacktestSummaryPage: React.FC = () => {
             </select>
             条
           </div>
+        </div>
+      )}
+
+      {/* 指标说明悬浮窗 */}
+      {tooltip.visible && (
+        <div
+          className="tooltip"
+          style={{
+            position: 'fixed',
+            left: tooltip.x,
+            top: tooltip.y,
+            zIndex: 1000,
+            backgroundColor: '#333',
+            color: 'white',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            maxWidth: '300px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            pointerEvents: 'none'
+          }}
+        >
+          {tooltip.content}
         </div>
       )}
     </div>

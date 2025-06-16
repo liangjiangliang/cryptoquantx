@@ -35,6 +35,10 @@ export interface BacktestSummary {
   winRate: number;
   totalFee: number;
   success?: boolean; // 策略是否成功执行
+  calmarRatio?: number; // 卡玛比率
+  sortinoRatio?: number; // 索提诺比率
+  volatility?: number; // 波动率
+  maximumLoss?: number; // 最大损失
 }
 
 // 订单簿数据类型
