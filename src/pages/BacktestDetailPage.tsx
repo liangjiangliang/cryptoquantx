@@ -25,7 +25,7 @@ const strategyNameMap: Record<string, string> = {
 const TRADES_PER_PAGE = 14;
 
 // 排序类型
-type SortField = 'profit' | 'profitPercentage' | 'totalAssets' | 'maxDrawdown' | null;
+type SortField = 'profit' | 'profitPercentage' | 'totalAssets' | 'maxDrawdown' | 'maxLoss' | null;
 type SortOrder = 'asc' | 'desc';
 
 const BacktestDetailPage: React.FC = () => {
@@ -187,6 +187,9 @@ const BacktestDetailPage: React.FC = () => {
         } else if (sortField === 'maxDrawdown') {
           aValue = a.maxDrawdown || 0;
           bValue = b.maxDrawdown || 0;
+        } else if (sortField === 'maxLoss') {
+          aValue = a.maxLoss || 0;
+          bValue = b.maxLoss || 0;
         }
 
         // 根据排序顺序返回比较结果
@@ -288,6 +291,9 @@ const BacktestDetailPage: React.FC = () => {
                   <th onClick={() => handleSort('maxDrawdown')} style={{ cursor: 'pointer' }}>
                     最大回撤 {getSortIcon('maxDrawdown')}
                   </th>
+                  <th onClick={() => handleSort('maxLoss')} style={{ cursor: 'pointer' }}>
+                    最大损失 {getSortIcon('maxLoss')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -311,6 +317,7 @@ const BacktestDetailPage: React.FC = () => {
                       <td className={profitPercentage >= 0 ? 'positive' : 'negative'}>{formatPercentage(profitPercentage)}</td>
                       <td>{formatAmount(trade.totalAssets)}</td>
                       <td>{formatPercentage(trade.maxDrawdown * 100)}</td>
+                      <td>{trade.maxLoss ? formatPercentage(trade.maxLoss * 100) : '-'}</td>
                     </tr>
                   );
                 })}

@@ -200,6 +200,8 @@ const BacktestPanel: React.FC = () => {
           winRate: data.data.winRate * 100, // 转换为百分比
           maxDrawdown: data.data.maxDrawdown * 100, // 转换为百分比
           sharpeRatio: data.data.sharpeRatio,
+          maximumLoss: data.data.maximumLoss, // 添加最大损失字段
+          annualizedReturn: data.data.annualizedReturn, // 添加年化收益率字段
           backtestId: backtestId, // 明确使用获取的backtestId
           trades: (data.data.trades || []).map((trade: any) => ({
             id: String(trade.index || Math.random()),
@@ -499,10 +501,6 @@ const BacktestPanel: React.FC = () => {
           <div className="backtest-results">
             <div className="results-summary">
               <div className="summary-item">
-                <span className="label">初始资金</span>
-                <span className="value">{(backtestResults.initialCapital/1000.0).toFixed(2)}K</span>
-              </div>
-              <div className="summary-item">
                 <span className="label">最终资金</span>
                 <span className="value">{(backtestResults.finalCapital / 1000.0).toFixed(2)}K </span>
               </div>
@@ -519,6 +517,10 @@ const BacktestPanel: React.FC = () => {
                 </span>
               </div>
               <div className="summary-item">
+                <span className="label">年化收益率</span>
+                <span className="value positive">{backtestResults.annualizedReturn ? (backtestResults.annualizedReturn * 100).toFixed(2) + '%' : '-'}</span>
+              </div>
+              <div className="summary-item">
                 <span className="label">总交易次数</span>
                 <span className="value">{backtestResults.totalTrades}</span>
               </div>
@@ -531,8 +533,8 @@ const BacktestPanel: React.FC = () => {
                 <span className="value">{formatPercentage(backtestResults.maxDrawdown)}</span>
               </div>
               <div className="summary-item">
-                <span className="label">夏普比率</span>
-                <span className="value">{backtestResults.sharpeRatio.toFixed(2)}</span>
+                <span className="label">最大损失</span>
+                <span className="value">{backtestResults.maximumLoss ? (backtestResults.maximumLoss * 100).toFixed(2) + '%' : '-'}</span>
               </div>
             </div>
 

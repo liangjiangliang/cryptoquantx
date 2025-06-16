@@ -94,6 +94,8 @@ export interface BacktestResults {
   winRate: number;
   maxDrawdown: number;
   sharpeRatio: number;
+  maximumLoss?: number; // 最大损失
+  annualizedReturn?: number; // 年化收益率
   trades: BacktestTrade[];
   backtestId?: string;
 }
@@ -154,6 +156,7 @@ export interface BacktestTradeDetail {
   id: number;
   index: number;
   maxDrawdown: number;
+  maxLoss?: number; // 最大损失
   profit: number;
   profitPercentage: number;
   remark: string | null;
