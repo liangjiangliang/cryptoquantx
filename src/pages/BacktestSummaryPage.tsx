@@ -679,6 +679,16 @@ const BacktestSummaryPage: React.FC = () => {
                 <th onClick={() => handleSort('numberOfTrades')} className="sortable-header">
                   交易次数 {renderSortIcon('numberOfTrades')}
                 </th>
+                <th onClick={() => handleSort('averageProfit')} className="sortable-header">
+                  平均收益 {renderSortIcon('averageProfit')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('averageProfit', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
                 <th onClick={() => handleSort('winRate')} className="sortable-header">
                   胜率 {renderSortIcon('winRate')}
                 </th>
@@ -732,16 +742,6 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
-                <th onClick={() => handleSort('averageProfit')} className="sortable-header">
-                  平均收益 {renderSortIcon('averageProfit')}
-                  <span
-                    className="info-icon"
-                    onClick={(e) => { e.stopPropagation(); showTooltip('averageProfit', e); }}
-                    onMouseLeave={hideTooltip}
-                  >
-                    ⓘ
-                  </span>
-                </th>
                 <th onClick={() => handleSort('volatility')} className="sortable-header">
                   波动率 {renderSortIcon('volatility')}
                   <span
@@ -779,13 +779,13 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{formatAmount(summary.totalFee)}</td>
                   <td>{((summary.totalFee / summary.initialAmount) * 100).toFixed(2)}%</td>
                   <td>{summary.numberOfTrades}</td>
+                  <td>{(summary.averageProfit * 100).toFixed(2)}%</td>
                   <td>{(summary.winRate * 100).toFixed(2)}%</td>
                   <td>{(summary.maxDrawdown * 100).toFixed(2)}%</td>
                   <td>{summary.maximumLoss ? (summary.maximumLoss * 100).toFixed(2) + '%' : '-'}</td>
                   <td>{summary.sharpeRatio.toFixed(2)}</td>
                   <td>{summary.calmarRatio ? summary.calmarRatio.toFixed(2) : '-'}</td>
                   <td>{summary.sortinoRatio ? summary.sortinoRatio.toFixed(2) : '-'}</td>
-                  <td>{summary.averageProfit.toFixed(2)}</td>
                   <td>{summary.volatility ? summary.volatility.toFixed(2) : '-'}</td>
                   <td>{summary.id === 0 ? '-' : summary.createTime.substring(0, 10)}</td>
                   <td>
