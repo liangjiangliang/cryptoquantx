@@ -2714,13 +2714,6 @@ const CandlestickChart: React.FC = () => {
           
           {/* 底部填充区域 - 始终显示 */}
           <div className={`chart-bottom-padding ${showPanels ? '' : 'panels-hidden'}`}></div>
-          
-          {isLoading && (
-            <div className="loading-overlay">
-              <div className="loading-spinner"></div>
-              <p>正在加载数据...</p>
-            </div>
-          )}
         </div>
 
         {/* K线详细信息浮层 */}
@@ -2780,20 +2773,11 @@ const CandlestickChart: React.FC = () => {
         />
       </div>
 
-      {/* 加载历史数据模态框 */}
-      {isModalOpen && (
-        <DataLoadModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onLoadData={handleLoadHistoryData}
-        />
-      )}
-
-      {/* 显示错误信息 */}
-      {isHistoryLoading && (
+      {/* 显示加载状态 */}
+      {(isLoading || isHistoryLoading) && (
         <div className="loading-overlay">
           <div className="loading-spinner"></div>
-          <p>正在加载历史数据...</p>
+          <p>{isHistoryLoading ? '正在加载历史数据...' : '正在加载数据...'}</p>
         </div>
       )}
     </div>
