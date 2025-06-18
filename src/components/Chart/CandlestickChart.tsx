@@ -519,9 +519,9 @@ const CandlestickChart: React.FC = () => {
         // 设置十字线移动事件
         setupCrosshairMoveHandler();
 
-        // 监听K线宽度变化
+        // 监听K线宽度变化和时间轴范围变化
         chart.current.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-          if (!chart.current) return;
+          if (!chart.current || !range) return;
 
           try {
             // 获取当前K线宽度
@@ -530,20 +530,43 @@ const CandlestickChart: React.FC = () => {
             // 如果宽度发生变化，保存到localStorage
             if (currentBarSpacing !== undefined && currentBarSpacing !== getSavedBarSpacing()) {
               saveBarSpacing(currentBarSpacing);
+            }
 
-              // 同步更新所有副图表的K线宽度
-              if (macdChart.current && macdChart.current.timeScale()) {
-                macdChart.current.timeScale().applyOptions({ barSpacing: currentBarSpacing });
+            // 同步更新所有副图表的时间轴范围和K线宽度
+            if (macdChart.current && macdChart.current.timeScale()) {
+              try {
+                macdChart.current.timeScale().setVisibleLogicalRange(range);
+                if (currentBarSpacing !== undefined) {
+                  macdChart.current.timeScale().applyOptions({ barSpacing: currentBarSpacing });
+                }
+              } catch (error) {
+                // 忽略错误
               }
-              if (rsiChart.current && rsiChart.current.timeScale()) {
-                rsiChart.current.timeScale().applyOptions({ barSpacing: currentBarSpacing });
+            }
+            
+            if (rsiChart.current && rsiChart.current.timeScale()) {
+              try {
+                rsiChart.current.timeScale().setVisibleLogicalRange(range);
+                if (currentBarSpacing !== undefined) {
+                  rsiChart.current.timeScale().applyOptions({ barSpacing: currentBarSpacing });
+                }
+              } catch (error) {
+                // 忽略错误
               }
-              if (kdjChart.current && kdjChart.current.timeScale()) {
-                kdjChart.current.timeScale().applyOptions({ barSpacing: currentBarSpacing });
+            }
+            
+            if (kdjChart.current && kdjChart.current.timeScale()) {
+              try {
+                kdjChart.current.timeScale().setVisibleLogicalRange(range);
+                if (currentBarSpacing !== undefined) {
+                  kdjChart.current.timeScale().applyOptions({ barSpacing: currentBarSpacing });
+                }
+              } catch (error) {
+                // 忽略错误
               }
             }
           } catch (error) {
-            console.error('保存K线宽度错误:', error);
+            console.error('同步图表错误:', error);
           }
         });
       }
@@ -2042,7 +2065,8 @@ const CandlestickChart: React.FC = () => {
                   if (!macdChart.current && macdChartRef.current) {
                     macdChart.current = createChart(macdChartRef.current, {
                       ...commonOptions,
-                      // 禁用时间轴同步
+                      height: 150,
+                      // 保持与主图完全相同的时间轴设置，只隐藏显示
                       timeScale: {
                         ...commonOptions.timeScale,
                         visible: false,
@@ -2056,7 +2080,8 @@ const CandlestickChart: React.FC = () => {
                   if (!rsiChart.current && rsiChartRef.current) {
                     rsiChart.current = createChart(rsiChartRef.current, {
                       ...commonOptions,
-                      // 禁用时间轴同步
+                      height: 150,
+                      // 保持与主图完全相同的时间轴设置，只隐藏显示
                       timeScale: {
                         ...commonOptions.timeScale,
                         visible: false,
@@ -2069,7 +2094,8 @@ const CandlestickChart: React.FC = () => {
                   if (!kdjChart.current && kdjChartRef.current) {
                     kdjChart.current = createChart(kdjChartRef.current, {
                       ...commonOptions,
-                      // 禁用时间轴同步
+                      height: 150,
+                      // 保持与主图完全相同的时间轴设置，只隐藏显示
                       timeScale: {
                         ...commonOptions.timeScale,
                         visible: false,

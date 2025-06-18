@@ -185,13 +185,15 @@
   position: relative;
   width: 100%;
   flex-shrink: 0;
+  height: 100%;
 }
 
 .main-chart {
   min-height: 400px;
+  height: 100%;
   flex: 4; /* 增加主图所占比例 */
   transition: flex 0.3s ease, height 0.3s ease;
-  margin-bottom: -1px; /* 使边框重叠 */
+  margin-bottom: 0; /* 去掉底部间距 */
 }
 
 .sub-chart {
@@ -199,6 +201,7 @@
   height: 150px;
   min-height: 150px;
   margin-top: 0; /* 紧贴主图 */
+  margin-bottom: 0; /* 去掉底部间距 */
   border-top: 1px solid #2e3241;
   flex: 1;
 }

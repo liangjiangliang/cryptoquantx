@@ -98,7 +98,7 @@ const BacktestPanel: React.FC = () => {
             dispatch(clearBacktestResults());
           } 
           // 否则使用第一个策略作为默认值
-          else if (Object.keys(data.data).length > 0 && !strategy) {
+          else if (Object.keys(data.data).length > 0) {
             const firstStrategy = Object.keys(data.data)[0];
             console.log('使用第一个策略作为默认值:', firstStrategy);
             setStrategy(firstStrategy);
@@ -144,7 +144,7 @@ const BacktestPanel: React.FC = () => {
         if (strategyFromUrl && mockStrategies[strategyFromUrl]) {
           setStrategy(strategyFromUrl);
           dispatch(clearBacktestResults());
-        } else if (!strategy) {
+        } else {
           setStrategy(Object.keys(mockStrategies)[0]);
         }
       } finally {
@@ -153,7 +153,7 @@ const BacktestPanel: React.FC = () => {
     };
 
     fetchStrategies();
-  }, [strategy, dispatch]);
+  }, [dispatch]); // 移除strategy依赖，防止无限循环
 
   // 监听setStrategy事件，接收从URL传递的策略代码
   useEffect(() => {
@@ -401,8 +401,40 @@ const BacktestPanel: React.FC = () => {
       }
       
       console.log('获取失败策略，批次ID:', batchId);
+      
+      // 如果有批次ID，从批量回测结果中获取失败策略
+      if (batchId) {
+        try {
+          const url = `/api/api/backtest/ta4j/run-all-results?batch_backtest_id=${batchId}`;
+          const response = await fetch(url);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('批量回测结果数据:', data);
+            
+            if (data.code === 200 && data.data && Array.isArray(data.data.results)) {
+              // 从结果中筛选出失败的策略
+              const failedStrategies = data.data.results.filter((strategy: any) => 
+                strategy.success === false
+              ).map((strategy: any) => ({
+                strategy_code: strategy.strategy_code || 'Unknown',
+                strategy_name: strategy.strategy_name || strategy.strategy_code || 'Unknown',
+                error: strategy.error || '未知错误'
+              }));
+              
+              console.log('筛选出的失败策略:', failedStrategies);
+              setFailedStrategies(failedStrategies);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('从批量回测结果获取失败策略失败:', error);
+        }
+      }
+      
+      // 如果上面的方法失败，使用原有的API
       const strategies = await fetchFailedStrategies(batchId);
-      console.log('失败策略列表:', strategies);
+      console.log('从API获取的失败策略列表:', strategies);
       setFailedStrategies(strategies);
     } catch (error) {
       console.error('获取失败策略失败:', error);
@@ -546,9 +578,9 @@ const BacktestPanel: React.FC = () => {
             <button
               className="run-batch-backtest-button"
               onClick={runBatchBacktest}
-              disabled={runningBatchBacktestRef.current || isBacktesting || loading || !strategy}
+              disabled={runningBatchBacktest || isBacktesting || loading || !strategy}
             >
-              {runningBatchBacktestRef.current ? '批量回测运行中...' : '运行批量回测'}
+              {runningBatchBacktest ? '批量回测运行中...' : '运行批量回测'}
             </button>
           </div>
         ) : (
