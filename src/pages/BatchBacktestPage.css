@@ -1,17 +1,17 @@
 .batch-backtest-page {
-  padding: 20px;
+  padding: 60px 0px 100px 0px; /* 上边距60px为导航栏留空间，左右边距为0 */
   background-color: #1a1a2e;
   color: #e6e6e6;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  margin: 20px;
-  min-height: calc(100vh - 140px);
-  padding-bottom: 100px; /* 为分页组件预留更多空间 */
-  position: relative; /* 添加相对定位 */
+  border-radius: 0px; /* 去掉圆角 */
+  box-shadow: none; /* 去掉阴影 */
+  margin: 0px; /* 去掉margin */
+  min-height: calc(100vh - 60px); /* 调整最小高度 */
+  position: relative;
 }
 
 .page-header {
   margin-bottom: 30px;
+  padding: 0 20px; /* 添加左右内边距 */
 }
 
 .page-header h2 {
@@ -30,7 +30,7 @@
   background-color: rgba(255, 107, 107, 0.1);
   padding: 12px;
   border-radius: 4px;
-  margin-bottom: 20px;
+  margin: 0 20px 20px 20px; /* 添加左右边距 */
 }
 
 .loading-indicator {
@@ -53,7 +53,7 @@
 
 .batch-table-container {
   overflow-x: auto;
-  margin-bottom: 20px;
+  margin: 0 20px 20px 20px; /* 添加左右边距 */
   max-height: calc(100vh - 300px); /* 限制最大高度，确保分页可见 */
 }
 

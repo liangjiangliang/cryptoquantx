@@ -1,5 +1,5 @@
 .backtest-summary-page {
-  padding: 20px;
+  padding: 0px;
   background-color: #171b26;
   height: calc(100vh - 60px);
   color: #e6e6e6;
@@ -7,17 +7,19 @@
   flex-direction: column;
   overflow: hidden;
   position: fixed;
-  width: calc(100% - 40px);
+  width: 100%;
+  top: 60px;
+  left: 0;
 }
 
 .backtest-summary-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 0px;
   padding: 0;
   border-bottom: 1px solid #2a2a3a;
-  height: 60px;
+  height: 0px;
 }
 
 .backtest-summary-header h2 {
@@ -28,7 +30,7 @@
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  gap: 0px;
 }
 
 .refresh-button, .back-button {

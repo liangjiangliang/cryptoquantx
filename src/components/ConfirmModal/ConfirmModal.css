@@ -210,3 +210,16 @@
     width: 100%;
   }
 }
+
+/* 失败策略按钮样式 */
+.confirm-modal-btn-failed {
+  background-color: #dc2626;
+  color: white;
+  font-weight: 600;
+}
+
+.confirm-modal-btn-failed:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}

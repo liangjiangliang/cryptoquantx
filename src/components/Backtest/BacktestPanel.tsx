@@ -7,10 +7,11 @@ import { mockBacktestResults } from '../../data/mockData';
 import './BacktestPanel.css';
 import { Link, useLocation } from 'react-router-dom';
 import ConfirmModal from '../ConfirmModal/ConfirmModal';
+import FailedStrategiesModal, { FailedStrategy } from '../FailedStrategiesModal/FailedStrategiesModal';
 
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
-import { runAllBacktests } from '../../services/api';
+import { runAllBacktests, fetchFailedStrategies } from '../../services/api';
 
 // 策略接口定义
 interface Strategy {
@@ -49,13 +50,25 @@ const BacktestPanel: React.FC = () => {
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
 
+  // 使用useRef来保持最新的状态值，避免闭包问题
+  const runningBatchBacktestRef = React.useRef(false);
   const [runningBatchBacktest, setRunningBatchBacktest] = useState<boolean>(false);
+  
+  // 当状态变化时更新ref
+  useEffect(() => {
+    runningBatchBacktestRef.current = runningBatchBacktest;
+    console.log('runningBatchBacktest状态更新:', runningBatchBacktest);
+  }, [runningBatchBacktest]);
   const [batchStatusMessage, setBatchStatusMessage] = useState<string>('');
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [modalTitle, setModalTitle] = useState<string>('');
   const [modalMessage, setModalMessage] = useState<string>('');
   const [modalType, setModalType] = useState<'danger' | 'warning' | 'info'>('info');
+  // 失败策略弹窗相关状态
+  const [showFailedStrategiesModal, setShowFailedStrategiesModal] = useState(false);
+  const [failedStrategies, setFailedStrategies] = useState<FailedStrategy[]>([]);
+  const [loadingFailedStrategies, setLoadingFailedStrategies] = useState(false);
 
   // 获取可用策略列表
   useEffect(() => {
@@ -71,6 +84,7 @@ const BacktestPanel: React.FC = () => {
         const data: StrategiesResponse = await response.json();
         if (data.code === 200 && data.data) {
           setStrategies(data.data);
+          console.log('策略加载成功:', Object.keys(data.data));
           
           // 检查当前URL是否包含策略代码
           const urlParams = new URLSearchParams(window.location.search);
@@ -78,13 +92,16 @@ const BacktestPanel: React.FC = () => {
           
           // 如果URL中有策略代码且该策略存在，则使用它
           if (strategyFromUrl && data.data[strategyFromUrl]) {
+            console.log('使用URL中的策略:', strategyFromUrl);
             setStrategy(strategyFromUrl);
             // 清除可能存在的回测结果
             dispatch(clearBacktestResults());
           } 
           // 否则使用第一个策略作为默认值
           else if (Object.keys(data.data).length > 0 && !strategy) {
-            setStrategy(Object.keys(data.data)[0]);
+            const firstStrategy = Object.keys(data.data)[0];
+            console.log('使用第一个策略作为默认值:', firstStrategy);
+            setStrategy(firstStrategy);
           }
         } else {
           throw new Error(data.message || '获取策略列表失败');
@@ -230,6 +247,7 @@ const BacktestPanel: React.FC = () => {
 
   // 运行批量回测
   const runBatchBacktest = async () => {
+    console.log('开始批量回测，当前状态:', { runningBatchBacktest, isBacktesting, loading, strategy });
     setRunningBatchBacktest(true);
     setBatchStatusMessage('批量回测运行中...'); // 添加初始状态消息
 
@@ -247,6 +265,9 @@ const BacktestPanel: React.FC = () => {
       if (result.success) {
         // 批量回测完成后设置状态消息
         if (result.data && result.data.batch_backtest_id) {
+          // 保存批次ID供后续使用
+          (runAllBacktests as any).lastBatchId = result.data.batch_backtest_id;
+          
           // 获取策略执行结果和统计数据
           const strategyResults = result.data.results || [];
           const totalStrategies = result.data.total_strategies || strategyResults.length || 0;
@@ -284,7 +305,10 @@ const BacktestPanel: React.FC = () => {
       setBatchStatusMessage(errorMessage);
       showErrorDialog('批量回测错误', errorMessage);
     } finally {
+      console.log('批量回测完成，重置状态');
+      // 直接重置状态，不使用setTimeout
       setRunningBatchBacktest(false);
+      console.log('状态已重置，当前ref值:', runningBatchBacktestRef.current);
     }
   };
 
@@ -356,6 +380,35 @@ const BacktestPanel: React.FC = () => {
     // 如果有批次ID，保存到状态中
     if (batchId) {
       setBatchStatusMessage(prevMessage => prevMessage + `\n\n批次ID: ${batchId}`);
+    }
+  };
+
+  // 显示失败策略列表
+  const showFailedStrategiesList = async () => {
+    setLoadingFailedStrategies(true);
+    setShowFailedStrategiesModal(true);
+    
+    try {
+      // 尝试从模态框消息中提取批次ID
+      const batchIdMatch = modalMessage.match(/批次ID:\s*([^\s]+)/);
+      let batchId = '';
+      
+      if (batchIdMatch && batchIdMatch[1]) {
+        batchId = batchIdMatch[1];
+      } else {
+        // 如果模态框消息中没有批次ID，使用最近一次批量回测的批次ID
+        batchId = (runAllBacktests as any).lastBatchId;
+      }
+      
+      console.log('获取失败策略，批次ID:', batchId);
+      const strategies = await fetchFailedStrategies(batchId);
+      console.log('失败策略列表:', strategies);
+      setFailedStrategies(strategies);
+    } catch (error) {
+      console.error('获取失败策略失败:', error);
+      setFailedStrategies([]);
+    } finally {
+      setLoadingFailedStrategies(false);
     }
   };
 
@@ -489,12 +542,13 @@ const BacktestPanel: React.FC = () => {
               {isBacktesting ? '运行中...' : '运行回测'}
             </button>
             
+
             <button
               className="run-batch-backtest-button"
               onClick={runBatchBacktest}
-              disabled={runningBatchBacktest || isBacktesting || loading || !strategy}
+              disabled={runningBatchBacktestRef.current || isBacktesting || loading || !strategy}
             >
-              {runningBatchBacktest ? '批量回测运行中...' : '运行批量回测'}
+              {runningBatchBacktestRef.current ? '批量回测运行中...' : '运行批量回测'}
             </button>
           </div>
         ) : (
@@ -655,7 +709,7 @@ const BacktestPanel: React.FC = () => {
         onConfirm={() => {
           setShowStatusModal(false);
           // 如果是批量回测完成且包含批次ID，跳转到历史回测页面
-          if (modalMessage.includes('批量回测完成')) {
+          if (modalTitle.includes('批量回测完成')) {
             // 提取批次ID
             const batchIdMatch = modalMessage.match(/批次ID:\s*([^\s]+)/);
             if (batchIdMatch && batchIdMatch[1]) {
@@ -673,11 +727,11 @@ const BacktestPanel: React.FC = () => {
         }}
         title={modalTitle}
         message={modalMessage}
-        confirmText={modalMessage.includes('批量回测完成') ? '确定' : '确定'}
+        confirmText={modalTitle.includes('批量回测完成') ? '确定' : '确定'}
         cancelText="关闭"
         type={modalType}
         // 添加查看明细按钮
-        showDetailButton={modalMessage.includes('批量回测完成')}
+        showDetailButton={modalTitle.includes('批量回测完成')}
         onViewDetail={() => {
           setShowStatusModal(false);
           // 提取批次ID
@@ -695,6 +749,17 @@ const BacktestPanel: React.FC = () => {
           }
         }}
         detailButtonText="查看明细"
+        // 添加失败策略按钮
+        showFailedStrategiesButton={modalTitle.includes('批量回测完成')}
+        onViewFailedStrategies={showFailedStrategiesList}
+      />
+
+      {/* 失败策略弹窗 */}
+      <FailedStrategiesModal
+        isOpen={showFailedStrategiesModal}
+        onClose={() => setShowFailedStrategiesModal(false)}
+        failedStrategies={failedStrategies}
+        loading={loadingFailedStrategies}
       />
     </div>
   );

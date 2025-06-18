@@ -635,3 +635,62 @@ export const fetchStrategyMaxReturns = async (): Promise<Record<string, number>>
     return {};
   }
 };
+
+// 获取失败的策略列表
+export const fetchFailedStrategies = async (batchBacktestId?: string): Promise<any[]> => {
+  try {
+    // 如果有批次ID，先尝试从批量回测结果中获取失败策略
+    if (batchBacktestId) {
+      const url = `/api/api/backtest/ta4j/run-all-results?batch_backtest_id=${batchBacktestId}`;
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.code === 200 && data.data && Array.isArray(data.data.results)) {
+          // 从结果中筛选出失败的策略
+          const failedStrategies = data.data.results.filter((strategy: any) => 
+            strategy.success === false || strategy.error
+          ).map((strategy: any) => ({
+            strategy_code: strategy.strategy_code,
+            strategy_name: strategy.strategy_name,
+            error: strategy.error || '未知错误'
+          }));
+          
+          if (failedStrategies.length > 0) {
+            return failedStrategies;
+          }
+        }
+      }
+    }
+
+    // 如果上面的方法没有获取到数据，使用专门的失败策略API
+    let url = `/api/api/backtest/ta4j/failed-strategies`;
+    if (batchBacktestId) {
+      url += `?batch_backtest_id=${batchBacktestId}`;
+    }
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.warn(`获取失败策略失败: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+
+    if (data.code !== 200) {
+      console.warn(`API错误: ${data.message}`);
+      return [];
+    }
+
+    if (!data.data || data.data.length === 0) {
+      console.warn('API返回的失败策略数据为空');
+      return [];
+    }
+
+    return data.data;
+  } catch (error) {
+    console.error('获取失败策略数据失败:', error);
+    return [];
+  }
+};

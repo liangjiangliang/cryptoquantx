@@ -954,13 +954,37 @@ const BacktestFactoryPage: React.FC = () => {
   const renderFilters = () => {
     return (
       <div className="filters">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="搜索策略名称或描述"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
+        <div className="search-and-actions">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="搜索策略名称或描述"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
+
+          <div className="action-buttons">
+            <button
+              className={`filter-btn ${hideUnavailable ? 'active' : ''}`}
+              onClick={() => {
+                // 切换状态并强制重新计算过滤结果
+                setHideUnavailable(prev => !prev);
+                // 重置到第一页，确保状态变化后能看到结果
+                setCurrentPage(1);
+              }}
+            >
+              {hideUnavailable ? '显示全部策略' : '隐藏不可用策略'}
+            </button>
+            
+            <button
+              className="generate-strategy-btn"
+              onClick={() => setShowGenerateModal(true)}
+              disabled={generatingStrategy}
+            >
+              {generatingStrategy ? '生成中...' : '🤖 AI生成策略'}
+            </button>
+          </div>
         </div>
 
         <div className="category-filter">
@@ -975,32 +999,6 @@ const BacktestFactoryPage: React.FC = () => {
                 {category}
               </button>
             ))}
-          </div>
-        </div>
-
-        <div className="buttons-container">
-          <div className="filter-buttons">
-            <button
-              className={`filter-btn ${hideUnavailable ? 'active' : ''}`}
-              onClick={() => {
-                // 切换状态并强制重新计算过滤结果
-                setHideUnavailable(prev => !prev);
-                // 重置到第一页，确保状态变化后能看到结果
-                setCurrentPage(1);
-              }}
-            >
-              {hideUnavailable ? '显示全部策略' : '隐藏不可用策略'}
-            </button>
-        </div>
-
-        <div className="generate-strategy-section">
-          <button
-            className="generate-strategy-btn"
-            onClick={() => setShowGenerateModal(true)}
-            disabled={generatingStrategy}
-          >
-            {generatingStrategy ? '生成中...' : '🤖 AI生成策略'}
-          </button>
           </div>
         </div>
       </div>

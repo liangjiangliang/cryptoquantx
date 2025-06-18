@@ -481,3 +481,33 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+/* 按钮组布局 */
+.button-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* 失败策略按钮 */
+.failed-strategies-button {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.failed-strategies-button:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.failed-strategies-button:disabled {
+  background-color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.7;
+}

@@ -1,24 +1,24 @@
 .backtest-factory-page {
   width: 100%;
   min-height: 100vh;
-  padding: 10px 20px;
+  padding: 0px 0px 80px 0px; /* 调整左右边距为0 */
   display: flex;
   flex-direction: column;
   background-color: #171b26;
   color: #e6e6e6;
-  padding-bottom: 80px; /* 为分页组件预留空间 */
 }
 
 .page-header {
-  margin-bottom: 10px;
+  margin-bottom: 0px; /* 去掉底部边距 */
   text-align: center;
   color: #e6e6e6;
+  padding: 0 0px; /* 添加左右内边距 */
 }
 
 .page-header h1 {
   font-size: 24px;
   font-weight: 500;
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0; /* 减少底部边距 */
   color: #e6e6e6;
 }
 
@@ -31,16 +31,21 @@
 /* 过滤器样式 */
 .filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 15px;
   margin-bottom: 15px;
-  margin-top: 5px;
+  margin-top: 0px; /* 去掉顶部边距 */
+  padding: 12px; /* 恢复原来的内边距 */
+  background-color: #1a1a2e;
+  border-radius: 0px; /* 去掉圆角 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.search-and-actions {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
-  background-color: #1a1a2e;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  gap: 15px;
 }
 
 .search-box input {
@@ -84,6 +89,12 @@
   background-color: #2962ff;
   color: white;
   border-color: #2962ff;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .page-size-selector {
@@ -186,11 +197,11 @@
   display: flex;
   flex-direction: column;
   background-color: #1a1a2e;
-  border-radius: 5px;
+  border-radius: 0px; /* 去掉圆角 */
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   overflow: hidden;
   min-height: 400px;
-  margin-bottom: 20px;
+  margin: 0px; /* 去掉所有边距 */
 }
 
 .strategy-header {
@@ -524,91 +535,99 @@
 /* 响应式布局 */
 @media (max-width: 768px) {
   .strategy-cell.comments {
-    width: 30%;
+    width: 100%;
+    overflow: visible;
     white-space: normal;
-    overflow-wrap: break-word;
-    padding: 6px 8px;
-    word-break: break-word;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-height: 5.6em;
+    padding: 5px 0;
   }
-  
-  .strategy-cell.name {
-    width: 18%;
-  }
-  
-  .strategy-cell.category {
-    width: 12%;
-  }
-  
-  .strategy-cell.description {
-    width: 25%;
-    white-space: normal;
-    line-height: 1.4;
-    color: #d9d9d9;
-    font-size: 14px;
-    overflow-wrap: break-word;
-    padding: 6px 8px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    -webkit-box-orient: vertical;
-    max-height: 5.6em;
-  }
-  
-  .strategy-cell.default-params {
-    width: 15%;
-  }
-  
-  .strategy-cell.updated-at {
-    width: 10%;
-  }
-  
-  .strategy-cell.action {
-  width: 20%;
-}
-  
-  .strategy-cell.max-return {
-    width: 8%;
-  }
-  
-  .filters {
+
+  .strategy-row {
     flex-direction: column;
-    align-items: stretch;
+    padding: 10px;
   }
-  
-  .search-box, .category-filter, .page-size-selector {
+
+  .strategy-header {
+    display: none;
+  }
+
+  .strategy-cell.name {
     width: 100%;
   }
-  
-  .pagination-container {
-    flex-direction: column;
-    gap: 15px;
+
+  .strategy-cell.category {
+    width: 100%;
   }
-  
-  .pagination-buttons {
-    flex-direction: column;
+
+  .strategy-cell.description {
+    width: 100%;
+  }
+
+  .strategy-cell.default-params {
+    width: 100%;
+  }
+
+  .strategy-cell.updated-at {
+    width: 100%;
+  }
+
+  .strategy-cell.action {
+    width: 100%;
+  }
+
+  .strategy-cell.max-return {
+    width: 100%;
+  }
+
+  .filters {
     gap: 10px;
   }
-  
-  .pagination-buttons > button {
-    min-width: 80px;
+
+  .search-and-actions {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
   }
-  
-  .pagination-info {
-    margin: 10px 0;
-    text-align: center;
-    order: -1;
+
+  .search-box {
+    width: 100%;
   }
-  
-  .page-size-selector {
-    margin-left: 0;
+
+  .search-box input {
+    width: 100%;
+  }
+
+  .category-filter {
+    width: 100%;
+  }
+
+  .action-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .pagination-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pagination-buttons {
+    margin-bottom: 10px;
     justify-content: center;
+  }
+
+  .pagination-buttons > button {
+    padding: 6px 10px;
+  }
+
+  .pagination-info {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .page-size-selector {
+    justify-content: center;
+    margin-top: 10px;
   }
 }
 

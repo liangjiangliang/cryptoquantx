@@ -1,0 +1,148 @@
+.failed-strategies-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.failed-strategies-modal {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  color: #d1d5db;
+}
+
+.failed-strategies-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #334155;
+}
+
+.failed-strategies-modal-header h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.failed-strategies-modal-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.failed-strategies-modal-close:hover {
+  background-color: #374151;
+  color: #f3f4f6;
+}
+
+.failed-strategies-modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.failed-strategies-table-container {
+  overflow-x: auto;
+}
+
+.failed-strategies-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.failed-strategies-table th,
+.failed-strategies-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #374151;
+}
+
+.failed-strategies-table th {
+  background-color: #374151;
+  color: #f8fafc;
+  font-weight: 600;
+  font-size: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.failed-strategies-table td {
+  background-color: #1e293b;
+  color: #d1d5db;
+  font-size: 14px;
+}
+
+.failed-strategies-table tr:hover td {
+  background-color: #334155;
+}
+
+.error-cell {
+  max-width: 300px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  color: #fca5a5 !important;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.failed-strategies-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #334155;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.loading-indicator,
+.no-data-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+  font-size: 16px;
+}
+
+/* 复用现有的按钮样式 */
+.confirm-modal-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.confirm-modal-btn-cancel {
+  background-color: #374151;
+  color: #d1d5db;
+}
+
+.confirm-modal-btn-cancel:hover {
+  background-color: #4b5563;
+} 

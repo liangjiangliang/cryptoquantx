@@ -13,6 +13,8 @@ interface ConfirmModalProps {
   showDetailButton?: boolean;
   onViewDetail?: () => void;
   detailButtonText?: string;
+  showFailedStrategiesButton?: boolean;
+  onViewFailedStrategies?: () => void;
 }
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -26,7 +28,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   type = 'danger',
   showDetailButton = false,
   onViewDetail,
-  detailButtonText = '查看明细'
+  detailButtonText = '查看明细',
+  showFailedStrategiesButton = false,
+  onViewFailedStrategies
 }) => {
   if (!isOpen) return null;
 
@@ -64,6 +68,14 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
           >
             {cancelText}
           </button>
+          {showFailedStrategiesButton && onViewFailedStrategies && (
+            <button 
+              className="confirm-modal-btn confirm-modal-btn-failed"
+              onClick={onViewFailedStrategies}
+            >
+              失败策略
+            </button>
+          )}
           {showDetailButton && onViewDetail && (
             <button 
               className="confirm-modal-btn confirm-modal-btn-confirm info"
