@@ -299,7 +299,7 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       const requestEndDate = extendedEndDate.toISOString().split('T')[0];
       
       // 获取K线数据
-      const url = `/api/market/query_saved_history?symbol=${symbol}&interval=1D&startTimeStr=${encodeURIComponent(requestStartDate + ' 00:00:00')}&endTimeStr=${encodeURIComponent(requestEndDate + ' 00:00:00')}`;
+      const url = `/api/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=1D&startTimeStr=${encodeURIComponent(requestStartDate + ' 00:00:00')}&endTimeStr=${encodeURIComponent(requestEndDate + ' 00:00:00')}`;
       const response = await fetch(url);
       
       if (!response.ok) {

@@ -35,7 +35,9 @@ export const getDefaultStartDate = (): string => {
   return date.toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
 };
 
-// 获取当前日期
+// 获取昨天日期
 export const getDefaultEndDate = (): string => {
-  return new Date().toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
+  const date = new Date();
+  date.setDate(date.getDate() - 1); // 减去1天，获取昨天的日期
+  return date.toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
 }; 

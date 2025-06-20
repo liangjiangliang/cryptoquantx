@@ -2280,7 +2280,7 @@ const CandlestickChart: React.FC = () => {
       const normalizedTimeframe = timeframe;
 
       // 构建API URL
-      const url = `/api/market/query_saved_history?symbol=${selectedPair}&interval=${normalizedTimeframe}&startTimeStr=${encodeURIComponent(startTimeStr)}&endTimeStr=${encodeURIComponent(endTimeStr)}`;
+      const url = `/api/market/fetch_history_with_integrity_check?symbol=${selectedPair}&interval=${normalizedTimeframe}&startTimeStr=${encodeURIComponent(startTimeStr)}&endTimeStr=${encodeURIComponent(endTimeStr)}`;
 
       console.log('查询URL:', url);
 

@@ -114,7 +114,7 @@ export const fetchCandlestickData = async (
 ): Promise<CandlestickData[]> => {
   try {
     // 构建API URL，包含日期范围参数
-    let url = `/api/market/query_saved_history?symbol=${symbol}&interval=${interval}`;
+    let url = `/api/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}`;
 
     if (startDate) {
       url += `&startTimeStr=${encodeURIComponent(formatDateString(startDate))}`;

@@ -83,7 +83,7 @@ npm run build
 
 系统集成了以下API接口：
 
-- `/api/market/query_saved_history` - 查询已保存的历史K线数据
+- `/api/market/fetch_history_with_integrity_check` - 查询已保存的历史K线数据
 - `/api/market/fetch_history_with_integrity_check` - 获取并检查历史数据完整性
 - `/api/backtest/ta4j/strategies` - 获取可用的回测策略列表
 - `/api/backtest/ta4j/run` - 运行回测并返回结果
