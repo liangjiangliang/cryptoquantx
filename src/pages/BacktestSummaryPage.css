@@ -223,6 +223,17 @@
   color: #4caf50;
 }
 
+/* 红涨绿跌颜色样式 */
+.positive-value {
+  color: #ff5722 !important; /* 红色表示上涨 */
+  font-weight: 500;
+}
+
+.negative-value {
+  color: #4caf50 !important; /* 绿色表示下跌 */
+  font-weight: 500;
+}
+
 .detail-button {
   height: 36px;
   box-sizing: border-box;

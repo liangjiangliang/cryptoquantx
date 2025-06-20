@@ -226,6 +226,14 @@ const BacktestSummaryPage: React.FC = () => {
     return isNegative ? `-${formattedValue}` : formattedValue;
   };
 
+  // 获取数值颜色类名（红涨绿跌）
+  const getValueColorClass = (value: number | null | undefined): string => {
+    if (value === null || value === undefined || value === 0) {
+      return '';
+    }
+    return value > 0 ? 'positive-value' : 'negative-value';
+  };
+
   // 处理排序
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -775,7 +783,7 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>
                     {formatPercentage(summary.totalReturn * 100)}
                   </td>
-                  <td className="positive">{summary.annualizedReturn !== null && summary.annualizedReturn !== undefined ? formatPercentage(summary.annualizedReturn * 100) : ''}</td>
+                  <td className={getValueColorClass(summary.annualizedReturn)}>{summary.annualizedReturn !== null && summary.annualizedReturn !== undefined ? formatPercentage(summary.annualizedReturn * 100) : ''}</td>
                   <td>{formatAmount(summary.totalFee)}</td>
                   <td>{((summary.totalFee / summary.initialAmount) * 100).toFixed(2)}%</td>
                   <td>{summary.numberOfTrades}</td>

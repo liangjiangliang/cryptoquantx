@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createChart, CrosshairMode, Time, LineWidth, ISeriesApi, IChartApi, SeriesMarkerPosition, SeriesMarker, LineStyle } from 'lightweight-charts';
 import { useSelector, useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { AppState, CandlestickData, BacktestTrade } from '../../store/types';
 import { updateCandlestickData, setSelectedPair, setTimeframe, setDateRange } from '../../store/actions';
 import { fetchHistoryWithIntegrityCheck } from '../../services/api';
@@ -157,6 +158,7 @@ const CandlestickChart: React.FC = () => {
   const [showPanels, setShowPanels] = useState<boolean>(true);
 
   const dispatch = useDispatch();
+  const location = useLocation();
   const candlestickData = useSelector((state: AppState) => state.candlestickData);
   const selectedPair = useSelector((state: AppState) => state.selectedPair);
   const timeframe = useSelector((state: AppState) => state.timeframe);
@@ -2463,11 +2465,79 @@ const CandlestickChart: React.FC = () => {
       setTimeout(() => {
         drawTradeMarkers();
       }, 100);
-    } else if (candleSeries.current) {
+    } else {
       // 如果没有回测结果，清除所有标记
-      candleSeries.current.setMarkers([]);
+      console.log('backtestResults为空，清除买卖点标记');
+      if (candleSeries.current) {
+        candleSeries.current.setMarkers([]);
+        console.log('已通过backtestResults监听清除买卖点标记');
+      } else {
+        console.log('candleSeries.current不存在，无法清除买卖点标记');
+      }
     }
   }, [backtestResults]);
+
+  // 清除买卖点标记的函数
+  const clearTradeMarkers = () => {
+    try {
+      if (candleSeries.current) {
+        candleSeries.current.setMarkers([]);
+        console.log('已清除所有买卖点标记');
+      } else {
+        console.log('candleSeries.current 不存在，无法清除买卖点标记');
+      }
+    } catch (error) {
+      console.error('清除买卖点标记时出错:', error);
+    }
+  };
+
+  // 监听路由变化，当导航到首页时清除买卖点标记
+  useEffect(() => {
+    if (location.pathname === '/') {
+      console.log('检测到路由变化到首页，准备清除买卖点标记');
+      
+      // 尝试多次清除，确保candleSeries已初始化
+      let retryCount = 0;
+      const maxRetries = 10;
+      
+      const attemptClear = () => {
+        retryCount++;
+        if (candleSeries.current) {
+          clearTradeMarkers();
+          console.log('路由变化到首页，已清除买卖点标记');
+        } else if (retryCount < maxRetries) {
+          console.log(`第${retryCount}次尝试清除买卖点标记，candleSeries.current还未初始化，${200 * retryCount}ms后重试`);
+          setTimeout(attemptClear, 200 * retryCount);
+        } else {
+          console.log('达到最大重试次数，停止尝试清除买卖点标记');
+        }
+      };
+      
+      // 立即尝试一次，然后延迟尝试
+      attemptClear();
+    }
+  }, [location.pathname]);
+
+  // 监听首页加载事件，清除买卖点标记
+  useEffect(() => {
+    const handleHomePageLoad = () => {
+      clearTradeMarkers();
+    };
+
+    // 监听首页加载事件
+    window.addEventListener('reload_data', handleHomePageLoad);
+
+    // 组件初始化时也清除买卖点标记（针对首页刷新情况）
+    if (window.location.pathname === '/') {
+      setTimeout(() => {
+        clearTradeMarkers();
+      }, 200);
+    }
+
+    return () => {
+      window.removeEventListener('reload_data', handleHomePageLoad);
+    };
+  }, []);
 
   // 清除所有指标
   const clearIndicators = () => {

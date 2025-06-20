@@ -34,8 +34,26 @@ const HomePage = () => {
 
     // 在页面加载时清除回测结果
     useEffect(() => {
+        console.log('HomePage 组件加载，清除回测结果和买卖点标记');
+        
         // 确保页面加载时清除任何之前的回测结果
         dispatch(clearBacktestResults());
+        
+        // 多次尝试触发清除买卖点标记事件，确保图表组件已经初始化
+        const triggerClearMarkers = (retryCount = 0) => {
+            const maxRetries = 5;
+            
+            console.log(`第${retryCount + 1}次触发清除买卖点标记事件`);
+            const clearMarkersEvent = new Event('reload_data');
+            window.dispatchEvent(clearMarkersEvent);
+            
+            if (retryCount < maxRetries) {
+                setTimeout(() => triggerClearMarkers(retryCount + 1), 200 * (retryCount + 1));
+            }
+        };
+        
+        // 立即触发一次，然后延迟重试
+        triggerClearMarkers();
     }, [dispatch]);
 
     // 监听自定义事件以响应面板切换
@@ -89,17 +107,22 @@ const HomePage = () => {
 // 路由监听组件，用于在路由变化时触发数据加载
 const RouteChangeHandler = () => {
     const location = useLocation();
+    const dispatch = useDispatch();
 
     useEffect(() => {
-        // 当路由变化到首页时，触发数据重新加载
+        // 当路由变化到首页时，清除回测结果和买卖点标记
         if (location.pathname === '/') {
-            // 给DataLoader一个小延时，确保组件已经挂载
+            // 立即清除回测结果
+            dispatch(clearBacktestResults());
+            console.log('路由变化到首页，已清除回测结果');
+            
+            // 给DataLoader和图表组件一个小延时，确保组件已经挂载
             setTimeout(() => {
                 const event = new Event('reload_data');
                 window.dispatchEvent(event);
-            }, 100);
+            }, 50);
         }
-    }, [location]);
+    }, [location.pathname, dispatch]);
 
     return null;
 };
