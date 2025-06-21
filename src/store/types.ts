@@ -37,8 +37,16 @@ export interface BacktestSummary {
   success?: boolean; // 策略是否成功执行
   calmarRatio?: number; // 卡玛比率
   sortinoRatio?: number; // 索提诺比率
-  volatility?: number; // 波动率
+
   maximumLoss?: number; // 最大损失
+  // 新增字段
+  alpha?: number; // Alpha系数
+  beta?: number; // Beta系数
+  omega?: number; // Omega比率
+  profitFactor?: number; // 盈利因子
+  skewness?: number; // 偏度
+  treynorRatio?: number; // 特雷诺比率
+  ulcerIndex?: number; // 溃疡指数
 }
 
 // 订单簿数据类型

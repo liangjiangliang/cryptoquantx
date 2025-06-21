@@ -10,14 +10,20 @@ import './BacktestSummaryPage.css';
 
 // 指标说明
 const INDICATOR_DESCRIPTIONS = {
-  annualizedReturn: '年化收益率：将投资期间的收益率转换为年化形式，便于比较不同时间长度的投资表现',
-  maxDrawdown: '最大回撤：投资组合从最高点到最低点的最大跌幅，衡量投资风险',
-  sharpeRatio: '夏普比率：衡量每单位风险所获得的超额回报，数值越高表示风险调整后收益越好',
-  calmarRatio: '卡玛比率：年化收益率与最大回撤的比值，数值越高表示策略越优秀',
-  sortinoRatio: '索提诺比率：类似夏普比率，但只考虑下行风险，更关注负收益的波动性',
-  averageProfit: '平均收益：每笔交易的平均盈利金额',
-  volatility: '波动率：价格变化的标准差，衡量投资的不确定性和风险程度',
-  maximumLoss: '最大损失：单笔交易的最大亏损金额'
+  annualizedReturn: `年化收益率：将投资期间的收益率转换为年化形式，便于比较不同时间长度的投资表现\n• **判断标准**：数值越高越好，正值表示盈利，负值表示亏损\n• **主要作用**：评估策略的整体盈利能力和与其他投资产品的比较`,
+  maxDrawdown: `最大回撤：投资组合从最高点到最低点的最大跌幅，衡量投资风险\n• **判断标准**：数值越小越好（接近0%最佳）\n• **风险提示**：超过20%需要谨慎，超过50%风险极高\n• **主要作用**：评估策略的风险承受能力和风险控制水平`,
+  sharpeRatio: `夏普比率：衡量每单位风险所获得的超额回报\n• **计算公式**：(收益率-无风险利率)/收益率标准差\n• **判断标准**：数值越高越好，>1为良好，>2为优秀，>3为卓越\n• **主要作用**：评估风险调整后的收益表现`,
+  calmarRatio: `卡玛比率：年化收益率与最大回撤的比值\n• **判断标准**：数值越高越好，>1为良好，>2为优秀\n• **主要作用**：评估策略在控制回撤风险下的盈利效率`,
+  sortinoRatio: `索提诺比率：类似夏普比率，但只考虑下行风险\n• **判断标准**：数值越高越好，>1为良好，>2为优秀\n• **适用场景**：更适合评估不对称收益分布的策略\n• **主要作用**：关注负收益的波动性评估`,
+  averageProfit: `平均收益：每笔交易的平均盈利金额\n• **判断标准**：数值越高越好，正值表示平均盈利，负值表示平均亏损\n• **主要作用**：评估策略的交易质量和资金使用效率`,
+  maximumLoss: `最大损失：单笔交易的最大亏损金额\n• **判断标准**：绝对值越小越好\n• **风险意义**：反映策略的风险控制和止损能力\n• **主要作用**：评估策略的极端风险暴露`,
+  alpha: `Alpha系数：衡量投资组合相对于基准的超额收益能力\n• **判断标准**：数值越高越好\n• **数值含义**：正值表示跑赢基准，负值表示跑输基准\n• **主要作用**：评估策略相对市场的增值能力`,
+  beta: `Beta系数：衡量投资组合相对于市场的系统性风险\n• **数值含义**：1表示与市场同步，>1表示波动更大，<1表示波动较小，0表示无相关性\n• **主要作用**：评估策略的市场敏感度和系统性风险暴露`,
+  omega: `Omega比率：收益概率加权平均与损失概率加权平均的比值\n• **判断标准**：数值越高越好，>1表示盈利概率大于亏损概率\n• **优势特点**：综合考虑收益分布的所有信息\n• **主要作用**：全面评估策略的风险收益特征`,
+  profitFactor: `盈利因子：总盈利与总亏损的比值\n• **判断标准**：数值越高越好\n• **评级标准**：>1表示盈利，>1.5为良好，>2为优秀\n• **主要作用**：评估策略的基本盈利逻辑和可持续性`,
+  skewness: `偏度：衡量收益分布的不对称性\n• **数值含义**：正值表示右偏（大涨概率高），负值表示左偏（大跌概率高），0表示对称分布\n• **判断标准**：绝对值越小分布越对称\n• **主要作用**：评估策略的收益分布特征和极端收益倾向`,
+  treynorRatio: `特雷诺比率：每单位系统性风险（Beta）的超额收益\n• **判断标准**：数值越高越好\n• **适用条件**：适用于充分分散化的投资组合\n• **主要作用**：评估承担系统性风险的补偿是否充分`,
+  ulcerIndex: `溃疡指数：衡量回撤的深度和持续时间的风险指标\n• **判断标准**：数值越小越好\n• **综合考量**：同时考虑回撤的严重程度和持续时间\n• **主要作用**：评估投资者心理承受能力和策略的平稳性`
 };
 
 // 排序方向类型
@@ -46,10 +52,17 @@ type SortField =
   | 'calmarRatio'
   | 'sortinoRatio'
   | 'averageProfit'
-  | 'volatility'
+
   | 'profitableTrades'
   | 'unprofitableTrades'
-  | 'maximumLoss';
+  | 'maximumLoss'
+  | 'alpha'
+  | 'beta'
+  | 'omega'
+  | 'profitFactor'
+  | 'skewness'
+  | 'treynorRatio'
+  | 'ulcerIndex';
 
 // 过滤条件类型
 interface Filters {
@@ -390,10 +403,7 @@ const BacktestSummaryPage: React.FC = () => {
           valueA = a.averageProfit;
           valueB = b.averageProfit;
           break;
-        case 'volatility':
-          valueA = a.volatility || 0;
-          valueB = b.volatility || 0;
-          break;
+
         case 'profitableTrades':
           valueA = a.profitableTrades;
           valueB = b.profitableTrades;
@@ -405,6 +415,34 @@ const BacktestSummaryPage: React.FC = () => {
         case 'maximumLoss':
           valueA = a.maximumLoss || 0;
           valueB = b.maximumLoss || 0;
+          break;
+        case 'alpha':
+          valueA = a.alpha || 0;
+          valueB = b.alpha || 0;
+          break;
+        case 'beta':
+          valueA = a.beta || 0;
+          valueB = b.beta || 0;
+          break;
+        case 'omega':
+          valueA = a.omega || 0;
+          valueB = b.omega || 0;
+          break;
+        case 'profitFactor':
+          valueA = a.profitFactor || 0;
+          valueB = b.profitFactor || 0;
+          break;
+        case 'skewness':
+          valueA = a.skewness || 0;
+          valueB = b.skewness || 0;
+          break;
+        case 'treynorRatio':
+          valueA = a.treynorRatio || 0;
+          valueB = b.treynorRatio || 0;
+          break;
+        case 'ulcerIndex':
+          valueA = a.ulcerIndex || 0;
+          valueB = b.ulcerIndex || 0;
           break;
         default:
           valueA = a.id;
@@ -498,7 +536,7 @@ const BacktestSummaryPage: React.FC = () => {
         calmarRatio: items.reduce((sum, item) => sum + (item.calmarRatio || 0), 0) / count,
         sortinoRatio: items.reduce((sum, item) => sum + (item.sortinoRatio || 0), 0) / count,
         averageProfit: items.reduce((sum, item) => sum + item.averageProfit, 0) / count,
-        volatility: items.reduce((sum, item) => sum + (item.volatility || 0), 0) / count,
+
         profitableTrades: Math.round(items.reduce((sum, item) => sum + item.profitableTrades, 0) / count),
         unprofitableTrades: Math.round(items.reduce((sum, item) => sum + item.unprofitableTrades, 0) / count),
         maximumLoss: items.reduce((sum, item) => sum + (item.maximumLoss || 0), 0) / count,
@@ -750,11 +788,72 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
-                <th onClick={() => handleSort('volatility')} className="sortable-header">
-                  波动率 {renderSortIcon('volatility')}
+
+                <th onClick={() => handleSort('treynorRatio')} className="sortable-header">
+                  特雷诺比率 {renderSortIcon('treynorRatio')}
                   <span
                     className="info-icon"
-                    onClick={(e) => { e.stopPropagation(); showTooltip('volatility', e); }}
+                    onClick={(e) => { e.stopPropagation(); showTooltip('treynorRatio', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('alpha')} className="sortable-header">
+                  Alpha系数 {renderSortIcon('alpha')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('alpha', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('beta')} className="sortable-header">
+                  Beta系数 {renderSortIcon('beta')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('beta', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('omega')} className="sortable-header">
+                  Omega比率 {renderSortIcon('omega')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('omega', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('profitFactor')} className="sortable-header">
+                  盈利因子 {renderSortIcon('profitFactor')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('profitFactor', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('skewness')} className="sortable-header">
+                  偏度 {renderSortIcon('skewness')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('skewness', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('ulcerIndex')} className="sortable-header">
+                  溃疡指数 {renderSortIcon('ulcerIndex')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('ulcerIndex', e); }}
                     onMouseLeave={hideTooltip}
                   >
                     ⓘ
@@ -794,7 +893,14 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{summary.sharpeRatio.toFixed(2)}</td>
                   <td>{summary.calmarRatio ? summary.calmarRatio.toFixed(2) : '-'}</td>
                   <td>{summary.sortinoRatio ? summary.sortinoRatio.toFixed(2) : '-'}</td>
-                  <td>{summary.volatility ? summary.volatility.toFixed(2) : '-'}</td>
+
+                  <td>{summary.treynorRatio ? summary.treynorRatio.toFixed(4) : '-'}</td>
+                  <td>{summary.alpha ? summary.alpha.toFixed(4) : '-'}</td>
+                  <td>{summary.beta ? summary.beta.toFixed(4) : '-'}</td>
+                  <td>{summary.omega ? summary.omega.toFixed(4) : '-'}</td>
+                  <td>{summary.profitFactor ? summary.profitFactor.toFixed(4) : '-'}</td>
+                  <td>{summary.skewness ? summary.skewness.toFixed(4) : '-'}</td>
+                  <td>{summary.ulcerIndex ? summary.ulcerIndex.toFixed(2) : '-'}</td>
                   <td>{summary.id === 0 ? '-' : summary.createTime.substring(0, 10)}</td>
                   <td>
                     {summary.id !== 0 && (
@@ -882,10 +988,16 @@ const BacktestSummaryPage: React.FC = () => {
             fontSize: '12px',
             maxWidth: '300px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            whiteSpace: 'pre-line',
+            lineHeight: '1.4'
+          }}
+          dangerouslySetInnerHTML={{
+            __html: tooltip.content
+              .replace(/\n/g, '<br/>')
+              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           }}
         >
-          {tooltip.content}
         </div>
       )}
     </div>
