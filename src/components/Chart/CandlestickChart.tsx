@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState, CandlestickData, BacktestTrade } from '../../store/types';
 import { updateCandlestickData, setSelectedPair, setTimeframe, setDateRange } from '../../store/actions';
-import { fetchHistoryWithIntegrityCheck } from '../../services/api';
+import { fetchHistoryWithIntegrityCheck, getDefaultDateRange, formatDateTimeString } from '../../services/api';
 import DataLoadModal from '../DataLoadModal/DataLoadModal';
 import IndicatorSelector, { IndicatorType } from './IndicatorSelector';
 import {
@@ -199,7 +199,7 @@ const CandlestickChart: React.FC = () => {
 
       // 确保有数据可用
       if (!candlestickData || candlestickData.length === 0) {
-        console.log('没有K线数据可用');
+        // console.log('没有K线数据可用');
         return;
       }
 
@@ -234,12 +234,12 @@ const CandlestickChart: React.FC = () => {
         });
 
         // 打印一些调试信息，查看candlestickData的格式
-        console.log('param.time:', param.time, 'type:', typeof param.time);
-        console.log('candlestickData示例:', candlestickData.length > 0 ? {
-          time: candlestickData[0].time,
-          timeType: typeof candlestickData[0].time
-        } : '无数据');
-        console.log('candlestickData长度:', candlestickData.length);
+        // console.log('param.time:', param.time, 'type:', typeof param.time);
+        // console.log('candlestickData示例:', candlestickData.length > 0 ? {
+        //   time: candlestickData[0].time,
+        //   timeType: typeof candlestickData[0].time
+        // } : '无数据');
+        // console.log('candlestickData长度:', candlestickData.length);
 
         // 获取当前显示的K线索引
         let dataIndex = -1;
@@ -250,7 +250,7 @@ const CandlestickChart: React.FC = () => {
             const logical = chart.current.timeScale().coordinateToLogical(param.point.x);
             if (logical !== null && logical >= 0 && logical < candlestickData.length) {
               dataIndex = Math.round(logical);
-              console.log('使用坐标估算，找到索引:', dataIndex);
+              // console.log('使用坐标估算，找到索引:', dataIndex);
             }
           }
 
@@ -271,14 +271,14 @@ const CandlestickChart: React.FC = () => {
                   dataIndex = i;
                 }
               }
-              console.log('使用最接近匹配，找到索引:', dataIndex, '差值:', minDiff);
+              // console.log('使用最接近匹配，找到索引:', dataIndex, '差值:', minDiff);
             }
           }
         } catch (error) {
           console.error('获取数据索引错误:', error);
         }
 
-        console.log('最终找到的数据索引:', dataIndex);
+        // console.log('最终找到的数据索引:', dataIndex);
 
         // 如果找到了有效的数据索引，更新指标值
         if (dataIndex !== -1 && dataIndex < candlestickData.length) {
@@ -693,14 +693,26 @@ const CandlestickChart: React.FC = () => {
       }, 100);
     };
 
+    const handleRetryDataUpdate = () => {
+      // 重新触发数据更新
+      if (candlestickData.length > 0) {
+        console.log('重试数据更新');
+        // 通过更新一个临时状态来触发useEffect重新执行
+        setIsLoading(prev => !prev);
+        setTimeout(() => setIsLoading(prev => !prev), 10);
+      }
+    };
+
     // 添加事件监听器
     window.addEventListener('timeframeChanged', handleTimeframeChange as EventListener);
+    window.addEventListener('retryDataUpdate', handleRetryDataUpdate);
 
     // 清理函数
     return () => {
       window.removeEventListener('timeframeChanged', handleTimeframeChange as EventListener);
+      window.removeEventListener('retryDataUpdate', handleRetryDataUpdate);
     };
-  }, [selectedPair, dateRange]); // 依赖项包括selectedPair和dateRange，确保在这些值变化时重新绑定事件
+  }, [selectedPair, dateRange, candlestickData]); // 依赖项包括selectedPair和dateRange，确保在这些值变化时重新绑定事件
 
   // 同步所有图表的时间轴
   const syncTimeScales = () => {
@@ -787,43 +799,96 @@ const CandlestickChart: React.FC = () => {
   // 更新数据
   useEffect(() => {
     try {
-      if (candleSeries.current && volumeSeries.current && candlestickData.length > 0) {
-        // 格式化数据
-        const formattedData = candlestickData.map((item: CandlestickData) => ({
-          time: item.time as Time,
-          open: item.open,
-          high: item.high,
-          low: item.low,
-          close: item.close,
-        }));
+      if (candlestickData.length > 0) {
+        // 等待图表初始化完成
+        if (!candleSeries.current || !volumeSeries.current) {
+          // 如果图表还没初始化，延迟处理
+          const timer = setTimeout(() => {
+            if (candleSeries.current && volumeSeries.current) {
+              // 递归调用自己来处理数据
+              const event = new CustomEvent('retryDataUpdate');
+              window.dispatchEvent(event);
+            }
+          }, 100);
+          return () => clearTimeout(timer);
+        }
 
-        const volumeData = candlestickData.map((item: CandlestickData) => ({
-          time: item.time as Time,
-          value: item.volume,
-          color: item.close > item.open ? '#ff5555' : '#32a852', // 红涨绿跌
-        }));
+        // 格式化数据，过滤掉包含 null 或 undefined 的数据项，但放宽过滤条件
+        const formattedData = candlestickData
+          .filter((item: CandlestickData) => {
+            // 基本检查：确保item存在且有必要的字段
+            if (!item || typeof item !== 'object') return false;
+            
+            // 时间检查：确保时间字段存在且有效
+            if (item.time === null || item.time === undefined) return false;
+            
+            // 价格检查：确保OHLC数据存在且为有效数字
+            const priceFields = [item.open, item.high, item.low, item.close];
+            return priceFields.every(price => 
+              price !== null && price !== undefined && 
+              typeof price === 'number' && !isNaN(price) && isFinite(price)
+            );
+          })
+          .map((item: CandlestickData) => ({
+            time: item.time as Time,
+            open: Number(item.open),
+            high: Number(item.high),
+            low: Number(item.low),
+            close: Number(item.close),
+          }));
 
-        // 设置数据
-        candleSeries.current.setData(formattedData);
-        volumeSeries.current.setData(volumeData);
+        const volumeData = candlestickData
+          .filter((item: CandlestickData) => {
+            // 基本检查
+            if (!item || typeof item !== 'object') return false;
+            
+            // 时间和价格检查
+            if (item.time === null || item.time === undefined) return false;
+            if (item.open === null || item.open === undefined || isNaN(item.open)) return false;
+            if (item.close === null || item.close === undefined || isNaN(item.close)) return false;
+            
+            // 成交量检查：允许0值，但不允许null/undefined/NaN
+            return item.volume !== null && item.volume !== undefined && 
+                   typeof item.volume === 'number' && !isNaN(item.volume) && isFinite(item.volume);
+          })
+          .map((item: CandlestickData) => ({
+            time: item.time as Time,
+            value: Number(item.volume),
+            color: item.close > item.open ? '#ff5555' : '#32a852', // 红涨绿跌
+          }));
 
-        // 适配视图
-        chart.current?.timeScale().fitContent();
+        // console.log(`处理数据: 原始${candlestickData.length}条，K线${formattedData.length}条，成交量${volumeData.length}条`);
 
-        // 更新指标
-        setTimeout(() => {
-          updateIndicators();
+        // 确保有有效数据才设置
+        if (formattedData.length > 0 && volumeData.length > 0) {
+          // 设置数据
+          candleSeries.current.setData(formattedData);
+          volumeSeries.current.setData(volumeData);
 
-          // 如果有回测结果，重新绘制交易标记
-          if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
-            drawTradeMarkers();
-          }
+          // 适配视图
+          setTimeout(() => {
+            if (chart.current) {
+              chart.current.timeScale().fitContent();
+            }
+          }, 50);
 
-          // 重新设置十字线事件处理器，确保使用最新的数据
-          setupCrosshairMoveHandler();
+          // 更新指标
+          setTimeout(() => {
+            updateIndicators();
 
-          console.log('数据已更新，重新设置十字线事件处理器');
-        }, 0);
+            // 如果有回测结果，重新绘制交易标记
+            if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
+              drawTradeMarkers();
+            }
+
+            // 重新设置十字线事件处理器，确保使用最新的数据
+            setupCrosshairMoveHandler();
+
+            // console.log('数据已更新，重新设置十字线事件处理器');
+          }, 100);
+        } else {
+          console.warn('没有有效的K线数据可显示');
+        }
       }
     } catch (error) {
       console.error('更新图表数据错误:', error);
@@ -1229,18 +1294,18 @@ const CandlestickChart: React.FC = () => {
           // 准备数据，过滤掉无效值
           const upperData = upper.map((value, index) => ({
             time: candlestickData[index].time as Time,
-            value: isNaN(value) ? null : value,
-          })).filter(item => item.value !== null);
+            value: value,
+          })).filter(item => !isNaN(item.value) && item.value !== null && item.value !== undefined);
 
           const middleData = middle.map((value, index) => ({
             time: candlestickData[index].time as Time,
-            value: isNaN(value) ? null : value,
-          })).filter(item => item.value !== null);
+            value: value,
+          })).filter(item => !isNaN(item.value) && item.value !== null && item.value !== undefined);
 
           const lowerData = lower.map((value, index) => ({
             time: candlestickData[index].time as Time,
-            value: isNaN(value) ? null : value,
-          })).filter(item => item.value !== null);
+            value: value,
+          })).filter(item => !isNaN(item.value) && item.value !== null && item.value !== undefined);
 
           // 如果没有有效数据，不添加指标
           if (upperData.length === 0 || middleData.length === 0 || lowerData.length === 0) return;
@@ -1280,8 +1345,8 @@ const CandlestickChart: React.FC = () => {
           // 准备数据，过滤掉无效值
           const sarData = sarValues.map((value, index) => ({
             time: candlestickData[index].time as Time,
-            value: isNaN(value) ? null : value,
-          })).filter(item => item.value !== null);
+            value: value,
+          })).filter(item => !isNaN(item.value) && item.value !== null && item.value !== undefined);
 
           // 如果没有有效数据，不添加指标
           if (sarData.length === 0) return;
@@ -1374,7 +1439,7 @@ const CandlestickChart: React.FC = () => {
           macd.every(v => isNaN(v)) ||
           signal.every(v => isNaN(v)) ||
           histogram.every(v => isNaN(v))) {
-        console.warn('MACD数据全为NaN，跳过绘制');
+        // console.warn('MACD数据全为NaN，跳过绘制');
         return;
       }
 
@@ -1416,7 +1481,7 @@ const CandlestickChart: React.FC = () => {
 
       // 如果没有有效数据，不添加指标
       if (macdData.length === 0 || signalData.length === 0 || histogramData.length === 0) {
-        console.warn('MACD处理后数据为空，跳过绘制');
+        // console.warn('MACD处理后数据为空，跳过绘制');
         return;
       }
 
@@ -1534,7 +1599,7 @@ const CandlestickChart: React.FC = () => {
       const rsiData = calculateRSI(closePrices);
 
       if (!rsiData || rsiData.length === 0 || rsiData.every(v => isNaN(v))) {
-        console.warn('RSI数据全为NaN，跳过绘制');
+        // console.warn('RSI数据全为NaN，跳过绘制');
         return;
       }
 
@@ -1554,7 +1619,7 @@ const CandlestickChart: React.FC = () => {
 
       // 如果没有有效数据，不添加指标
       if (formattedData.length === 0) {
-        console.warn('RSI处理后数据为空，跳过绘制');
+        // console.warn('RSI处理后数据为空，跳过绘制');
         return;
       }
 
@@ -1683,7 +1748,7 @@ const CandlestickChart: React.FC = () => {
       const stockRsiData = calculateStockRSI(closePrices);
 
       if (!stockRsiData || stockRsiData.length === 0 || stockRsiData.every(v => isNaN(v))) {
-        console.warn('StockRSI数据全为NaN，跳过绘制');
+        // console.warn('StockRSI数据全为NaN，跳过绘制');
         return;
       }
 
@@ -1703,7 +1768,7 @@ const CandlestickChart: React.FC = () => {
 
       // 如果没有有效数据，不添加指标
       if (formattedData.length === 0) {
-        console.warn('StockRSI处理后数据为空，跳过绘制');
+        // console.warn('StockRSI处理后数据为空，跳过绘制');
         return;
       }
 
@@ -1859,7 +1924,7 @@ const CandlestickChart: React.FC = () => {
           k.every(v => isNaN(v)) ||
           d.every(v => isNaN(v)) ||
           j.every(v => isNaN(v))) {
-        console.warn('KDJ数据全为NaN，跳过绘制');
+        // console.warn('KDJ数据全为NaN，跳过绘制');
         return;
       }
 
@@ -1885,7 +1950,7 @@ const CandlestickChart: React.FC = () => {
 
       // 如果没有有效数据，不添加指标
       if (kData.length === 0 || dData.length === 0 || jData.length === 0) {
-        console.warn('KDJ处理后数据为空，跳过绘制');
+        // console.warn('KDJ处理后数据为空，跳过绘制');
         return;
       }
 
@@ -2233,13 +2298,8 @@ const CandlestickChart: React.FC = () => {
 
   // 处理加载数据按钮点击
   const handleLoadDataClick = () => {
-    // 获取一年前的日期
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-    const startDate = oneYearAgo.toISOString().split('T')[0]; // YYYY-MM-DD格式
-
-    // 获取当前日期
-    const endDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD格式
+    // 使用统一的默认时间范围
+    const defaultRange = getDefaultDateRange();
 
     // 打开模态框并传入默认值
     setIsModalOpen(true);
@@ -2248,8 +2308,8 @@ const CandlestickChart: React.FC = () => {
     setTimeout(() => {
       const event = new CustomEvent('setDefaultDataLoadValues', {
         detail: {
-          startDate: startDate,
-          endDate: endDate,
+          startDate: defaultRange.startDate.split(' ')[0], // 只取日期部分用于UI显示
+          endDate: defaultRange.endDate.split(' ')[0], // 只取日期部分用于UI显示
           interval: '1D' // 默认周期为1天
         }
       });
@@ -2257,12 +2317,9 @@ const CandlestickChart: React.FC = () => {
     }, 100);
   };
 
-  // 格式化日期为API所需格式
+  // 格式化日期为API所需格式（使用统一的格式化函数）
   const formatDateForApi = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day} 00:00:00`;
+    return formatDateTimeString(date);
   };
 
   // 处理查询按钮点击
@@ -2274,18 +2331,19 @@ const CandlestickChart: React.FC = () => {
     setIsHistoryLoading(true);
 
     try {
-      // 使用Redux中的日期范围，结束时间设置为23:59:59
-      const endTimeStr = `${dateRange.endDate} 23:59:59`;
+      // 使用Redux中的日期范围，统一格式化时间
+      const startTimeStr = `${dateRange.startDate} 00:00:00`;
+      const endTimeStr = `${dateRange.endDate} 00:00:00`;
 
       // 确保时间周期格式正确
       const normalizedTimeframe = timeframe;
 
-      // 使用fetchHistoryWithIntegrityCheck函数，它会自动处理日期格式
+      // 使用fetchHistoryWithIntegrityCheck函数，传入标准格式的时间字符串
       const result = await fetchHistoryWithIntegrityCheck(
         selectedPair,
         normalizedTimeframe,
-        dateRange.startDate, // formatDateString会自动添加 00:00:00
-        endTimeStr // 已包含时间部分，formatDateString会直接返回
+        startTimeStr,
+        endTimeStr
       );
 
       console.log('API返回结果:', result);
@@ -2295,26 +2353,63 @@ const CandlestickChart: React.FC = () => {
       console.log('查询结果:', data);
 
       if (data && data.data && Array.isArray(data.data)) {
-        // 转换数据格式
-        const candlestickData = data.data.map((item: any) => {
-          // 将日期字符串转换为时间戳（秒）
-          const openTime = new Date(item.openTime).getTime() / 1000;
+        // 转换数据格式，添加数据验证
+        const candlestickData = data.data
+          .filter((item: any) => {
+            // 基本数据验证
+            if (!item) return false;
+            
+            // 时间验证
+            if (!item.openTime) return false;
+            
+            // 价格数据验证
+            const prices = [item.open, item.high, item.low, item.close];
+            if (prices.some(price => price === null || price === undefined || isNaN(Number(price)))) {
+              return false;
+            }
+            
+            // 成交量验证
+            if (item.volume === null || item.volume === undefined || isNaN(Number(item.volume))) {
+              return false;
+            }
+            
+            return true;
+          })
+          .map((item: any) => {
+            // 将日期字符串转换为时间戳（秒）
+            let openTime: number;
+            try {
+              openTime = new Date(item.openTime).getTime() / 1000;
+              // 验证时间戳是否有效
+              if (isNaN(openTime) || openTime <= 0) {
+                throw new Error('Invalid timestamp');
+              }
+            } catch (error) {
+              console.warn('时间转换失败:', item.openTime, error);
+              // 使用当前时间作为备选
+              openTime = Math.floor(Date.now() / 1000);
+            }
 
-          return {
-            time: openTime,
-            open: item.open,
-            high: item.high,
-            low: item.low,
-            close: item.close,
-            volume: item.volume
-          };
-        });
+            return {
+              time: openTime,
+              open: Number(item.open),
+              high: Number(item.high),
+              low: Number(item.low),
+              close: Number(item.close),
+              volume: Number(item.volume)
+            };
+          });
 
-        // 更新Redux中的数据
-        dispatch(updateCandlestickData(candlestickData));
+        console.log(`数据转换完成: 原始${data.data.length}条，有效${candlestickData.length}条`);
 
-        // 显示成功消息
-        setResponseMessage(`成功加载 ${data.data.length} 条数据`);
+        if (candlestickData.length > 0) {
+          // 更新Redux中的数据
+          dispatch(updateCandlestickData(candlestickData));
+          // 显示成功消息
+          setResponseMessage(`成功加载 ${candlestickData.length} 条数据`);
+        } else {
+          setResponseMessage('数据转换后没有有效数据');
+        }
       } else {
         setResponseMessage('没有找到符合条件的数据');
       }
@@ -2485,7 +2580,7 @@ const CandlestickChart: React.FC = () => {
     try {
       if (candleSeries.current) {
         candleSeries.current.setMarkers([]);
-        console.log('已清除所有买卖点标记');
+        // console.log('已清除所有买卖点标记');
       } else {
         console.log('candleSeries.current 不存在，无法清除买卖点标记');
       }

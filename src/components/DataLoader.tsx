@@ -44,7 +44,7 @@ const DataLoader: React.FC = () => {
         dateRange.endDate
       );
       dispatch(updateCandlestickData(data));
-      console.log(`已加载 ${data.length} 条K线数据`);
+      // console.log(`已加载 ${data.length} 条K线数据`);
     } catch (error) {
       console.error('加载数据失败:', error);
     }
@@ -65,7 +65,7 @@ const DataLoader: React.FC = () => {
   // 添加对reload_data事件的监听
   useEffect(() => {
     const handleReloadData = () => {
-      console.log('接收到reload_data事件，重新加载数据');
+      // console.log('接收到reload_data事件，重新加载数据');
       loadData();
     };
 

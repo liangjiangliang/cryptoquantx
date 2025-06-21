@@ -43,7 +43,7 @@ const HomePage = () => {
         const triggerClearMarkers = (retryCount = 0) => {
             const maxRetries = 5;
             
-            console.log(`第${retryCount + 1}次触发清除买卖点标记事件`);
+            // console.log(`第${retryCount + 1}次触发清除买卖点标记事件`);
             const clearMarkersEvent = new Event('reload_data');
             window.dispatchEvent(clearMarkersEvent);
             

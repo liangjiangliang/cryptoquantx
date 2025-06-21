@@ -1,6 +1,49 @@
 import { CandlestickData } from '../store/types';
 import { BacktestSummary } from '../store/types';
 
+// 统一的时间处理工具函数
+export const getDefaultDateRange = () => {
+  const today = new Date();
+  
+  // 结束时间：昨天00:00:00  
+  const endDate = new Date(today);
+  endDate.setDate(today.getDate() - 1);
+  endDate.setHours(0, 0, 0, 0);
+  
+  // 开始时间：昨天往前一年 00:00:00
+  const startDate = new Date(endDate);
+  startDate.setFullYear(endDate.getFullYear() - 1);
+  startDate.setHours(0, 0, 0, 0);
+  
+  return {
+    startDate: formatDateTimeString(startDate),
+    endDate: formatDateTimeString(endDate)
+  };
+};
+
+// 统一的时间格式化函数：yyyy-MM-dd HH:mm:ss
+export const formatDateTimeString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+// 将日期字符串转换为标准格式
+export const normalizeTimeString = (timeStr: string): string => {
+  // 如果已经包含时间部分，直接返回
+  if (timeStr.includes(':')) {
+    return timeStr;
+  }
+  
+  // 如果只有日期部分，添加 00:00:00
+  return `${timeStr} 00:00:00`;
+};
+
 interface ApiResponse {
   code: number;
   message: string;
@@ -94,16 +137,12 @@ const generateMockData = (): CandlestickData[] => {
   });
 };
 
-// 格式化日期字符串为API所需格式
+// 格式化日期字符串为API所需格式（保持向后兼容）
 const formatDateString = (dateStr: string): string => {
-  // 检查日期格式是否已经包含时间部分
-  if (dateStr.includes(':')) {
-    return dateStr;
-  }
-
-  // 将YYYY-MM-DD转换为"YYYY-MM-DD 00:00:00"格式
-  return `${dateStr} 00:00:00`;
+  return normalizeTimeString(dateStr);
 };
+
+
 
 // 获取K线数据
 export const fetchCandlestickData = async (
@@ -112,17 +151,18 @@ export const fetchCandlestickData = async (
   startDate?: string,
   endDate?: string
 ): Promise<CandlestickData[]> => {
+  // 如果没有提供时间范围，使用默认时间范围（昨天开始往前一年）
+  const defaultRange = getDefaultDateRange();
+  const normalizedStartDate = startDate ? normalizeTimeString(startDate) : defaultRange.startDate;
+  const normalizedEndDate = endDate ? normalizeTimeString(endDate) : defaultRange.endDate;
+
   try {
     // 构建API URL，包含日期范围参数
     let url = `/api/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}`;
+    url += `&startTimeStr=${encodeURIComponent(normalizedStartDate)}`;
+    url += `&endTimeStr=${encodeURIComponent(normalizedEndDate)}`;
 
-    if (startDate) {
-      url += `&startTimeStr=${encodeURIComponent(formatDateString(startDate))}`;
-    }
-
-    if (endDate) {
-      url += `&endTimeStr=${encodeURIComponent(formatDateString(endDate))}`;
-    }
+    // console.log('从API获取K线数据:', { symbol, interval, startDate: normalizedStartDate, endDate: normalizedEndDate });
 
     // 使用相对路径，由React开发服务器代理到目标API
     const response = await fetch(url);
@@ -155,24 +195,27 @@ export const fetchCandlestickData = async (
 export const fetchHistoryWithIntegrityCheck = async (
   symbol: string,
   interval: string,
-  startDate: string,
-  endDate: string
+  startDate?: string,
+  endDate?: string
 ): Promise<{
   data: CandlestickData[];
   message: string;
 }> => {
+  // 如果没有提供时间范围，使用默认时间范围（昨天开始往前一年）
+  const defaultRange = getDefaultDateRange();
+  const normalizedStartDate = startDate ? normalizeTimeString(startDate) : defaultRange.startDate;
+  const normalizedEndDate = endDate ? normalizeTimeString(endDate) : defaultRange.endDate;
+
   try {
     // 构建API URL
-    const formattedStartDate = formatDateString(startDate);
-    const formattedEndDate = formatDateString(endDate);
+    const url = `/api/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}&startTimeStr=${encodeURIComponent(normalizedStartDate)}&endTimeStr=${encodeURIComponent(normalizedEndDate)}`;
 
-    const url = `/api/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}&startTimeStr=${encodeURIComponent(formattedStartDate)}&endTimeStr=${encodeURIComponent(formattedEndDate)}`;
-
+    console.log('从API获取历史数据:', { symbol, interval, startDate: normalizedStartDate, endDate: normalizedEndDate });
     console.log('请求URL:', url); // 调试日志
 
     const response = await fetch(url);
     const responseText = await response.text();
-    console.log('API响应:', responseText); // 调试日志
+    // console.log('API响应:', responseText); // 调试日志
 
     if (!response.ok) {
       throw new Error(`API请求失败: ${response.status}`);
@@ -186,12 +229,18 @@ export const fetchHistoryWithIntegrityCheck = async (
       throw new Error(`解析API响应失败: ${responseText.substring(0, 100)}...`);
     }
 
+    // 如果API返回了数据，转换数据
+    let convertedData: CandlestickData[] = [];
+    if (apiResponse.code === 200 && apiResponse.data && Array.isArray(apiResponse.data)) {
+      convertedData = convertApiDataToCandlestickData(apiResponse.data);
+    }
+
     // 格式化API响应为可读格式
     const formattedResponse = JSON.stringify(apiResponse, null, 2);
-    console.log('格式化的API响应:', formattedResponse); // 调试日志
+    // console.log('格式化的API响应:', formattedResponse); // 调试日志
 
     return {
-      data: [], // 返回空数组，因为我们只需要显示消息
+      data: convertedData,
       message: `API响应:\n${formattedResponse}`
     };
   } catch (error: any) {

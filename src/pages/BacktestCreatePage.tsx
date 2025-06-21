@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchBacktestStrategies, createBacktest } from '../services/api';
+import { fetchBacktestStrategies, createBacktest, getDefaultDateRange } from '../services/api';
 import { Strategy } from '../types/strategy';
 import './BacktestCreatePage.css';
 
@@ -22,17 +22,12 @@ const BacktestCreatePage: React.FC = () => {
   const [endDate, setEndDate] = useState<string>('');
   const [initialAmount, setInitialAmount] = useState<number>(10000);
 
-  // 设置默认日期范围（过去90天）
+  // 设置默认日期范围（使用统一的默认时间范围）
   useEffect(() => {
-    const today = new Date();
-    const endDateStr = today.toISOString().split('T')[0];
-    
-    const startDay = new Date();
-    startDay.setDate(today.getDate() - 90);
-    const startDateStr = startDay.toISOString().split('T')[0];
-    
-    setStartDate(startDateStr);
-    setEndDate(endDateStr);
+    const defaultRange = getDefaultDateRange();
+    // 只取日期部分用于UI显示
+    setStartDate(defaultRange.startDate.split(' ')[0]);
+    setEndDate(defaultRange.endDate.split(' ')[0]);
   }, []);
 
   // 加载策略详情

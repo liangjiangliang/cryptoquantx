@@ -84,7 +84,7 @@ const BacktestPanel: React.FC = () => {
         const data: StrategiesResponse = await response.json();
         if (data.code === 200 && data.data) {
           setStrategies(data.data);
-          console.log('策略加载成功:', Object.keys(data.data));
+          // console.log('策略加载成功:', Object.keys(data.data));
           
           // 检查当前URL是否包含策略代码
           const urlParams = new URLSearchParams(window.location.search);
@@ -183,7 +183,7 @@ const BacktestPanel: React.FC = () => {
     try {
       // 格式化开始和结束时间
       const formattedStartTime = `${dateRange.startDate} 00:00:00`;
-      const formattedEndTime = `${dateRange.endDate} 23:59:59`;
+      const formattedEndTime = `${dateRange.endDate} 00:00:00`;
 
       // 构建API URL，添加手续费参数
       const url = `/api/api/backtest/ta4j/run?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialCapital}&strategyType=${strategy}&symbol=${selectedPair}&interval=${timeframe}&saveResult=True&feeRatio=${feeRatio}`;

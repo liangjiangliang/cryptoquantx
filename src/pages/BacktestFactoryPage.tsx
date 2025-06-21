@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy, updateStrategy, fetchStrategyMaxReturns } from '../services/api';
+import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy, updateStrategy, fetchStrategyMaxReturns, getDefaultDateRange } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import GenerateStrategyModal from '../components/GenerateStrategyModal/GenerateStrategyModal';
 import ResultModal from '../components/ResultModal/ResultModal';
@@ -76,17 +76,12 @@ const BacktestFactoryPage: React.FC = () => {
   const [strategyMaxReturns, setStrategyMaxReturns] = useState<Record<string, number>>({});
   const [isLoadingReturns, setIsLoadingReturns] = useState<boolean>(false);
 
-  // 设置默认日期范围（过去90天）
+  // 设置默认日期范围（使用统一的默认时间范围）
   useEffect(() => {
-    const today = new Date();
-    const endDateStr = today.toISOString().split('T')[0];
-
-    const startDay = new Date();
-    startDay.setDate(today.getDate() - 90);
-    const startDateStr = startDay.toISOString().split('T')[0];
-
-    setStartDate(startDateStr);
-    setEndDate(endDateStr);
+    const defaultRange = getDefaultDateRange();
+    // 只取日期部分用于UI显示
+    setStartDate(defaultRange.startDate.split(' ')[0]);
+    setEndDate(defaultRange.endDate.split(' ')[0]);
   }, []);
 
   // 加载策略列表

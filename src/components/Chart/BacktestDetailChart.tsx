@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { createChart, CrosshairMode, Time, ISeriesApi, IChartApi, SeriesMarkerPosition } from 'lightweight-charts';
 import { BacktestTradeDetail, CandlestickData } from '../../store/types';
 import { formatPrice } from '../../utils/helpers';
-import { fetchHistoryWithIntegrityCheck } from '../../services/api';
+import { fetchHistoryWithIntegrityCheck, getDefaultDateRange, formatDateTimeString } from '../../services/api';
 import './BacktestDetailChart.css';
 
 interface BacktestDetailChartProps {
@@ -307,12 +307,14 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       // 计算开始日期前30天的日期作为请求开始日期
       const extendedStartDate = new Date(startDate);
       extendedStartDate.setDate(extendedStartDate.getDate() - 30);
-      const requestStartDate = extendedStartDate.toISOString().split('T')[0];
+      extendedStartDate.setHours(0, 0, 0, 0);
+      const requestStartDate = formatDateTimeString(extendedStartDate);
       
       // 计算结束日期后15天的日期作为请求结束日期
       const extendedEndDate = new Date(endDate);
       extendedEndDate.setDate(extendedEndDate.getDate() + 15);
-      const requestEndDate = extendedEndDate.toISOString().split('T')[0];
+      extendedEndDate.setHours(23, 59, 59, 999);
+      const requestEndDate = formatDateTimeString(extendedEndDate);
       
       // 获取K线数据，使用fetchHistoryWithIntegrityCheck函数
       let result;
@@ -320,8 +322,8 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         result = await fetchHistoryWithIntegrityCheck(
           symbol,
           '1D',
-          requestStartDate, // formatDateString会自动添加 00:00:00
-          requestEndDate    // formatDateString会自动添加 00:00:00
+          requestStartDate,
+          requestEndDate
         );
         
         if (!result || !result.data || !Array.isArray(result.data) || result.data.length === 0) {
