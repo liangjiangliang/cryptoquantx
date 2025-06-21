@@ -34,7 +34,7 @@ const HomePage = () => {
 
     // 在页面加载时清除回测结果
     useEffect(() => {
-        console.log('HomePage 组件加载，清除回测结果和买卖点标记');
+        // console.log('HomePage 组件加载，清除回测结果和买卖点标记');
         
         // 确保页面加载时清除任何之前的回测结果
         dispatch(clearBacktestResults());
@@ -114,7 +114,7 @@ const RouteChangeHandler = () => {
         if (location.pathname === '/') {
             // 立即清除回测结果
             dispatch(clearBacktestResults());
-            console.log('路由变化到首页，已清除回测结果');
+            // console.log('路由变化到首页，已清除回测结果');
             
             // 给DataLoader和图表组件一个小延时，确保组件已经挂载
             setTimeout(() => {

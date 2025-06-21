@@ -57,7 +57,7 @@ const BacktestPanel: React.FC = () => {
   // 当状态变化时更新ref
   useEffect(() => {
     runningBatchBacktestRef.current = runningBatchBacktest;
-    console.log('runningBatchBacktest状态更新:', runningBatchBacktest);
+    // console.log('runningBatchBacktest状态更新:', runningBatchBacktest);
   }, [runningBatchBacktest]);
   const [batchStatusMessage, setBatchStatusMessage] = useState<string>('');
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -100,7 +100,7 @@ const BacktestPanel: React.FC = () => {
           // 否则使用第一个策略作为默认值
           else if (Object.keys(data.data).length > 0) {
             const firstStrategy = Object.keys(data.data)[0];
-            console.log('使用第一个策略作为默认值:', firstStrategy);
+            // console.log('使用第一个策略作为默认值:', firstStrategy);
             setStrategy(firstStrategy);
           }
         } else {

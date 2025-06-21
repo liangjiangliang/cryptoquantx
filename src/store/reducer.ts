@@ -80,11 +80,11 @@ const reducer = (state = initialState, action: any): AppState => {
       };
     
     case ActionType.UPDATE_CANDLESTICK_DATA:
-      console.log('Redux reducer - 更新K线数据:', {
-        newDataLength: action.payload.length,
-        oldDataLength: state.candlestickData.length,
-        firstNewItem: action.payload.length > 0 ? action.payload[0] : null
-      });
+      // console.log('Redux reducer - 更新K线数据:', {
+      //   newDataLength: action.payload.length,
+      //   oldDataLength: state.candlestickData.length,
+      //   firstNewItem: action.payload.length > 0 ? action.payload[0] : null
+      // });
       return {
         ...state,
         candlestickData: action.payload

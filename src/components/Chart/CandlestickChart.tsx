@@ -56,10 +56,10 @@ const saveBarSpacing = (spacing: number): void => {
 const saveCandlestickData = (data: CandlestickData[]): void => {
   try {
     localStorage.setItem(CANDLESTICK_DATA_KEY, JSON.stringify(data));
-    console.log('已保存K线数据到localStorage:', {
-      dataLength: data.length,
-      firstItem: data.length > 0 ? data[0] : null
-    });
+    // console.log('已保存K线数据到localStorage:', {
+    //   dataLength: data.length,
+    //   firstItem: data.length > 0 ? data[0] : null
+    // });
   } catch (error) {
     console.error('保存K线数据失败:', error);
   }
@@ -213,12 +213,12 @@ const CandlestickChart: React.FC = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const candlestickData = useSelector((state: AppState) => {
-    console.log('Redux candlestickData更新:', {
-      length: state.candlestickData.length,
-      type: typeof state.candlestickData,
-      isArray: Array.isArray(state.candlestickData),
-      firstItem: state.candlestickData.length > 0 ? state.candlestickData[0] : null
-    });
+    // console.log('Redux candlestickData更新:', {
+    //   length: state.candlestickData.length,
+    //   type: typeof state.candlestickData,
+    //   isArray: Array.isArray(state.candlestickData),
+    //   firstItem: state.candlestickData.length > 0 ? state.candlestickData[0] : null
+    // });
     return state.candlestickData;
   });
   const selectedPair = useSelector((state: AppState) => state.selectedPair);
@@ -226,24 +226,59 @@ const CandlestickChart: React.FC = () => {
   const backtestResults = useSelector((state: AppState) => state.backtestResults);
   const dateRange = useSelector((state: AppState) => state.dateRange);
 
-  // 页面加载时记录恢复状态
+  // 页面加载时记录恢复状态和强制数据恢复
   useEffect(() => {
-    console.log('页面加载完成，当前状态:', {
-      selectedPair,
-      timeframe,
-      dateRange,
-      candlestickDataLength: candlestickData.length
-    });
+    // console.log('页面加载完成，当前状态:', {
+    //   selectedPair,
+    //   timeframe,
+    //   dateRange,
+    //   candlestickDataLength: candlestickData.length
+    // });
     
-    // 如果有恢复的数据但图表还未创建，延迟创建图表
-    if (candlestickData.length > 0 && !chart.current) {
-      console.log('检测到恢复的数据，准备创建图表');
-      setTimeout(() => {
-        if (chartContainerRef.current && !chart.current) {
-          createCharts();
+    // 强制检查localStorage并恢复数据
+    const forceDataRecovery = () => {
+      try {
+        const savedData = localStorage.getItem(CANDLESTICK_DATA_KEY);
+        // console.log('强制数据恢复检查:', {
+        //   hasLocalStorageData: !!savedData,
+        //   reduxDataLength: candlestickData.length
+        // });
+        
+        if (savedData) {
+          const parsedData = JSON.parse(savedData);
+          // console.log('从localStorage强制恢复数据:', {
+          //   dataLength: parsedData.length,
+          //   firstItem: parsedData[0]
+          // });
+          
+          // 无论Redux中是否有数据，都强制更新一次
+          dispatch(updateCandlestickData(parsedData));
         }
-      }, 100);
-    }
+      } catch (error) {
+        console.error('强制数据恢复失败:', error);
+      }
+    };
+    
+    // 添加强制数据恢复事件监听
+    const handleForceDataRestore = (event: CustomEvent) => {
+      console.log('接收到强制数据恢复事件:', event.detail);
+      if (event.detail && event.detail.data) {
+        dispatch(updateCandlestickData(event.detail.data));
+      }
+    };
+    
+    window.addEventListener('forceDataRestore', handleForceDataRestore as EventListener);
+    
+    // 立即执行一次数据恢复检查
+    forceDataRecovery();
+    
+    // 再延迟执行一次，确保组件完全初始化
+    setTimeout(forceDataRecovery, 200);
+    setTimeout(forceDataRecovery, 1000);
+
+    return () => {
+      window.removeEventListener('forceDataRestore', handleForceDataRestore as EventListener);
+    };
   }, []); // 只在组件初始化时执行一次
 
 
@@ -718,12 +753,15 @@ const CandlestickChart: React.FC = () => {
 
   // 使用useEffect创建和更新图表
   useEffect(() => {
-    const cleanup = createCharts();
+    // 延迟创建图表，确保DOM完全准备好
+    const timer = setTimeout(() => {
+      createCharts();
+    }, 50);
 
     // 当组件卸载时，清除所有图表
     return () => {
-      if (cleanup) cleanup();
-
+      clearTimeout(timer);
+      
       if (chart.current) {
         chart.current.remove();
         chart.current = null;
@@ -744,7 +782,7 @@ const CandlestickChart: React.FC = () => {
         kdjChart.current = null;
       }
     };
-  }, []);
+  }, []); // 只在组件初始化时创建一次图表
 
 
 
@@ -878,31 +916,31 @@ const CandlestickChart: React.FC = () => {
 
   // 更新数据
   useEffect(() => {
-    console.log('数据更新useEffect触发:', {
-      dataLength: candlestickData.length,
-      hasChart: !!chart.current,
-      hasCandleSeries: !!candleSeries.current,
-      hasVolumeSeries: !!volumeSeries.current,
-      hasContainer: !!chartContainerRef.current,
-      firstItem: candlestickData.length > 0 ? candlestickData[0] : null
-    });
+    // console.log('数据更新useEffect触发:', {
+    //   dataLength: candlestickData.length,
+    //   hasChart: !!chart.current,
+    //   hasCandleSeries: !!candleSeries.current,
+    //   hasVolumeSeries: !!volumeSeries.current,
+    //   hasContainer: !!chartContainerRef.current,
+    //   firstItem: candlestickData.length > 0 ? candlestickData[0] : null
+    // });
 
     try {
       if (candlestickData.length > 0) {
         // 等待图表初始化完成
         if (!candleSeries.current || !volumeSeries.current || !chart.current) {
-          console.log('图表未初始化，重新创建图表');
+          // console.log('图表未初始化，重新创建图表');
           // 如果图表还没初始化，先创建图表
           if (chartContainerRef.current) {
             createCharts();
             
             // 延迟处理数据，给图表初始化时间
             const timer = setTimeout(() => {
-              console.log('延迟重试，检查图表状态:', {
-                hasCandleSeries: !!candleSeries.current,
-                hasVolumeSeries: !!volumeSeries.current,
-                hasChart: !!chart.current
-              });
+              // console.log('延迟重试，检查图表状态:', {
+              //   hasCandleSeries: !!candleSeries.current,
+              //   hasVolumeSeries: !!volumeSeries.current,
+              //   hasChart: !!chart.current
+              // });
               // 简单的重试机制
               if (candleSeries.current && volumeSeries.current) {
                 setDataToChart();
@@ -925,10 +963,10 @@ const CandlestickChart: React.FC = () => {
         }
 
         // 图表已初始化，直接设置数据
-        console.log('图表已初始化，直接设置数据');
+        // console.log('图表已初始化，直接设置数据');
         setDataToChart();
       } else {
-        console.log('candlestickData为空，长度:', candlestickData.length);
+        // console.log('candlestickData为空，长度:', candlestickData.length);
       }
     } catch (error) {
       console.error('更新图表数据错误:', error);
@@ -937,7 +975,7 @@ const CandlestickChart: React.FC = () => {
     // 设置数据到图表的函数
     function setDataToChart() {
       try {
-        console.log('开始处理数据，原始数据长度:', candlestickData.length);
+        // console.log('开始处理数据，原始数据长度:', candlestickData.length);
         
         // 格式化数据，过滤掉包含 null 或 undefined 的数据项
         const formattedData = candlestickData
@@ -955,8 +993,9 @@ const CandlestickChart: React.FC = () => {
               typeof price === 'number' && !isNaN(price) && isFinite(price)
             );
           })
+          .sort((a, b) => Number(a.time) - Number(b.time)) // 确保时间序列排序
           .map((item: CandlestickData) => ({
-            time: item.time as Time,
+            time: Number(item.time) as Time, // 确保时间是数字
             open: Number(item.open),
             high: Number(item.high),
             low: Number(item.low),
@@ -977,35 +1016,68 @@ const CandlestickChart: React.FC = () => {
             return item.volume !== null && item.volume !== undefined && 
                    typeof item.volume === 'number' && !isNaN(item.volume) && isFinite(item.volume);
           })
+          .sort((a, b) => Number(a.time) - Number(b.time)) // 确保时间序列排序
           .map((item: CandlestickData) => ({
-            time: item.time as Time,
+            time: Number(item.time) as Time, // 确保时间是数字
             value: Number(item.volume),
             color: item.close > item.open ? '#ff5555' : '#32a852', // 红涨绿跌
           }));
 
-        console.log('数据处理结果:', {
-          原始数据: candlestickData.length,
-          格式化后: formattedData.length,
-          成交量数据: volumeData.length,
-          图表状态: {
-            hasChart: !!chart.current,
-            hasCandleSeries: !!candleSeries.current,
-            hasVolumeSeries: !!volumeSeries.current
-          }
-        });
+        // console.log('数据处理结果:', {
+        //   原始数据: candlestickData.length,
+        //   格式化后: formattedData.length,
+        //   成交量数据: volumeData.length,
+        //   图表状态: {
+        //     hasChart: !!chart.current,
+        //     hasCandleSeries: !!candleSeries.current,
+        //     hasVolumeSeries: !!volumeSeries.current
+        //   }
+        // });
 
         // 确保有有效数据才设置
         if (formattedData.length > 0 && volumeData.length > 0 && candleSeries.current && volumeSeries.current) {
-          console.log('开始设置数据到图表');
-          // 设置数据
-          candleSeries.current.setData(formattedData);
-          volumeSeries.current.setData(volumeData);
-          console.log('数据设置完成');
+          // console.log('开始设置数据到图表');
+          try {
+            // 先清空现有数据，避免数组大小冲突
+            candleSeries.current.setData([]);
+            volumeSeries.current.setData([]);
+            
+            // 短暂延迟后设置新数据
+            setTimeout(() => {
+              if (candleSeries.current && volumeSeries.current) {
+                try {
+                  candleSeries.current.setData(formattedData);
+                  volumeSeries.current.setData(volumeData);
+                  // console.log('数据设置完成，K线条数:', formattedData.length);
+                } catch (error) {
+                  console.error('设置图表数据时出错:', error);
+                  // 尝试逐条添加数据
+                  try {
+                    formattedData.forEach(item => {
+                      if (candleSeries.current) {
+                        candleSeries.current.update(item);
+                      }
+                    });
+                    volumeData.forEach(item => {
+                      if (volumeSeries.current) {
+                        volumeSeries.current.update(item);
+                      }
+                    });
+                    console.log('通过逐条更新成功设置数据');
+                  } catch (updateError) {
+                    console.error('逐条更新也失败:', updateError);
+                  }
+                }
+              }
+            }, 10);
+          } catch (error) {
+            console.error('清空数据时出错:', error);
+          }
 
           // 适配视图
           setTimeout(() => {
             if (chart.current) {
-              console.log('调整图表视图');
+              // console.log('调整图表视图');
               chart.current.timeScale().fitContent();
             }
           }, 50);
@@ -1022,7 +1094,7 @@ const CandlestickChart: React.FC = () => {
             // 重新设置十字线事件处理器，确保使用最新的数据
             setupCrosshairMoveHandler();
             
-            console.log('K线图数据更新完成，应该可以看到图表了');
+            // console.log('K线图数据更新完成，应该可以看到图表了');
           }, 100);
         } else {
           console.warn('数据设置失败:', {
@@ -2473,14 +2545,14 @@ const CandlestickChart: React.FC = () => {
         endTimeStr
       );
 
-      console.log('API返回结果:', result);
-      console.log('API结果类型:', typeof result);
-      console.log('API结果结构:', {
-        hasData: !!result.data,
-        dataType: typeof result.data,
-        dataIsArray: Array.isArray(result.data),
-        dataLength: result.data ? result.data.length : 'N/A'
-      });
+      // console.log('API返回结果:', result);
+      // console.log('API结果类型:', typeof result);
+      // console.log('API结果结构:', {
+      //   hasData: !!result.data,
+      //   dataType: typeof result.data,
+      //   dataIsArray: Array.isArray(result.data),
+      //   dataLength: result.data ? result.data.length : 'N/A'
+      // });
 
       const data = result;
 
@@ -2519,7 +2591,7 @@ const CandlestickChart: React.FC = () => {
                 throw new Error('Invalid timestamp');
               }
             } catch (error) {
-              console.warn('时间转换失败:', item.openTime, error);
+              console.warn('时间转换失败:', item.time, error);
               // 使用当前时间作为备选
               openTime = Math.floor(Date.now() / 1000);
             }
@@ -2556,7 +2628,7 @@ const CandlestickChart: React.FC = () => {
             dateRange
           });
           
-          console.log('Redux数据更新调用完成，已保存到localStorage');
+          // console.log('Redux数据更新调用完成，已保存到localStorage');
           
           // 显示成功消息
           setResponseMessage(`成功加载 ${candlestickData.length} 条数据`);
@@ -2712,19 +2784,19 @@ const CandlestickChart: React.FC = () => {
   // 监听回测结果变化
   useEffect(() => {
     if (backtestResults && backtestResults.trades && backtestResults.trades.length > 0) {
-      console.log(`检测到回测结果更新: ${backtestResults.trades.length} 个交易记录`);
+      // console.log(`检测到回测结果更新: ${backtestResults.trades.length} 个交易记录`);
       // 延迟一下，确保图表已经准备好
       setTimeout(() => {
         drawTradeMarkers();
       }, 100);
     } else {
       // 如果没有回测结果，清除所有标记
-      console.log('backtestResults为空，清除买卖点标记');
+      // console.log('backtestResults为空，清除买卖点标记');
       if (candleSeries.current) {
         candleSeries.current.setMarkers([]);
-        console.log('已通过backtestResults监听清除买卖点标记');
+        // console.log('已通过backtestResults监听清除买卖点标记');
       } else {
-        console.log('candleSeries.current不存在，无法清除买卖点标记');
+        // console.log('candleSeries.current不存在，无法清除买卖点标记');
       }
     }
   }, [backtestResults]);
@@ -2746,7 +2818,7 @@ const CandlestickChart: React.FC = () => {
   // 监听路由变化，当导航到首页时清除买卖点标记
   useEffect(() => {
     if (location.pathname === '/') {
-      console.log('检测到路由变化到首页，准备清除买卖点标记');
+      // console.log('检测到路由变化到首页，准备清除买卖点标记');
       
       // 尝试多次清除，确保candleSeries已初始化
       let retryCount = 0;
@@ -2756,9 +2828,9 @@ const CandlestickChart: React.FC = () => {
         retryCount++;
         if (candleSeries.current) {
           clearTradeMarkers();
-          console.log('路由变化到首页，已清除买卖点标记');
+          // console.log('路由变化到首页，已清除买卖点标记');
         } else if (retryCount < maxRetries) {
-          console.log(`第${retryCount}次尝试清除买卖点标记，candleSeries.current还未初始化，${200 * retryCount}ms后重试`);
+          // console.log(`第${retryCount}次尝试清除买卖点标记，candleSeries.current还未初始化，${200 * retryCount}ms后重试`);
           setTimeout(attemptClear, 200 * retryCount);
         } else {
           console.log('达到最大重试次数，停止尝试清除买卖点标记');
@@ -3048,9 +3120,6 @@ const CandlestickChart: React.FC = () => {
           </div>
           <button className="query-button" onClick={handleQueryClick} disabled={isLoading || isHistoryLoading}>
             {isLoading ? '查询中...' : '查询数据'}
-          </button>
-          <button className="load-data-button" onClick={handleLoadDataClick}>
-            加载历史数据
           </button>
           <button className="toggle-panels-button" onClick={togglePanels}>
             {showPanels ? '隐藏回测面板' : '显示回测面板'}

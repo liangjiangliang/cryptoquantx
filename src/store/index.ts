@@ -16,14 +16,14 @@ const loadBacktestResults = (): BacktestResults | null => {
   }
 };
 
-// 创建store并加载持久化的状态
-const store = createStore(
-  reducer, 
-  {
-    ...reducer(undefined, { type: '@@INIT' }),
-    backtestResults: loadBacktestResults()
-  }
-);
+// 创建store，使用reducer的默认初始状态（包含从localStorage恢复的数据）
+const store = createStore(reducer);
+
+// 如果有保存的回测结果，则设置到store中
+const savedBacktestResults = loadBacktestResults();
+if (savedBacktestResults) {
+  store.dispatch({ type: 'FINISH_BACKTEST', payload: savedBacktestResults });
+}
 
 // 订阅store变化，保存回测结果到localStorage
 store.subscribe(() => {
