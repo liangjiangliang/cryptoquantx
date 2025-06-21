@@ -15,12 +15,24 @@ import GlobalNavbar from './components/GlobalNavbar';
 import {clearBacktestResults} from './store/actions';
 import './App.css';
 
-// 懒加载StagewiseToolbar组件
-const StagewiseToolbar = lazy(() => 
-  import('@stagewise/toolbar-react').then(module => ({
-    default: module.StagewiseToolbar
-  }))
-);
+// 懒加载StagewiseToolbar组件和配置
+const StagewiseToolbar = lazy(async () => {
+  const [toolbarModule, pluginModule] = await Promise.all([
+    import('@stagewise/toolbar-react'),
+    import('@stagewise-plugins/react')
+  ]);
+  
+  const ToolbarWithConfig = (props: any) => {
+    return React.createElement(toolbarModule.StagewiseToolbar, {
+      ...props,
+      config: {
+        plugins: [pluginModule.ReactPlugin]
+      }
+    });
+  };
+  
+  return { default: ToolbarWithConfig };
+});
 
 // 首页组件，用于包装首页内容
 const HomePage = () => {
