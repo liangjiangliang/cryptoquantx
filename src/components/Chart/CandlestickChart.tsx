@@ -2274,20 +2274,23 @@ const CandlestickChart: React.FC = () => {
     setIsHistoryLoading(true);
 
     try {
-      // 使用Redux中的日期范围
-      const startTimeStr = `${dateRange.startDate} 00:00:00`;
+      // 使用Redux中的日期范围，结束时间设置为23:59:59
       const endTimeStr = `${dateRange.endDate} 23:59:59`;
 
       // 确保时间周期格式正确
       const normalizedTimeframe = timeframe;
 
-      // 构建API URL
-      const url = `/api/market/fetch_history_with_integrity_check?symbol=${selectedPair}&interval=${normalizedTimeframe}&startTimeStr=${encodeURIComponent(startTimeStr)}&endTimeStr=${encodeURIComponent(endTimeStr)}`;
+      // 使用fetchHistoryWithIntegrityCheck函数，它会自动处理日期格式
+      const result = await fetchHistoryWithIntegrityCheck(
+        selectedPair,
+        normalizedTimeframe,
+        dateRange.startDate, // formatDateString会自动添加 00:00:00
+        endTimeStr // 已包含时间部分，formatDateString会直接返回
+      );
 
-      console.log('查询URL:', url);
+      console.log('API返回结果:', result);
 
-      const response = await fetch(url);
-      const data = await response.json();
+      const data = result;
 
       console.log('查询结果:', data);
 

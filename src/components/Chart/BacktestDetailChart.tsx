@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { createChart, CrosshairMode, Time, ISeriesApi, IChartApi, SeriesMarkerPosition } from 'lightweight-charts';
-import { BacktestTradeDetail } from '../../store/types';
+import { BacktestTradeDetail, CandlestickData } from '../../store/types';
 import { formatPrice } from '../../utils/helpers';
+import { fetchHistoryWithIntegrityCheck } from '../../services/api';
 import './BacktestDetailChart.css';
 
 interface BacktestDetailChartProps {
@@ -148,6 +149,13 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
     } catch (error) {
       console.error('图表初始化错误:', error);
       setError('图表初始化失败');
+      // 清理可能部分创建的引用
+      if (chart.current) {
+        chart.current.remove();
+        chart.current = null;
+      }
+      candleSeries.current = null;
+      volumeSeries.current = null;
     }
   };
 
@@ -167,10 +175,16 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         return;
       }
 
+      // 检查series引用是否存在
+      if (!candleSeries.current || !volumeSeries.current) {
+        setHoveredData(null);
+        return;
+      }
+      
       const candleData = param.seriesPrices.get(candleSeries.current);
       const volumeData = param.seriesPrices.get(volumeSeries.current);
       
-      if (candleData && volumeData) {
+      if (candleData && volumeData && candleData.open != null && candleData.high != null && candleData.low != null && candleData.close != null && volumeData != null) {
         // 调试信息，查看param.time的实际类型和值
         console.log('param.time类型:', typeof param.time, 'param.time值:', param.time);
         
@@ -195,6 +209,8 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         // 尝试从原始数据中找到对应的K线
         if (originalData && originalData.length > 0) {
           const originalCandle = originalData.find(item => {
+            // 检查item是否存在且有openTime属性
+            if (!item || !item.openTime) return false;
             // 从openTime提取日期部分（不含时间）
             const itemDate = item.openTime.split(' ')[0];
             return itemDate === dateStr;
@@ -298,19 +314,24 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       extendedEndDate.setDate(extendedEndDate.getDate() + 15);
       const requestEndDate = extendedEndDate.toISOString().split('T')[0];
       
-      // 获取K线数据
-      const url = `/api/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=1D&startTimeStr=${encodeURIComponent(requestStartDate + ' 00:00:00')}&endTimeStr=${encodeURIComponent(requestEndDate + ' 00:00:00')}`;
-      const response = await fetch(url);
-      
-      if (!response.ok) {
+      // 获取K线数据，使用fetchHistoryWithIntegrityCheck函数
+      let result;
+      try {
+        result = await fetchHistoryWithIntegrityCheck(
+          symbol,
+          '1D',
+          requestStartDate, // formatDateString会自动添加 00:00:00
+          requestEndDate    // formatDateString会自动添加 00:00:00
+        );
+        
+        if (!result || !result.data || !Array.isArray(result.data) || result.data.length === 0) {
+          setError('没有找到K线数据或数据格式错误');
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error('加载K线数据失败:', error);
         setError('加载K线数据失败');
-        setLoading(false);
-        return;
-      }
-      
-      const result = await response.json();
-      if (result.code !== 200 || !result.data || result.data.length === 0) {
-        setError('未找到K线数据');
         setLoading(false);
         return;
       }
@@ -321,51 +342,35 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       // 调试信息，查看原始数据的格式
       console.log('原始K线数据示例:', result.data.length > 0 ? result.data[0] : '无数据');
       
-      // 转换为图表需要的格式
-      const convertedData = result.data.map((item: {
-        openTime: string;
-        open: number;
-        high: number;
-        low: number;
-        close: number;
-        volume?: number;
-        quoteVolume?: number;
-      }) => {
-        // 从openTime中提取日期部分作为时间
-        const dateStr = item.openTime.split(' ')[0]; // 格式: YYYY-MM-DD
-        return {
-          time: dateStr, // 直接使用日期字符串作为时间
-          open: item.open,
-          high: item.high,
-          low: item.low,
-          close: item.close,
-          volume: item.volume || item.quoteVolume || 0
-        };
-      });
+      // fetchHistoryWithIntegrityCheck返回的data已经是CandlestickData[]格式
+      // 需要将time字段转换为Time类型以兼容lightweight-charts
+      const convertedData = result.data
+        .filter(item => item && item.time != null && item.open != null && item.high != null && item.low != null && item.close != null && item.volume != null)
+        .map(item => ({
+          ...item,
+          time: item.time as Time
+        }));
       
       // 调试信息，查看转换后的数据格式
       console.log('转换后的K线数据示例:', convertedData.length > 0 ? convertedData[0] : '无数据');
       
-      // 更新K线图
-      if (candleSeries.current && volumeSeries.current) {
+      // 更新K线图 - 添加更严格的检查
+      if (candleSeries.current && volumeSeries.current && chart.current && convertedData.length > 0) {
         // 直接使用转换好的数据
         candleSeries.current.setData(convertedData);
         
         // 创建成交量数据
-        const volumeData = convertedData.map((item: {
-          time: string;
-          open: number;
-          high: number;
-          low: number;
-          close: number;
-          volume: number;
-        }) => ({
-          time: item.time,
-          value: item.volume,
-          color: item.close > item.open ? '#ff5555' : '#32a852',
-        }));
+        const volumeData = convertedData
+          .filter(item => item && item.time != null && item.volume != null && item.close != null && item.open != null)
+          .map((item) => ({
+            time: item.time,
+            value: item.volume,
+            color: item.close > item.open ? '#ff5555' : '#32a852',
+          }));
         
-        volumeSeries.current.setData(volumeData);
+        if (volumeData.length > 0) {
+            volumeSeries.current.setData(volumeData);
+          }
         
         // 绘制交易标记
         drawTradeMarkers();
@@ -401,16 +406,18 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
 
   // 绘制交易标记
   const drawTradeMarkers = () => {
-    if (!candleSeries.current || !tradeDetails || tradeDetails.length === 0) return;
+    if (!candleSeries.current || !chart.current || !tradeDetails || tradeDetails.length === 0) return;
 
     try {
       // 准备交易标记
-      const markers: any[] = tradeDetails.flatMap(trade => {
-        const markers = [];
-        
-        // 将交易时间字符串转换为日期格式 YYYY-MM-DD
-        const entryDate = trade.entryTime.split(' ')[0];
-        const exitDate = trade.exitTime.split(' ')[0];
+      const markers: any[] = tradeDetails
+        .filter(trade => trade && trade.entryTime && trade.exitTime && trade.entryPrice != null && trade.exitPrice != null && trade.type && trade.profit != null)
+        .flatMap(trade => {
+          const markers = [];
+          
+          // 将交易时间字符串转换为日期格式 YYYY-MM-DD
+          const entryDate = trade.entryTime.split(' ')[0];
+          const exitDate = trade.exitTime.split(' ')[0];
         
         // 添加入场标记 - 使用与主图相同的颜色
         markers.push({
@@ -447,11 +454,13 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
     createCharts();
     
     return () => {
-      // 清理图表
+      // 清理图表和所有引用
       if (chart.current) {
         chart.current.remove();
         chart.current = null;
       }
+      candleSeries.current = null;
+      volumeSeries.current = null;
     };
   }, []);
 

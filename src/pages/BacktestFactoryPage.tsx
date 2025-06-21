@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy, updateStrategy, fetchStrategyMaxReturns } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import GenerateStrategyModal from '../components/GenerateStrategyModal/GenerateStrategyModal';
