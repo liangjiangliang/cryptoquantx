@@ -41,6 +41,8 @@ const BacktestDetailPage: React.FC = () => {
   // 添加排序状态
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  // 添加回测指标折叠状态
+  const [isMetricsCollapsed, setIsMetricsCollapsed] = useState(true);
 
   useEffect(() => {
     if (backtestId) {
@@ -140,7 +142,7 @@ const BacktestDetailPage: React.FC = () => {
 
   // 获取回测的开始和结束时间
   const getBacktestTimeRange = () => {
-    if (tradeDetails.length === 0) {
+    if (tradeDetails.length === 0 || !tradeDetails[0]) {
       return { startTime: '', endTime: '', symbol: '' };
     }
 
@@ -150,10 +152,10 @@ const BacktestDetailPage: React.FC = () => {
     let symbol = tradeDetails[0].symbol;
 
     tradeDetails.forEach(trade => {
-      if (new Date(trade.entryTime) < new Date(earliestEntryTime)) {
+      if (trade && trade.entryTime && new Date(trade.entryTime) < new Date(earliestEntryTime)) {
         earliestEntryTime = trade.entryTime;
       }
-      if (new Date(trade.exitTime) > new Date(latestExitTime)) {
+      if (trade && trade.exitTime && new Date(trade.exitTime) > new Date(latestExitTime)) {
         latestExitTime = trade.exitTime;
       }
     });
@@ -168,8 +170,8 @@ const BacktestDetailPage: React.FC = () => {
 
   // 获取排序后的交易记录
   const getSortedTrades = () => {
-    // 创建交易记录的副本
-    const sortedTrades = [...tradeDetails];
+    // 过滤掉空值元素并创建交易记录的副本
+    const sortedTrades = tradeDetails.filter(trade => trade != null);
 
     // 根据排序字段排序
     if (sortField) {
@@ -178,13 +180,13 @@ const BacktestDetailPage: React.FC = () => {
         let bValue: number = 0;
 
         if (sortField === 'profit') {
-          aValue = (a.exitAmount - a.entryAmount - (a.fee || 0));
-          bValue = (b.exitAmount - b.entryAmount - (b.fee || 0));
+          aValue = ((a.exitAmount || 0) - (a.entryAmount || 0) - (a.fee || 0));
+          bValue = ((b.exitAmount || 0) - (b.entryAmount || 0) - (b.fee || 0));
         } else if (sortField === 'profitPercentage') {
-          const aProfit = (a.exitAmount - a.entryAmount - (a.fee || 0));
-          const bProfit = (b.exitAmount - b.entryAmount - (b.fee || 0));
-          aValue = (aProfit / a.entryAmount) * 100;
-          bValue = (bProfit / b.entryAmount) * 100;
+          const aProfit = ((a.exitAmount || 0) - (a.entryAmount || 0) - (a.fee || 0));
+          const bProfit = ((b.exitAmount || 0) - (b.entryAmount || 0) - (b.fee || 0));
+          aValue = a.entryAmount ? (aProfit / a.entryAmount) * 100 : 0;
+          bValue = b.entryAmount ? (bProfit / b.entryAmount) * 100 : 0;
         } else if (sortField === 'totalAssets') {
           aValue = a.totalAssets || 0;
           bValue = b.totalAssets || 0;
@@ -217,7 +219,7 @@ const BacktestDetailPage: React.FC = () => {
     setCurrentPage(newPage);
   };
 
-  const { startTime, endTime, symbol } = getBacktestTimeRange();
+  const { startTime, endTime, symbol } = tradeDetails.length > 0 ? getBacktestTimeRange() : { startTime: '', endTime: '', symbol: '' };
 
   return (
     <div className="backtest-detail-page">
@@ -236,37 +238,72 @@ const BacktestDetailPage: React.FC = () => {
       ) : (
         <div className="detail-info">
           <div className="strategy-info" style={{ backgroundColor: '#1e222d', borderRadius: '8px', padding: '10px', marginBottom: '15px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' }}>
-            <div className="info-item-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-              <div className="info-item" style={{ flex: 1, minWidth: '200px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
+            {/* 策略信息行 - 所有信息在一行 */}
+            <div className="info-item-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+              <div className="info-item" style={{ flex: 1, minWidth: '180px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
                 <span className="label" style={{ color: '#8d8d8d', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>策略名称:</span>
-                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '250px', whiteSpace: 'normal' }}>{strategyNameMap[tradeDetails[0].strategyName] || tradeDetails[0].strategyName}</span>
+                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '200px', whiteSpace: 'normal' }}>{tradeDetails[0]?.strategyName ? (strategyNameMap[tradeDetails[0].strategyName] || tradeDetails[0].strategyName) : '-'}</span>
               </div>
-              <div className="info-item" style={{ flex: 1, minWidth: '200px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
+              <div className="info-item" style={{ flex: 1, minWidth: '180px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
                 <span className="label" style={{ color: '#8d8d8d', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>策略参数:</span>
-                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '250px', whiteSpace: 'normal' }}>{formatStrategyParams(tradeDetails[0].strategyName, tradeDetails[0].strategyParams)}</span>
+                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '200px', whiteSpace: 'normal' }}>{tradeDetails[0]?.strategyName && tradeDetails[0]?.strategyParams ? formatStrategyParams(tradeDetails[0].strategyName, tradeDetails[0].strategyParams) : '-'}</span>
               </div>
-              <div className="info-item" style={{ flex: 1, minWidth: '200px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
+              <div className="info-item" style={{ flex: 1, minWidth: '180px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
                 <span className="label" style={{ color: '#8d8d8d', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>交易对:</span>
-                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '250px', whiteSpace: 'normal' }}>{tradeDetails[0].symbol}</span>
+                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '200px', whiteSpace: 'normal' }}>{tradeDetails[0]?.symbol || '-'}</span>
               </div>
-              <div className="info-item" style={{ flex: 1, minWidth: '200px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
+              <div className="info-item" style={{ flex: 1, minWidth: '180px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
                 <span className="label" style={{ color: '#8d8d8d', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>回测周期:</span>
-                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '250px', whiteSpace: 'normal' }}>{intervalVal}</span>
+                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '200px', whiteSpace: 'normal' }}>{intervalVal || '-'}</span>
               </div>
               <div className="info-item" style={{ flex: 1, minWidth: '200px', marginBottom: '5px', display: 'flex', alignItems: 'center', flexShrink: 0, color: '#b0b0b0' }}>
                 <span className="label" style={{ color: '#8d8d8d', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>时间范围:</span>
-                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '250px', whiteSpace: 'normal' }}>{formatDateTime(startTime)} 至 {formatDateTime(endTime)}</span>
+                <span className="value" style={{ color: '#b0b0b0', fontWeight: 500, wordBreak: 'break-word', overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block', maxWidth: '300px', whiteSpace: 'normal' }}>
+                  {startTime && endTime ? `${formatDateTime(startTime)} - ${formatDateTime(endTime)}` : '-'}
+                </span>
               </div>
+              {/* 回测指标按钮 */}
+              {backtestSummary && (
+                <button 
+                  style={{ 
+                    backgroundColor: isMetricsCollapsed ? '#2a2e39' : '#4caf50', 
+                    color: '#b0b0b0', 
+                    border: 'none', 
+                    borderRadius: '6px', 
+                    padding: '6px 12px', 
+                    fontSize: '13px', 
+                    fontWeight: 500, 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease',
+                    marginLeft: 'auto',
+                    flexShrink: 0
+                  }}
+                  onClick={() => setIsMetricsCollapsed(!isMetricsCollapsed)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isMetricsCollapsed ? '#3a3e49' : '#5cbf60';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = isMetricsCollapsed ? '#2a2e39' : '#4caf50';
+                  }}
+                >
+                  <span>回测指标</span>
+                  <span style={{ transform: isMetricsCollapsed ? 'rotate(0deg)' : 'rotate(90deg)', transition: 'transform 0.2s ease', fontSize: '10px' }}>▶</span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* 回测指标展示区域 */}
-          {backtestSummary && (
+          {backtestSummary && !isMetricsCollapsed && (
             <div className="backtest-metrics" style={{ backgroundColor: '#1e222d', borderRadius: '8px', padding: '15px', marginBottom: '15px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' }}>
-              <h3 style={{ color: '#b0b0b0', marginBottom: '15px', fontSize: '16px', fontWeight: 600 }}>回测指标</h3>
               
-              {/* 基础收益指标 */}
-              <div className="metrics-group" style={{ marginBottom: '15px' }}>
+              {/* 指标内容区域 */}
+              <div className="metrics-content">
+                  {/* 基础收益指标 */}
+                  <div className="metrics-group" style={{ marginBottom: '15px' }}>
                 <h4 style={{ color: '#8d8d8d', marginBottom: '10px', fontSize: '14px', fontWeight: 500 }}>收益指标</h4>
                 <div className="metrics-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                   <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
@@ -303,7 +340,7 @@ const BacktestDetailPage: React.FC = () => {
 
                   <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
                     <span style={{ color: '#8d8d8d', fontSize: '13px' }}>溃疡指数:</span>
-                    <span style={{ color: '#b0b0b0', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.ulcerIndex ? backtestSummary.ulcerIndex.toFixed(2) : '-'}</span>
+                    <span style={{ color: backtestSummary.ulcerIndex && backtestSummary.ulcerIndex <= 5 ? '#4caf50' : '#f44336', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.ulcerIndex ? backtestSummary.ulcerIndex.toFixed(2) : '-'}</span>
                   </div>
                 </div>
               </div>
@@ -314,19 +351,19 @@ const BacktestDetailPage: React.FC = () => {
                 <div className="metrics-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                   <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
                     <span style={{ color: '#8d8d8d', fontSize: '13px' }}>夏普比率:</span>
-                    <span style={{ color: '#b0b0b0', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.sharpeRatio.toFixed(2)}</span>
+                    <span style={{ color: backtestSummary.sharpeRatio >= 0 ? '#f44336' : '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.sharpeRatio.toFixed(2)}</span>
                   </div>
                   <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
                     <span style={{ color: '#8d8d8d', fontSize: '13px' }}>卡玛比率:</span>
-                    <span style={{ color: '#b0b0b0', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.calmarRatio ? backtestSummary.calmarRatio.toFixed(2) : '-'}</span>
+                    <span style={{ color: backtestSummary.calmarRatio && backtestSummary.calmarRatio >= 0 ? '#f44336' : '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.calmarRatio ? backtestSummary.calmarRatio.toFixed(2) : '-'}</span>
                   </div>
                   <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
                     <span style={{ color: '#8d8d8d', fontSize: '13px' }}>索提诺比率:</span>
-                    <span style={{ color: '#b0b0b0', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.sortinoRatio ? backtestSummary.sortinoRatio.toFixed(2) : '-'}</span>
+                    <span style={{ color: backtestSummary.sortinoRatio && backtestSummary.sortinoRatio >= 0 ? '#f44336' : '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.sortinoRatio ? backtestSummary.sortinoRatio.toFixed(2) : '-'}</span>
                   </div>
                   <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
                     <span style={{ color: '#8d8d8d', fontSize: '13px' }}>特雷诺比率:</span>
-                    <span style={{ color: '#b0b0b0', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.treynorRatio ? backtestSummary.treynorRatio.toFixed(4) : '-'}</span>
+                    <span style={{ color: backtestSummary.treynorRatio && backtestSummary.treynorRatio >= 0 ? '#f44336' : '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.treynorRatio ? backtestSummary.treynorRatio.toFixed(4) : '-'}</span>
                   </div>
                 </div>
               </div>
@@ -337,43 +374,44 @@ const BacktestDetailPage: React.FC = () => {
                 <div className="metrics-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
                   <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
                     <span style={{ color: '#8d8d8d', fontSize: '13px' }}>Alpha系数:</span>
-                    <span style={{ color: '#b0b0b0', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.alpha ? backtestSummary.alpha.toFixed(4) : '-'}</span>
+                    <span style={{ color: backtestSummary.alpha && backtestSummary.alpha >= 0 ? '#f44336' : '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.alpha ? backtestSummary.alpha.toFixed(4) : '-'}</span>
                   </div>
                   <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
                     <span style={{ color: '#8d8d8d', fontSize: '13px' }}>Beta系数:</span>
-                    <span style={{ color: '#b0b0b0', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.beta ? backtestSummary.beta.toFixed(4) : '-'}</span>
+                    <span style={{ color: backtestSummary.beta && backtestSummary.beta >= 0 ? '#f44336' : '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.beta ? backtestSummary.beta.toFixed(4) : '-'}</span>
                   </div>
                   <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
                     <span style={{ color: '#8d8d8d', fontSize: '13px' }}>偏度:</span>
-                    <span style={{ color: '#b0b0b0', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.skewness ? backtestSummary.skewness.toFixed(4) : '-'}</span>
+                    <span style={{ color: backtestSummary.skewness && backtestSummary.skewness >= 0 ? '#f44336' : '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.skewness ? backtestSummary.skewness.toFixed(4) : '-'}</span>
                   </div>
                 </div>
               </div>
 
-              {/* 交易效率指标 */}
-              <div className="metrics-group">
-                <h4 style={{ color: '#8d8d8d', marginBottom: '10px', fontSize: '14px', fontWeight: 500 }}>交易效率指标</h4>
-                <div className="metrics-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-                  <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
-                    <span style={{ color: '#8d8d8d', fontSize: '13px' }}>盈利因子:</span>
-                    <span style={{ color: '#b0b0b0', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.profitFactor ? backtestSummary.profitFactor.toFixed(4) : '-'}</span>
-                  </div>
-                  <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
-                    <span style={{ color: '#8d8d8d', fontSize: '13px' }}>Omega比率:</span>
-                    <span style={{ color: '#b0b0b0', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.omega ? backtestSummary.omega.toFixed(4) : '-'}</span>
-                  </div>
-                  <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
-                    <span style={{ color: '#8d8d8d', fontSize: '13px' }}>盈利交易:</span>
-                    <span style={{ color: '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.profitableTrades}</span>
-                  </div>
-                  <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
-                    <span style={{ color: '#8d8d8d', fontSize: '13px' }}>亏损交易:</span>
-                    <span style={{ color: '#f44336', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.unprofitableTrades}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+                  {/* 交易效率指标 */}
+                  <div className="metrics-group">
+                    <h4 style={{ color: '#8d8d8d', marginBottom: '10px', fontSize: '14px', fontWeight: 500 }}>交易效率指标</h4>
+                    <div className="metrics-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+                      <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
+                        <span style={{ color: '#8d8d8d', fontSize: '13px' }}>盈利因子:</span>
+                        <span style={{ color: backtestSummary.profitFactor && backtestSummary.profitFactor >= 1 ? '#f44336' : '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.profitFactor ? backtestSummary.profitFactor.toFixed(4) : '-'}</span>
+                      </div>
+                      <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
+                        <span style={{ color: '#8d8d8d', fontSize: '13px' }}>Omega比率:</span>
+                        <span style={{ color: backtestSummary.omega && backtestSummary.omega >= 1 ? '#f44336' : '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.omega ? backtestSummary.omega.toFixed(4) : '-'}</span>
+                      </div>
+                      <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
+                        <span style={{ color: '#8d8d8d', fontSize: '13px' }}>盈利交易:</span>
+                        <span style={{ color: '#4caf50', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.profitableTrades}</span>
+                      </div>
+                      <div className="metric-item" style={{ flex: 1, minWidth: '180px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', backgroundColor: '#2a2e39', borderRadius: '6px' }}>
+                        <span style={{ color: '#8d8d8d', fontSize: '13px' }}>亏损交易:</span>
+                        <span style={{ color: '#f44336', fontWeight: 600, fontSize: '13px' }}>{backtestSummary.unprofitableTrades}</span>
+                      </div>
+                    </div>
+                   </div>
+                 </div>
+             </div>
+           )}
 
           {/* 添加K线图 */}
           {symbol && startTime && endTime && (
@@ -417,25 +455,34 @@ const BacktestDetailPage: React.FC = () => {
               </thead>
               <tbody>
                 {getCurrentPageTrades().map((trade, index) => {
+                  // 安全检查：确保trade对象存在
+                  if (!trade) {
+                    return (
+                      <tr key={index}>
+                        <td colSpan={14} style={{ textAlign: 'center', color: '#8d8d8d' }}>数据异常</td>
+                      </tr>
+                    );
+                  }
+                  
                   const actualIndex = (currentPage - 1) * TRADES_PER_PAGE + index + 1;
-                  const profit = trade.exitAmount - trade.entryAmount - (trade.fee || 0);
-                  const profitPercentage = (profit / trade.entryAmount) * 100;
+                  const profit = (trade.exitAmount || 0) - (trade.entryAmount || 0) - (trade.fee || 0);
+                  const profitPercentage = trade.entryAmount ? (profit / trade.entryAmount) * 100 : 0;
                   
                   return (
                     <tr key={index}>
                       <td>{actualIndex}</td>
                       <td className={trade.type === 'BUY' ? 'buy' : 'sell'}>{trade.type === 'BUY' ? '买入' : '卖出'}</td>
-                      <td>{trade.entryTime}</td>
-                      <td>{trade.entryPrice}</td>
-                      <td>{formatAmount(trade.entryAmount)}</td>
-                      <td>{trade.exitTime}</td>
-                      <td>{trade.exitPrice}</td>
-                      <td>{formatAmount(trade.exitAmount)}</td>
-                      <td>{formatAmount(trade.fee)}</td>
+                      <td>{trade.entryTime || '-'}</td>
+                      <td>{trade.entryPrice || '-'}</td>
+                      <td>{formatAmount(trade.entryAmount || 0)}</td>
+                      <td>{trade.exitTime || '-'}</td>
+                      <td>{trade.exitPrice || '-'}</td>
+                      <td>{formatAmount(trade.exitAmount || 0)}</td>
+                      <td>{formatAmount(trade.fee || 0)}</td>
                       <td className={profit >= 0 ? 'positive' : 'negative'}>{formatAmount(profit)}</td>
                       <td className={profitPercentage >= 0 ? 'positive' : 'negative'}>{formatPercentage(profitPercentage)}</td>
-                      <td>{formatAmount(trade.totalAssets)}</td>
-                      <td>{formatPercentage(trade.maxDrawdown * 100)}</td>
+                      <td>{formatAmount(trade.totalAssets || 0)}</td>
+                      <td>{formatPercentage((trade.maxDrawdown || 0) * 100)}</td>
                       <td>{trade.maxLoss ? formatPercentage(trade.maxLoss * 100) : '-'}</td>
                     </tr>
                   );
