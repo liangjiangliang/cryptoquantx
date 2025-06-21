@@ -3,15 +3,47 @@ import { ActionType } from './actions';
 import { mockOrderBookData, mockTradeHistoryData, mockCryptoPairs } from '../data/mockData';
 import { getDefaultStartDate, getDefaultEndDate } from '../constants/trading';
 
+// 从localStorage获取保存的设置
+const getSavedSettings = () => {
+  try {
+    const savedSettings = localStorage.getItem('cryptoquantx_chart_settings');
+    return savedSettings ? JSON.parse(savedSettings) : null;
+  } catch (error) {
+    console.error('读取保存的设置失败:', error);
+    return null;
+  }
+};
+
+// 从localStorage获取保存的K线数据
+const getSavedData = () => {
+  try {
+    const savedData = localStorage.getItem('cryptoquantx_candlestick_data');
+    const data = savedData ? JSON.parse(savedData) : [];
+    console.log('Redux初始化 - 从localStorage恢复K线数据:', {
+      hasData: !!savedData,
+      dataLength: data.length,
+      firstItem: data.length > 0 ? data[0] : null
+    });
+    return data;
+  } catch (error) {
+    console.error('读取保存的K线数据失败:', error);
+    return [];
+  }
+};
+
+// 获取保存的设置，如果没有则使用默认值
+const savedSettings = getSavedSettings();
+const savedData = getSavedData();
+
 // 初始状态
 const initialState: AppState = {
-  selectedPair: 'BTC-USDT',
-  timeframe: '1D',
-  dateRange: {
+  selectedPair: savedSettings?.selectedPair || 'BTC-USDT',
+  timeframe: savedSettings?.timeframe || '1D',
+  dateRange: savedSettings?.dateRange || {
     startDate: getDefaultStartDate(),
     endDate: getDefaultEndDate()
   },
-  candlestickData: [], // 初始化为空数组，将通过API加载数据
+  candlestickData: savedData, // 从localStorage恢复K线数据
   orderBookData: mockOrderBookData,
   tradeHistoryData: mockTradeHistoryData,
   cryptoPairs: mockCryptoPairs,
@@ -48,6 +80,11 @@ const reducer = (state = initialState, action: any): AppState => {
       };
     
     case ActionType.UPDATE_CANDLESTICK_DATA:
+      console.log('Redux reducer - 更新K线数据:', {
+        newDataLength: action.payload.length,
+        oldDataLength: state.candlestickData.length,
+        firstNewItem: action.payload.length > 0 ? action.payload[0] : null
+      });
       return {
         ...state,
         candlestickData: action.payload

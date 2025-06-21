@@ -81,7 +81,12 @@ interface ApiCandlestickData {
 
 // 将API返回的数据转换为应用中使用的格式
 const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
-  return apiData.map(item => {
+  console.log('开始转换API数据:', {
+    inputLength: apiData.length,
+    firstItem: apiData.length > 0 ? apiData[0] : null
+  });
+  
+  const result = apiData.map((item, index) => {
     // 将日期字符串转换为时间戳（秒）
     let openTime: number;
 
@@ -115,7 +120,7 @@ const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
     const close = item.close !== undefined ? item.close : (item.c !== undefined ? item.c : open);
     const volume = item.volume !== undefined ? item.volume : (item.v !== undefined ? item.v : 0);
 
-    return {
+    const convertedItem = {
       time: openTime,
       open,
       high,
@@ -123,7 +128,21 @@ const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
       close,
       volume
     };
+    
+    if (index === 0) {
+      console.log('转换第一个数据项:', { original: item, converted: convertedItem });
+    }
+    
+    return convertedItem;
   });
+  
+  console.log('数据转换完成:', {
+    inputLength: apiData.length,
+    outputLength: result.length,
+    firstConverted: result.length > 0 ? result[0] : null
+  });
+  
+  return result;
 };
 
 // 模拟K线数据，用于API调用失败时的备用方案
