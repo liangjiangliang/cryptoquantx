@@ -44,6 +44,19 @@ export const normalizeTimeString = (timeStr: string): string => {
   return `${timeStr} 00:00:00`;
 };
 
+// 获取昨天的日期字符串（yyyy-MM-dd格式），用于限制日期选择器的最大值
+export const getYesterdayDateString = (): string => {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  
+  const year = yesterday.getFullYear();
+  const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+  const day = String(yesterday.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+};
+
 interface ApiResponse {
   code: number;
   message: string;

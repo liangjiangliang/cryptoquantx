@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchBacktestStrategies, createBacktest, getDefaultDateRange } from '../services/api';
+import { fetchBacktestStrategies, createBacktest, getDefaultDateRange, getYesterdayDateString } from '../services/api';
 import { Strategy } from '../types/strategy';
 import './BacktestCreatePage.css';
 
@@ -239,6 +239,7 @@ const BacktestCreatePage: React.FC = () => {
                   type="date" 
                   id="startDate" 
                   value={startDate} 
+                  max={getYesterdayDateString()}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
@@ -249,6 +250,7 @@ const BacktestCreatePage: React.FC = () => {
                   type="date" 
                   id="endDate" 
                   value={endDate}
+                  max={getYesterdayDateString()}
                   onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>

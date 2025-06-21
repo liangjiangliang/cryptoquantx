@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy, updateStrategy, fetchStrategyMaxReturns, getDefaultDateRange } from '../services/api';
+import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy, updateStrategy, fetchStrategyMaxReturns, getDefaultDateRange, getYesterdayDateString } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import GenerateStrategyModal from '../components/GenerateStrategyModal/GenerateStrategyModal';
 import ResultModal from '../components/ResultModal/ResultModal';
@@ -400,6 +400,7 @@ const BacktestFactoryPage: React.FC = () => {
                 type="date"
                 id="startDate"
                 value={startDate}
+                max={getYesterdayDateString()}
                 onChange={(e) => setStartDate(e.target.value)}
               />
             </div>
@@ -410,6 +411,7 @@ const BacktestFactoryPage: React.FC = () => {
                 type="date"
                 id="endDate"
                 value={endDate}
+                max={getYesterdayDateString()}
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>

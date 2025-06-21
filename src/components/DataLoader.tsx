@@ -50,8 +50,9 @@ const DataLoader: React.FC = () => {
     }
   }, [selectedPair, timeframe, dateRange, dispatch]);
 
-  // 在组件挂载时和selectedPair/timeframe/dateRange变化时加载数据
+  // 仅在组件挂载时加载一次数据，不再自动响应状态变化
   useEffect(() => {
+    // 初次加载数据
     loadData();
     
     // 设置定期刷新（每分钟）
@@ -60,7 +61,7 @@ const DataLoader: React.FC = () => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [loadData]);
+  }, []); // 移除依赖项，避免自动重新加载
 
   // 添加对reload_data事件的监听
   useEffect(() => {

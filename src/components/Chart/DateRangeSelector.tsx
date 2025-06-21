@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setDateRange } from '../../store/actions';
-import { getDefaultDateRange } from '../../services/api';
+import { getDefaultDateRange, getYesterdayDateString } from '../../services/api';
 import './DateRangeSelector.css';
 
 const DateRangeSelector: React.FC = () => {
@@ -36,7 +36,7 @@ const DateRangeSelector: React.FC = () => {
           type="date"
           value={startDate}
           onChange={handleStartDateChange}
-          max={endDate}
+          max={getYesterdayDateString()}
         />
       </div>
       <div className="date-input-group">
@@ -46,7 +46,7 @@ const DateRangeSelector: React.FC = () => {
           value={endDate}
           onChange={handleEndDateChange}
           min={startDate}
-          max={formattedToday}
+          max={getYesterdayDateString()}
         />
       </div>
     </div>

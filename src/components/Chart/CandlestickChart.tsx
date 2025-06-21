@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState, CandlestickData, BacktestTrade } from '../../store/types';
 import { updateCandlestickData, setSelectedPair, setTimeframe, setDateRange } from '../../store/actions';
-import { fetchHistoryWithIntegrityCheck, getDefaultDateRange, formatDateTimeString } from '../../services/api';
+import { fetchHistoryWithIntegrityCheck, getDefaultDateRange, formatDateTimeString, getYesterdayDateString } from '../../services/api';
 import DataLoadModal from '../DataLoadModal/DataLoadModal';
 import IndicatorSelector, { IndicatorType } from './IndicatorSelector';
 import {
@@ -171,7 +171,7 @@ const CandlestickChart: React.FC = () => {
   };
 
   // 安全获取数据点的方法，避免undefined或null
-  const safeGetDataPoint = (dataArray: any[], index: number, defaultValue: any = null) => {
+  const safeGetDataPoint = (dataArray: any[], index: number, defaultValue: any = 0) => {
     if (!dataArray || !Array.isArray(dataArray) || index < 0 || index >= dataArray.length) {
       return defaultValue;
     }
@@ -291,23 +291,23 @@ const CandlestickChart: React.FC = () => {
             const signalValue = safeGetDataPoint(signal, dataIndex);
             const histogramValue = safeGetDataPoint(histogram, dataIndex);
 
-            if (macdValue !== null && signalValue !== null && histogramValue !== null) {
-              // 创建或更新MACD值显示元素
-              let macdValueElement = document.getElementById('macd-indicator-values');
-              if (!macdValueElement) {
-                macdValueElement = document.createElement('div');
-                macdValueElement.id = 'macd-indicator-values';
-                macdValueElement.className = 'indicator-value-text macd-indicator';
-                macdChartRef.current.appendChild(macdValueElement);
-              }
+                    if (typeof macdValue === 'number' && typeof signalValue === 'number' && typeof histogramValue === 'number') {
+          // 创建或更新MACD值显示元素
+          let macdValueElement = document.getElementById('macd-indicator-values');
+          if (!macdValueElement) {
+            macdValueElement = document.createElement('div');
+            macdValueElement.id = 'macd-indicator-values';
+            macdValueElement.className = 'indicator-value-text macd-indicator';
+            macdChartRef.current.appendChild(macdValueElement);
+          }
 
-              macdValueElement.innerHTML = `
-                MACD: <span class="value">${macdValue.toFixed(4)}</span> | 
-                信号: <span class="value">${signalValue.toFixed(4)}</span> | 
-                柱: <span class="${histogramValue >= 0 ? 'positive' : 'negative'}">${histogramValue.toFixed(4)}</span>
-              `;
-              macdValueElement.style.display = 'block';
-            }
+          macdValueElement.innerHTML = `
+            MACD: <span class="value">${macdValue.toFixed(4)}</span> | 
+            信号: <span class="value">${signalValue.toFixed(4)}</span> | 
+            柱: <span class="${histogramValue >= 0 ? 'positive' : 'negative'}">${histogramValue.toFixed(4)}</span>
+          `;
+          macdValueElement.style.display = 'block';
+        }
           }
 
           // 更新RSI指标值
@@ -317,19 +317,19 @@ const CandlestickChart: React.FC = () => {
 
             const rsiValue = safeGetDataPoint(rsiData, dataIndex);
 
-            if (rsiValue !== null) {
-              // 创建或更新RSI值显示元素
-              let rsiValueElement = document.getElementById('rsi-indicator-values');
-              if (!rsiValueElement) {
-                rsiValueElement = document.createElement('div');
-                rsiValueElement.id = 'rsi-indicator-values';
-                rsiValueElement.className = 'indicator-value-text rsi-indicator';
-                rsiChartRef.current.appendChild(rsiValueElement);
-              }
+                    if (typeof rsiValue === 'number') {
+          // 创建或更新RSI值显示元素
+          let rsiValueElement = document.getElementById('rsi-indicator-values');
+          if (!rsiValueElement) {
+            rsiValueElement = document.createElement('div');
+            rsiValueElement.id = 'rsi-indicator-values';
+            rsiValueElement.className = 'indicator-value-text rsi-indicator';
+            rsiChartRef.current.appendChild(rsiValueElement);
+          }
 
-              rsiValueElement.innerHTML = `RSI: <span class="value">${rsiValue.toFixed(2)}</span>`;
-              rsiValueElement.style.display = 'block';
-            }
+          rsiValueElement.innerHTML = `RSI: <span class="value">${rsiValue.toFixed(2)}</span>`;
+          rsiValueElement.style.display = 'block';
+        }
           }
 
           // 更新KDJ指标值
@@ -343,23 +343,23 @@ const CandlestickChart: React.FC = () => {
             const dValue = safeGetDataPoint(d, dataIndex);
             const jValue = safeGetDataPoint(j, dataIndex);
 
-            if (kValue !== null && dValue !== null && jValue !== null) {
-              // 创建或更新KDJ值显示元素
-              let kdjValueElement = document.getElementById('kdj-indicator-values');
-              if (!kdjValueElement) {
-                kdjValueElement = document.createElement('div');
-                kdjValueElement.id = 'kdj-indicator-values';
-                kdjValueElement.className = 'indicator-value-text kdj-indicator';
-                kdjChartRef.current.appendChild(kdjValueElement);
-              }
+                    if (typeof kValue === 'number' && typeof dValue === 'number' && typeof jValue === 'number') {
+          // 创建或更新KDJ值显示元素
+          let kdjValueElement = document.getElementById('kdj-indicator-values');
+          if (!kdjValueElement) {
+            kdjValueElement = document.createElement('div');
+            kdjValueElement.id = 'kdj-indicator-values';
+            kdjValueElement.className = 'indicator-value-text kdj-indicator';
+            kdjChartRef.current.appendChild(kdjValueElement);
+          }
 
-              kdjValueElement.innerHTML = `
-                K: <span class="value">${kValue.toFixed(2)}</span> | 
-                D: <span class="value">${dValue.toFixed(2)}</span> | 
-                J: <span class="value">${jValue.toFixed(2)}</span>
-              `;
-              kdjValueElement.style.display = 'block';
-            }
+          kdjValueElement.innerHTML = `
+            K: <span class="value">${kValue.toFixed(2)}</span> | 
+            D: <span class="value">${dValue.toFixed(2)}</span> | 
+            J: <span class="value">${jValue.toFixed(2)}</span>
+          `;
+          kdjValueElement.style.display = 'block';
+        }
           }
 
           // 更新BOLL指标值
@@ -371,32 +371,32 @@ const CandlestickChart: React.FC = () => {
             const middleValue = safeGetDataPoint(middle, dataIndex);
             const lowerValue = safeGetDataPoint(lower, dataIndex);
 
-            if (upperValue !== null && middleValue !== null && lowerValue !== null) {
-              // 创建或更新BOLL值显示元素
-              let bollValueElement = document.getElementById('boll-indicator-values');
-              if (!bollValueElement) {
-                bollValueElement = document.createElement('div');
-                bollValueElement.id = 'boll-indicator-values';
-                bollValueElement.className = 'indicator-value-text boll-indicator';
-                chartContainerRef.current.appendChild(bollValueElement);
-              }
+                    if (typeof upperValue === 'number' && typeof middleValue === 'number' && typeof lowerValue === 'number') {
+          // 创建或更新BOLL值显示元素
+          let bollValueElement = document.getElementById('boll-indicator-values');
+          if (!bollValueElement) {
+            bollValueElement = document.createElement('div');
+            bollValueElement.id = 'boll-indicator-values';
+            bollValueElement.className = 'indicator-value-text boll-indicator';
+            chartContainerRef.current.appendChild(bollValueElement);
+          }
 
-              bollValueElement.innerHTML = `
-                上轨: <span class="value">${upperValue.toFixed(2)}</span> | 
-                中轨: <span class="value">${middleValue.toFixed(2)}</span> | 
-                下轨: <span class="value">${lowerValue.toFixed(2)}</span>
-              `;
-              bollValueElement.style.display = 'block';
-              bollValueElement.style.position = 'absolute';
+          bollValueElement.innerHTML = `
+            上轨: <span class="value">${upperValue.toFixed(2)}</span> | 
+            中轨: <span class="value">${middleValue.toFixed(2)}</span> | 
+            下轨: <span class="value">${lowerValue.toFixed(2)}</span>
+          `;
+          bollValueElement.style.display = 'block';
+          bollValueElement.style.position = 'absolute';
 
-              // 恢复BOLL指标值固定在左上角
-              bollValueElement.style.left = '10px';
-              bollValueElement.style.top = '10px';
-              bollValueElement.style.backgroundColor = 'rgba(30, 34, 45, 0.7)';
-              bollValueElement.style.padding = '5px';
-              bollValueElement.style.borderRadius = '3px';
-              bollValueElement.style.zIndex = '2';
-            }
+          // 恢复BOLL指标值固定在左上角
+          bollValueElement.style.left = '10px';
+          bollValueElement.style.top = '10px';
+          bollValueElement.style.backgroundColor = 'rgba(30, 34, 45, 0.7)';
+          bollValueElement.style.padding = '5px';
+          bollValueElement.style.borderRadius = '3px';
+          bollValueElement.style.zIndex = '2';
+        }
           }
         }
       }
@@ -686,11 +686,6 @@ const CandlestickChart: React.FC = () => {
         dispatch(updateCandlestickData([]));
         clearIndicators();
       }
-      
-      // 自动触发数据重新加载
-      setTimeout(() => {
-        handleQueryClick();
-      }, 100);
     };
 
     const handleRetryDataUpdate = () => {
@@ -934,7 +929,7 @@ const CandlestickChart: React.FC = () => {
         const signalValue = safeGetDataPoint(signal, dataIndex);
         const histogramValue = safeGetDataPoint(histogram, dataIndex);
 
-        if (macdValue !== null && signalValue !== null && histogramValue !== null) {
+        if (typeof macdValue === 'number' && typeof signalValue === 'number' && typeof histogramValue === 'number') {
           macdValueElement.innerHTML = `
             MACD: <span class="value">${macdValue.toFixed(4)}</span> | 
             信号: <span class="value">${signalValue.toFixed(4)}</span> | 
@@ -962,7 +957,7 @@ const CandlestickChart: React.FC = () => {
 
         const rsiValue = safeGetDataPoint(rsiData, dataIndex);
 
-        if (rsiValue !== null) {
+        if (typeof rsiValue === 'number') {
           rsiValueElement.innerHTML = `RSI: <span class="value">${rsiValue.toFixed(2)}</span>`;
         }
       }
@@ -990,7 +985,7 @@ const CandlestickChart: React.FC = () => {
         const dValue = safeGetDataPoint(d, dataIndex);
         const jValue = safeGetDataPoint(j, dataIndex);
 
-        if (kValue !== null && dValue !== null && jValue !== null) {
+        if (typeof kValue === 'number' && typeof dValue === 'number' && typeof jValue === 'number') {
           kdjValueElement.innerHTML = `
             K: <span class="value">${kValue.toFixed(2)}</span> | 
             D: <span class="value">${dValue.toFixed(2)}</span> | 
@@ -1008,7 +1003,7 @@ const CandlestickChart: React.FC = () => {
         const middleValue = safeGetDataPoint(middle, dataIndex);
         const lowerValue = safeGetDataPoint(lower, dataIndex);
 
-        if (upperValue !== null && middleValue !== null && lowerValue !== null) {
+        if (typeof upperValue === 'number' && typeof middleValue === 'number' && typeof lowerValue === 'number') {
           // 创建或更新BOLL值显示元素
           let bollValueElement = document.getElementById('boll-indicator-values');
           if (!bollValueElement) {
@@ -1133,11 +1128,6 @@ const CandlestickChart: React.FC = () => {
 
           // 清空指标
           clearIndicators();
-
-          // 自动重新加载数据
-          setTimeout(() => {
-            handleQueryClick();
-          }, 100);
         }
       }
     } catch (error) {
@@ -1291,21 +1281,11 @@ const CandlestickChart: React.FC = () => {
             lastValueVisible: false,
           });
 
-          // 准备数据，过滤掉无效值
-          const upperData = upper.map((value, index) => ({
-            time: candlestickData[index].time as Time,
-            value: value,
-          })).filter(item => !isNaN(item.value) && item.value !== null && item.value !== undefined);
-
-          const middleData = middle.map((value, index) => ({
-            time: candlestickData[index].time as Time,
-            value: value,
-          })).filter(item => !isNaN(item.value) && item.value !== null && item.value !== undefined);
-
-          const lowerData = lower.map((value, index) => ({
-            time: candlestickData[index].time as Time,
-            value: value,
-          })).filter(item => !isNaN(item.value) && item.value !== null && item.value !== undefined);
+                  // 准备数据，使用统一的数据准备函数
+        const times = candlestickData.map(item => item.time as Time);
+        const upperData = prepareTimeSeriesData(upper, times);
+        const middleData = prepareTimeSeriesData(middle, times);
+        const lowerData = prepareTimeSeriesData(lower, times);
 
           // 如果没有有效数据，不添加指标
           if (upperData.length === 0 || middleData.length === 0 || lowerData.length === 0) return;
@@ -1342,11 +1322,9 @@ const CandlestickChart: React.FC = () => {
             priceLineVisible: false,
           });
 
-          // 准备数据，过滤掉无效值
-          const sarData = sarValues.map((value, index) => ({
-            time: candlestickData[index].time as Time,
-            value: value,
-          })).filter(item => !isNaN(item.value) && item.value !== null && item.value !== undefined);
+          // 准备数据，使用统一的数据准备函数
+          const times = candlestickData.map(item => item.time as Time);
+          const sarData = prepareTimeSeriesData(sarValues, times);
 
           // 如果没有有效数据，不添加指标
           if (sarData.length === 0) return;
@@ -2812,6 +2790,7 @@ const CandlestickChart: React.FC = () => {
                 type="date"
                 className="date-input"
                 value={dateRange.startDate}
+                max={getYesterdayDateString()}
                 onChange={handleStartDateChange}
               />
             </div>
@@ -2821,6 +2800,7 @@ const CandlestickChart: React.FC = () => {
                 type="date"
                 className="date-input"
                 value={dateRange.endDate}
+                max={getYesterdayDateString()}
                 onChange={handleEndDateChange}
               />
             </div>

@@ -11,7 +11,7 @@ import FailedStrategiesModal, { FailedStrategy } from '../FailedStrategiesModal/
 
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
-import { runAllBacktests, fetchFailedStrategies } from '../../services/api';
+import { runAllBacktests, fetchFailedStrategies, getYesterdayDateString } from '../../services/api';
 
 // 策略接口定义
 interface Strategy {
@@ -476,6 +476,7 @@ const BacktestPanel: React.FC = () => {
               <input
                 type="date"
                 value={dateRange.startDate}
+                max={getYesterdayDateString()}
                 onChange={handleStartDateChange}
               />
             </div>
@@ -485,6 +486,7 @@ const BacktestPanel: React.FC = () => {
               <input
                 type="date"
                 value={dateRange.endDate}
+                max={getYesterdayDateString()}
                 onChange={handleEndDateChange}
               />
             </div>

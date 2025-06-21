@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import './DataLoadModal.css';
 import {CandlestickData} from '../../store/types';
+import { getYesterdayDateString } from '../../services/api';
 
 interface DataLoadModalProps {
     isOpen: boolean;
@@ -183,6 +184,7 @@ const DataLoadModal: React.FC<DataLoadModalProps> = ({isOpen, onClose, onLoadDat
                                 value={startDate}
                                 onChange={handleStartDateChange}
                                 disabled={loading}
+                                max={getYesterdayDateString()}
                                 className="form-control"
                             />
                         </div>
@@ -197,6 +199,7 @@ const DataLoadModal: React.FC<DataLoadModalProps> = ({isOpen, onClose, onLoadDat
                                 onChange={handleEndDateChange}
                                 disabled={loading}
                                 min={startDate}
+                                max={getYesterdayDateString()}
                                 className="form-control"
                             />
                         </div>
