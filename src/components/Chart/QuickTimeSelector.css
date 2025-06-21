@@ -1,0 +1,70 @@
+.quick-time-selector {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.quick-time-selector label {
+  font-size: 14px;
+  color: #8d8d8d;
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.quick-time-buttons {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.quick-time-button {
+  padding: 4px 8px;
+  background-color: #2e3241;
+  color: #d9d9d9;
+  border: 1px solid #3a3f4f;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.quick-time-button:hover {
+  background-color: #3a3f4f;
+  border-color: #4a5266;
+}
+
+.quick-time-button:active {
+  background-color: #1a1e26;
+  transform: translateY(1px);
+}
+
+.quick-time-button:focus {
+  outline: none;
+  border-color: #5a6574;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .quick-time-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .quick-time-selector label {
+    min-width: auto;
+  }
+  
+  .quick-time-buttons {
+    width: 100%;
+  }
+  
+  .quick-time-button {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+} 

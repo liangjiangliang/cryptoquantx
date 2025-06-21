@@ -22,6 +22,7 @@ import './CandlestickChart.css';
 import TradeMarkers from './TradeMarkers';
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
 import { Link } from 'react-router-dom';
+import QuickTimeSelector from './QuickTimeSelector';
 
 // K线宽度本地存储键名
 const CHART_BAR_SPACING_KEY = 'cryptoquantx_chart_bar_spacing';
@@ -3027,6 +3028,13 @@ const CandlestickChart: React.FC = () => {
     }
   };
 
+  // 处理快捷时间选择
+  const handleQuickTimeSelect = (startDate: string, endDate: string) => {
+    const settings = { selectedPair, timeframe, dateRange: { startDate, endDate } };
+    saveChartSettings(settings);
+    dispatch(setDateRange(startDate, endDate));
+  };
+
   return (
     <div className={`candlestick-chart-container ${showPanels ? '' : 'panels-hidden'}`}>
       <div className="chart-header">
@@ -3058,6 +3066,7 @@ const CandlestickChart: React.FC = () => {
         </div>
         <div className="chart-buttons">
           <div className="date-range-selector">
+            <QuickTimeSelector onTimeRangeSelect={handleQuickTimeSelect} />
             <div className="date-input-group">
               <label>开始日期:</label>
               <input

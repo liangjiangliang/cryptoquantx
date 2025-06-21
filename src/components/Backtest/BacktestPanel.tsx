@@ -12,6 +12,7 @@ import FailedStrategiesModal, { FailedStrategy } from '../FailedStrategiesModal/
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
 import { runAllBacktests, fetchFailedStrategies, getYesterdayDateString } from '../../services/api';
+import QuickTimeSelector from '../Chart/QuickTimeSelector';
 
 // 策略接口定义
 interface Strategy {
@@ -335,6 +336,11 @@ const BacktestPanel: React.FC = () => {
     dispatch(setDateRange(dateRange.startDate, e.target.value));
   };
 
+  // 处理快捷时间选择
+  const handleQuickTimeSelect = (startDate: string, endDate: string) => {
+    dispatch(setDateRange(startDate, endDate));
+  };
+
   // 计算总页数
   const getTotalPages = () => {
     if (!backtestResults || !backtestResults.trades) return 1;
@@ -471,6 +477,8 @@ const BacktestPanel: React.FC = () => {
       <div className="backtest-panel-content">
         {!backtestResults ? (
           <div className="backtest-form">
+            <QuickTimeSelector onTimeRangeSelect={handleQuickTimeSelect} />
+            
             <div className="input-group">
               <label>开始日期</label>
               <input
