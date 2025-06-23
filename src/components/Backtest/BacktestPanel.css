@@ -511,3 +511,26 @@
   cursor: not-allowed;
   opacity: 0.7;
 }
+
+.create-realtime-strategy-button {
+  padding: 10px 20px;
+  background-color: #9c27b0;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  margin-top: 10px;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.create-realtime-strategy-button:hover {
+  background-color: #7b1fa2;
+}
+
+.create-realtime-strategy-button:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+}

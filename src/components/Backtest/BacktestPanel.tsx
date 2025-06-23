@@ -11,7 +11,7 @@ import FailedStrategiesModal, { FailedStrategy } from '../FailedStrategiesModal/
 
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
-import { runAllBacktests, fetchFailedStrategies, getYesterdayDateString } from '../../services/api';
+import { runAllBacktests, fetchFailedStrategies, getYesterdayDateString, createRealTimeStrategy } from '../../services/api';
 import QuickTimeSelector from '../Chart/QuickTimeSelector';
 
 // 策略接口定义
@@ -70,6 +70,10 @@ const BacktestPanel: React.FC = () => {
   const [showFailedStrategiesModal, setShowFailedStrategiesModal] = useState(false);
   const [failedStrategies, setFailedStrategies] = useState<FailedStrategy[]>([]);
   const [loadingFailedStrategies, setLoadingFailedStrategies] = useState(false);
+  
+  // 实时策略状态
+  const [creatingRealTimeStrategy, setCreatingRealTimeStrategy] = useState(false);
+  const [tradeAmount, setTradeAmount] = useState<string>('20'); // 默认交易金额
 
   // 获取可用策略列表
   useEffect(() => {
@@ -313,6 +317,66 @@ const BacktestPanel: React.FC = () => {
     }
   };
 
+  // 创建实时策略
+  const createRealTimeStrategyHandler = async () => {
+    setCreatingRealTimeStrategy(true);
+
+    try {
+      const result = await createRealTimeStrategy(
+        strategy,
+        selectedPair,
+        timeframe,
+        Number(tradeAmount)
+      );
+
+      if (result.success) {
+        const tableContent = `
+<table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+  <tr style="border-bottom: 1px solid #444;">
+    <td style="padding: 8px; color: #8d8d8d;">策略名称:</td>
+    <td style="padding: 8px; color: #d9d9d9;">${result.data?.strategyName || strategy}</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #444;">
+    <td style="padding: 8px; color: #8d8d8d;">交易对:</td>
+    <td style="padding: 8px; color: #d9d9d9;">${selectedPair}</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #444;">
+    <td style="padding: 8px; color: #8d8d8d;">时间周期:</td>
+    <td style="padding: 8px; color: #d9d9d9;">${timeframe}</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #444;">
+    <td style="padding: 8px; color: #8d8d8d;">交易金额:</td>
+    <td style="padding: 8px; color: #d9d9d9;">${tradeAmount} USDT</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #444;">
+    <td style="padding: 8px; color: #8d8d8d;">开始时间:</td>
+    <td style="padding: 8px; color: #d9d9d9;">${result.data?.startTime || new Date().toLocaleString()}</td>
+  </tr>
+  <tr style="border-bottom: 1px solid #444;">
+    <td style="padding: 8px; color: #8d8d8d;">状态:</td>
+    <td style="padding: 8px; color: #4caf50; font-weight: 600;">${result.data?.status || 'RUNNING'}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; color: #8d8d8d;">消息:</td>
+    <td style="padding: 8px; color: #d9d9d9;">${result.message || '实时策略创建成功'}</td>
+  </tr>
+</table>`;
+        showStatusDialog(
+          '实时策略创建成功', 
+          tableContent, 
+          'info'
+        );
+      } else {
+        showErrorDialog('创建实时策略失败', result.message || '未知错误');
+      }
+    } catch (error) {
+      console.error('创建实时策略出错:', error);
+      showErrorDialog('创建实时策略错误', '创建实时策略时发生错误，请稍后重试');
+    } finally {
+      setCreatingRealTimeStrategy(false);
+    }
+  };
+
   // 处理时间周期变更
   const handleTimeframeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newTimeframe = e.target.value as '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M';
@@ -530,6 +594,18 @@ const BacktestPanel: React.FC = () => {
             </div>
 
             <div className="input-group">
+              <label>交易金额 (USDT) - 用于执行实盘策略金额</label>
+              <input
+                type="number"
+                value={tradeAmount}
+                onChange={(e) => setTradeAmount(e.target.value)}
+                min="1"
+                step="1"
+                placeholder="用于实时策略的单次交易金额"
+              />
+            </div>
+
+            <div className="input-group">
               <label>交易策略</label>
               {loading ? (
                 <div className="loading-strategies">加载策略中...</div>
@@ -597,6 +673,14 @@ const BacktestPanel: React.FC = () => {
               disabled={runningBatchBacktest || isBacktesting || loading || !strategy}
             >
               {runningBatchBacktest ? '批量回测运行中...' : '运行批量回测'}
+            </button>
+
+            <button
+              className="create-realtime-strategy-button"
+              onClick={createRealTimeStrategyHandler}
+              disabled={creatingRealTimeStrategy || isBacktesting || loading || !strategy || runningBatchBacktest}
+            >
+              {creatingRealTimeStrategy ? '创建中...' : '创建实时策略'}
             </button>
           </div>
         ) : (

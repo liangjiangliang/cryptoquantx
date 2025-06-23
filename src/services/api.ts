@@ -812,3 +812,56 @@ export const fetchFailedStrategies = async (batchBacktestId?: string): Promise<a
     return [];
   }
 };
+
+// 创建实时策略
+export const createRealTimeStrategy = async (
+  strategyCode: string,
+  symbol: string,
+  interval: string,
+  tradeAmount: number
+): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    const url = '/api/api/backtest/ta4j/real-time';
+    
+    // 构建参数
+    const params = new URLSearchParams();
+    params.append('strategyCode', strategyCode);
+    params.append('symbol', symbol);
+    params.append('interval', interval);
+    params.append('tradeAmount', tradeAmount.toString());
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('创建实时策略API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || '实时策略创建成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '创建实时策略失败'
+      };
+    }
+  } catch (error) {
+    console.error('创建实时策略失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '创建实时策略请求发生错误'
+    };
+  }
+};
