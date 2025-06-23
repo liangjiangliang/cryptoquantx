@@ -1,31 +1,12 @@
 import React from 'react';
 import './QuickTimeSelector.css';
-import { formatDateTimeString } from '../../services/api';
+import { getCurrentTimeString, getTodayDateString } from '../../services/api';
 
 interface QuickTimeSelectorProps {
   onTimeRangeSelect: (startDate: string, endDate: string) => void;
 }
 
 const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ onTimeRangeSelect }) => {
-  // 获取当前时间字符串（精确到秒）
-  const getCurrentTimeString = (): string => {
-    const now = new Date();
-    return formatDateTimeString(now);
-  };
-
-  // 获取今天的日期字符串（仅日期部分）
-  const getTodayDateString = (): string => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
-
-  // 计算指定时间前的日期（精确到当前秒）
-  const getDateTimeBefore = (months: number): string => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - months);
-    return formatDateTimeString(date);
-  };
-
   // 计算指定时间前的日期（仅日期部分）
   const getDateBefore = (months: number): string => {
     const date = new Date();
@@ -47,15 +28,13 @@ const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ onTimeRangeSelect
 
   const handleQuickSelect = (months: number, isToday = false) => {
     if (isToday) {
-      // 今天：从今天00:00:00到当前精确时间
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // 设置为今天的00:00:00
-      const startDate = formatDateTimeString(today);
+      // 今天：开始时间是今天00:00:00，结束时间是当前精确时间
+      const startDate = `${getTodayDateString()} 00:00:00`;
       const endDate = getCurrentTimeString();
       onTimeRangeSelect(startDate, endDate);
     } else {
-      // 其他时间范围：使用精确时间
-      const startDate = getDateTimeBefore(months);
+      // 其他时间范围：开始时间是指定日期00:00:00，结束时间是当前精确时间
+      const startDate = `${getDateBefore(months)} 00:00:00`;
       const endDate = getCurrentTimeString();
       onTimeRangeSelect(startDate, endDate);
     }

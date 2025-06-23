@@ -52,6 +52,41 @@ export const getTodayDateString = (): string => {
   return `${year}-${month}-${day}`;
 };
 
+// 获取当前时间的字符串格式（yyyy-MM-dd HH:mm:ss）
+export const getCurrentTimeString = (): string => {
+  return formatDateTimeString(new Date());
+};
+
+// 从时间字符串中提取日期部分（yyyy-MM-dd）
+export const extractDatePart = (timeStr: string): string => {
+  if (!timeStr) return '';
+  // 如果包含空格，说明有时间部分，只取日期部分
+  if (timeStr.includes(' ')) {
+    return timeStr.split(' ')[0];
+  }
+  // 如果已经是日期格式，直接返回
+  return timeStr;
+};
+
+// 规范化为完整的时间格式（yyyy-MM-dd HH:mm:ss）
+export const normalizeToFullTimeFormat = (timeStr: string): string => {
+  if (!timeStr) return '';
+  
+  // 如果已经包含时间部分，直接返回（但要处理重复格式问题）
+  if (timeStr.includes(' ')) {
+    // 处理类似 "2025-06-23 22:55:02 00:00:00" 的重复格式
+    const parts = timeStr.split(' ');
+    if (parts.length >= 2) {
+      // 只取前两部分：日期和时间
+      return `${parts[0]} ${parts[1]}`;
+    }
+    return timeStr;
+  }
+  
+  // 如果只有日期部分，添加 00:00:00
+  return `${timeStr} 00:00:00`;
+};
+
 // 保持向后兼容，使用getTodayDateString
 export const getYesterdayDateString = getTodayDateString;
 
@@ -231,10 +266,14 @@ export const fetchHistoryWithIntegrityCheck = async (
   data: CandlestickData[];
   message: string;
 }> => {
-  // 如果没有提供时间范围，使用默认时间范围（昨天开始往前一年）
+  // 如果没有提供时间范围，使用默认时间范围
   const defaultRange = getDefaultDateRange();
-  const normalizedStartDate = startDate ? normalizeTimeString(startDate) : defaultRange.startDate;
-  const normalizedEndDate = defaultRange.endDate;
+  
+  // startDate 需要完整的时间格式（yyyy-MM-dd HH:mm:ss）
+  const normalizedStartDate = startDate ? normalizeToFullTimeFormat(startDate) : defaultRange.startDate;
+  
+  // endDate 需要完整的时间格式（yyyy-MM-dd HH:mm:ss）
+  const normalizedEndDate = endDate ? normalizeToFullTimeFormat(endDate) : getCurrentTimeString();
 
   try {
     // 构建API URL
@@ -422,8 +461,8 @@ export const createBacktest = async (
       interval,
       strategyCode,
       strategyParams: JSON.stringify(params),
-      startTime: startDate ? formatDateString(startDate) : undefined,
-      endTime: endDate ? formatDateString(endDate) : undefined,
+      startTime: startDate || getDefaultDateRange().startDate,
+      endTime: endDate || getCurrentTimeString(),
       initialAmount
     };
 
@@ -495,12 +534,12 @@ export const runAllBacktests = async (
   feeRatio: number = 0.001
 ): Promise<any> => {
   try {
-    // 格式化开始和结束时间
-    const formattedStartTime = startDate ? formatDateString(startDate) : undefined;
-    const formattedEndTime = endDate ? formatDateString(endDate) : undefined;
+    // 直接使用传入的时间，这些时间应该已经是正确的格式
+    const formattedStartTime = startDate || getDefaultDateRange().startDate;
+    const formattedEndTime = endDate || getCurrentTimeString();
 
     // 构建API URL
-    const url = `/api/api/backtest/ta4j/run-all?startTime=${encodeURIComponent(formattedStartTime || '')}&endTime=${encodeURIComponent(formattedEndTime || '')}&initialAmount=${initialAmount}&symbol=${symbol}&interval=${interval}&saveResult=True&feeRatio=${feeRatio}`;
+    const url = `/api/api/backtest/ta4j/run-all?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialAmount}&symbol=${symbol}&interval=${interval}&saveResult=True&feeRatio=${feeRatio}`;
 
     console.log('发送批量回测请求:', url);
 

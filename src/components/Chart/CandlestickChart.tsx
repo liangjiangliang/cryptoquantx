@@ -2531,9 +2531,9 @@ const CandlestickChart: React.FC = () => {
     setIsHistoryLoading(true);
 
     try {
-      // 使用Redux中的日期范围，统一格式化时间
-      const startTimeStr = `${dateRange.startDate} 00:00:00`;
-      const endTimeStr = `${dateRange.endDate} 00:00:00`;
+      // 直接使用Redux中的日期范围，已经是完整的时间格式
+      const startTimeStr = dateRange.startDate;
+      const endTimeStr = dateRange.endDate;
 
       // 确保时间周期格式正确
       const normalizedTimeframe = timeframe;
@@ -3010,19 +3010,15 @@ const CandlestickChart: React.FC = () => {
   // 处理日期变更
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDatePart = e.target.value;
-    // 保留原有的时间部分，只更改日期部分
-    const existingTimePart = dateRange.startDate.includes(' ') ? 
-      dateRange.startDate.split(' ')[1] : '00:00:00';
-    const newStartDate = `${newDatePart} ${existingTimePart}`;
+    // 手动选择日期时，使用00:00:00作为开始时间
+    const newStartDate = `${newDatePart} 00:00:00`;
     
     // 获取结束日期的日期部分进行比较
     const endDatePart = dateRange.endDate.split(' ')[0];
     
-    // 如果开始日期大于结束日期，自动调整结束日期
+    // 如果开始日期大于结束日期，自动调整结束日期为选择日期的23:59:59
     if (newDatePart > endDatePart) {
-      const endTimePart = dateRange.endDate.includes(' ') ? 
-        dateRange.endDate.split(' ')[1] : '23:59:59';
-      dispatch(setDateRange(newStartDate, `${newDatePart} ${endTimePart}`));
+      dispatch(setDateRange(newStartDate, `${newDatePart} 23:59:59`));
     } else {
       dispatch(setDateRange(newStartDate, dateRange.endDate));
     }
@@ -3030,19 +3026,15 @@ const CandlestickChart: React.FC = () => {
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDatePart = e.target.value;
-    // 保留原有的时间部分，只更改日期部分
-    const existingTimePart = dateRange.endDate.includes(' ') ? 
-      dateRange.endDate.split(' ')[1] : '23:59:59';
-    const newEndDate = `${newDatePart} ${existingTimePart}`;
+    // 手动选择日期时，使用23:59:59作为结束时间
+    const newEndDate = `${newDatePart} 23:59:59`;
     
     // 获取开始日期的日期部分进行比较
     const startDatePart = dateRange.startDate.split(' ')[0];
     
-    // 如果结束日期小于开始日期，自动调整开始日期
+    // 如果结束日期小于开始日期，自动调整开始日期为选择日期的00:00:00
     if (newDatePart < startDatePart) {
-      const startTimePart = dateRange.startDate.includes(' ') ? 
-        dateRange.startDate.split(' ')[1] : '00:00:00';
-      dispatch(setDateRange(`${newDatePart} ${startTimePart}`, newEndDate));
+      dispatch(setDateRange(`${newDatePart} 00:00:00`, newEndDate));
     } else {
       dispatch(setDateRange(dateRange.startDate, newEndDate));
     }

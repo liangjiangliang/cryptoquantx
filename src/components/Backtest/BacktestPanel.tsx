@@ -182,9 +182,9 @@ const BacktestPanel: React.FC = () => {
     dispatch(startBacktest());
 
     try {
-      // 格式化开始和结束时间
-      const formattedStartTime = `${dateRange.startDate} 00:00:00`;
-      const formattedEndTime = `${dateRange.endDate} 00:00:00`;
+      // 直接使用已经正确格式化的时间范围
+      const formattedStartTime = dateRange.startDate;
+      const formattedEndTime = dateRange.endDate;
 
       // 构建API URL，添加手续费参数
       const url = `/api/api/backtest/ta4j/run?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialCapital}&strategyType=${strategy}&symbol=${selectedPair}&interval=${timeframe}&saveResult=True&feeRatio=${feeRatio}`;
@@ -330,19 +330,15 @@ const BacktestPanel: React.FC = () => {
   // 处理日期变更
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDatePart = e.target.value;
-    // 保留原有的时间部分，只更改日期部分
-    const existingTimePart = dateRange.startDate.includes(' ') ? 
-      dateRange.startDate.split(' ')[1] : '00:00:00';
-    const newStartDate = `${newDatePart} ${existingTimePart}`;
+    // 手动选择日期时，使用00:00:00作为开始时间
+    const newStartDate = `${newDatePart} 00:00:00`;
     dispatch(setDateRange(newStartDate, dateRange.endDate));
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDatePart = e.target.value;
-    // 保留原有的时间部分，只更改日期部分
-    const existingTimePart = dateRange.endDate.includes(' ') ? 
-      dateRange.endDate.split(' ')[1] : '23:59:59';
-    const newEndDate = `${newDatePart} ${existingTimePart}`;
+    // 手动选择日期时，使用23:59:59作为结束时间
+    const newEndDate = `${newDatePart} 23:59:59`;
     dispatch(setDateRange(dateRange.startDate, newEndDate));
   };
 
