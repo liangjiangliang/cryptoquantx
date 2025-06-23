@@ -600,6 +600,9 @@ const CandlestickChart: React.FC = () => {
             timeVisible: true,
             secondsVisible: false,
             barSpacing: savedBarSpacing, // 使用保存的K线宽度
+            rightOffset: 10, // 在右侧留出一些空间
+            fixLeftEdge: false, // 允许滚动到最左边
+            fixRightEdge: false, // 允许滚动到最右边
           },
         };
 
@@ -735,9 +738,19 @@ const CandlestickChart: React.FC = () => {
           // 同步所有图表的时间轴
           syncTimeScales();
 
-          // 使图表内容适应新尺寸
+          // 使图表内容适应新尺寸 - 确保显示全部数据
           if (chart.current && candlestickData.length > 0) {
             chart.current.timeScale().fitContent();
+            // 强制显示全部数据范围
+            setTimeout(() => {
+              if (chart.current && candlestickData.length > 0) {
+                chart.current.timeScale().setVisibleLogicalRange({
+                  from: 0,
+                  to: candlestickData.length - 1
+                });
+                chart.current.timeScale().fitContent();
+              }
+            }, 50);
           }
         }, 100);
       };
@@ -1075,11 +1088,23 @@ const CandlestickChart: React.FC = () => {
             console.error('清空数据时出错:', error);
           }
 
-          // 适配视图
+          // 适配视图 - 确保显示全部数据
           setTimeout(() => {
-            if (chart.current) {
+            if (chart.current && formattedData.length > 0) {
               // console.log('调整图表视图');
               chart.current.timeScale().fitContent();
+              
+              // 强制设置可见范围为全部数据
+              setTimeout(() => {
+                if (chart.current) {
+                  chart.current.timeScale().setVisibleLogicalRange({
+                    from: 0,
+                    to: formattedData.length - 1
+                  });
+                  // 再次调用fitContent确保完整显示
+                  chart.current.timeScale().fitContent();
+                }
+              }, 100);
             }
           }, 50);
 
@@ -2700,8 +2725,20 @@ const CandlestickChart: React.FC = () => {
           });
         }
 
-        // 使时间轴适应新宽度
+        // 使时间轴适应新宽度 - 确保显示全部数据
         chart.current.timeScale().fitContent();
+        // 强制显示全部数据范围
+        if (candlestickData.length > 0) {
+          setTimeout(() => {
+            if (chart.current) {
+              chart.current.timeScale().setVisibleLogicalRange({
+                from: 0,
+                to: candlestickData.length - 1
+              });
+              chart.current.timeScale().fitContent();
+            }
+          }, 50);
+        }
         syncTimeScales();
       }
     }, 350); // 延迟时间略长于CSS过渡时间
