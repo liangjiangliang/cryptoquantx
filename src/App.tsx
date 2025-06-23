@@ -10,6 +10,7 @@ import BacktestFactoryPage from './pages/BacktestFactoryPage';
 import BacktestCreatePage from './pages/BacktestCreatePage';
 import BatchBacktestPage from './pages/BatchBacktestPage';
 import BatchBacktestDetailPage from './pages/BatchBacktestDetailPage';
+import RealTimeStrategyPage from './pages/RealTimeStrategyPage';
 import DataLoader from './components/DataLoader';
 import GlobalNavbar from './components/GlobalNavbar';
 import {clearBacktestResults} from './store/actions';
@@ -159,6 +160,7 @@ function App() {
                         <Route path="/backtest-create/:strategyCode" element={<BacktestCreatePage/>}/>
                         <Route path="/batch-backtest" element={<BatchBacktestPage/>}/>
                         <Route path="/batch-backtest-detail/:batchId" element={<BatchBacktestDetailPage/>}/>
+                        <Route path="/real-time-strategy" element={<RealTimeStrategyPage/>}/>
                         <Route path="/" element={<HomePage/>}/>
                     </Routes>
                 </div>
