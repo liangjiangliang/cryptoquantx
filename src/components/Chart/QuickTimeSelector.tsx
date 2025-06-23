@@ -1,19 +1,32 @@
 import React from 'react';
 import './QuickTimeSelector.css';
+import { formatDateTimeString } from '../../services/api';
 
 interface QuickTimeSelectorProps {
   onTimeRangeSelect: (startDate: string, endDate: string) => void;
 }
 
 const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ onTimeRangeSelect }) => {
-  // 获取昨天的日期字符串
-  const getYesterdayDateString = (): string => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return yesterday.toISOString().split('T')[0];
+  // 获取当前时间字符串（精确到秒）
+  const getCurrentTimeString = (): string => {
+    const now = new Date();
+    return formatDateTimeString(now);
   };
 
-  // 计算指定时间前的日期
+  // 获取今天的日期字符串（仅日期部分）
+  const getTodayDateString = (): string => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  // 计算指定时间前的日期（精确到当前秒）
+  const getDateTimeBefore = (months: number): string => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - months);
+    return formatDateTimeString(date);
+  };
+
+  // 计算指定时间前的日期（仅日期部分）
   const getDateBefore = (months: number): string => {
     const date = new Date();
     date.setMonth(date.getMonth() - months);
@@ -21,7 +34,8 @@ const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ onTimeRangeSelect
   };
 
   // 快捷时间选项
-  const timeOptions = [
+  const timeOptions: Array<{ label: string; months: number; isToday?: boolean }> = [
+    { label: '今天', months: 0, isToday: true },
     { label: '1个月', months: 1 },
     { label: '3个月', months: 3 },
     { label: '半年', months: 6 },
@@ -31,10 +45,20 @@ const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ onTimeRangeSelect
     { label: '5年', months: 60 }
   ];
 
-  const handleQuickSelect = (months: number) => {
-    const startDate = getDateBefore(months);
-    const endDate = getYesterdayDateString();
-    onTimeRangeSelect(startDate, endDate);
+  const handleQuickSelect = (months: number, isToday = false) => {
+    if (isToday) {
+      // 今天：从今天00:00:00到当前精确时间
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // 设置为今天的00:00:00
+      const startDate = formatDateTimeString(today);
+      const endDate = getCurrentTimeString();
+      onTimeRangeSelect(startDate, endDate);
+    } else {
+      // 其他时间范围：使用精确时间
+      const startDate = getDateTimeBefore(months);
+      const endDate = getCurrentTimeString();
+      onTimeRangeSelect(startDate, endDate);
+    }
   };
 
   return (
@@ -43,9 +67,9 @@ const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ onTimeRangeSelect
       <div className="quick-time-buttons">
         {timeOptions.map(option => (
           <button
-            key={option.months}
+            key={option.label}
             className="quick-time-button"
-            onClick={() => handleQuickSelect(option.months)}
+            onClick={() => handleQuickSelect(option.months, option.isToday)}
             type="button"
           >
             {option.label}

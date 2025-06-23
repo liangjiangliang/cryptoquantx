@@ -3009,20 +3009,40 @@ const CandlestickChart: React.FC = () => {
 
   // 处理日期变更
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newStartDate = e.target.value;
+    const newDatePart = e.target.value;
+    // 保留原有的时间部分，只更改日期部分
+    const existingTimePart = dateRange.startDate.includes(' ') ? 
+      dateRange.startDate.split(' ')[1] : '00:00:00';
+    const newStartDate = `${newDatePart} ${existingTimePart}`;
+    
+    // 获取结束日期的日期部分进行比较
+    const endDatePart = dateRange.endDate.split(' ')[0];
+    
     // 如果开始日期大于结束日期，自动调整结束日期
-    if (newStartDate > dateRange.endDate) {
-      dispatch(setDateRange(newStartDate, newStartDate));
+    if (newDatePart > endDatePart) {
+      const endTimePart = dateRange.endDate.includes(' ') ? 
+        dateRange.endDate.split(' ')[1] : '23:59:59';
+      dispatch(setDateRange(newStartDate, `${newDatePart} ${endTimePart}`));
     } else {
       dispatch(setDateRange(newStartDate, dateRange.endDate));
     }
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEndDate = e.target.value;
+    const newDatePart = e.target.value;
+    // 保留原有的时间部分，只更改日期部分
+    const existingTimePart = dateRange.endDate.includes(' ') ? 
+      dateRange.endDate.split(' ')[1] : '23:59:59';
+    const newEndDate = `${newDatePart} ${existingTimePart}`;
+    
+    // 获取开始日期的日期部分进行比较
+    const startDatePart = dateRange.startDate.split(' ')[0];
+    
     // 如果结束日期小于开始日期，自动调整开始日期
-    if (newEndDate < dateRange.startDate) {
-      dispatch(setDateRange(newEndDate, newEndDate));
+    if (newDatePart < startDatePart) {
+      const startTimePart = dateRange.startDate.includes(' ') ? 
+        dateRange.startDate.split(' ')[1] : '00:00:00';
+      dispatch(setDateRange(`${newDatePart} ${startTimePart}`, newEndDate));
     } else {
       dispatch(setDateRange(dateRange.startDate, newEndDate));
     }
@@ -3072,8 +3092,8 @@ const CandlestickChart: React.FC = () => {
               <input
                 type="date"
                 className="date-input"
-                value={dateRange.startDate}
-                max={dateRange.endDate < getYesterdayDateString() ? dateRange.endDate : getYesterdayDateString()}
+                value={dateRange.startDate.split(' ')[0]}
+                max={dateRange.endDate.split(' ')[0] < getYesterdayDateString() ? dateRange.endDate.split(' ')[0] : getYesterdayDateString()}
                 onChange={handleStartDateChange}
               />
             </div>
@@ -3082,8 +3102,8 @@ const CandlestickChart: React.FC = () => {
               <input
                 type="date"
                 className="date-input"
-                value={dateRange.endDate}
-                min={dateRange.startDate}
+                value={dateRange.endDate.split(' ')[0]}
+                min={dateRange.startDate.split(' ')[0]}
                 max={getYesterdayDateString()}
                 onChange={handleEndDateChange}
               />

@@ -140,8 +140,11 @@ const RouteChangeHandler = () => {
 };
 
 function App() {
-    // 只在开发环境下显示工具栏
-    const [showToolbar, setShowToolbar] = useState(process.env.NODE_ENV === 'development');
+    // 通过环境变量控制工具栏显示，默认禁用以避免兼容性问题
+    const [showToolbar, setShowToolbar] = useState(
+        process.env.NODE_ENV === 'development' && 
+        process.env.REACT_APP_ENABLE_STAGEWISE === 'true'
+    );
 
     return (
         <Provider store={store}>

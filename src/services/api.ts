@@ -3,17 +3,14 @@ import { BacktestSummary } from '../store/types';
 
 // 统一的时间处理工具函数
 export const getDefaultDateRange = () => {
-  const today = new Date();
+  const now = new Date();
   
-  // 结束时间：昨天00:00:00  
-  const endDate = new Date(today);
-  endDate.setDate(today.getDate() - 1);
-  endDate.setHours(0, 0, 0, 0);
+  // 结束时间：当前精确时间  
+  const endDate = new Date(now);
   
-  // 开始时间：昨天往前一年 00:00:00
-  const startDate = new Date(endDate);
-  startDate.setFullYear(endDate.getFullYear() - 1);
-  startDate.setHours(0, 0, 0, 0);
+  // 开始时间：一年前的当前时间
+  const startDate = new Date(now);
+  startDate.setFullYear(now.getFullYear() - 1);
   
   return {
     startDate: formatDateTimeString(startDate),
@@ -44,18 +41,19 @@ export const normalizeTimeString = (timeStr: string): string => {
   return `${timeStr} 00:00:00`;
 };
 
-// 获取昨天的日期字符串（yyyy-MM-dd格式），用于限制日期选择器的最大值
-export const getYesterdayDateString = (): string => {
+// 获取今天的日期字符串（yyyy-MM-dd格式），用于限制日期选择器的最大值
+export const getTodayDateString = (): string => {
   const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
   
-  const year = yesterday.getFullYear();
-  const month = String(yesterday.getMonth() + 1).padStart(2, '0');
-  const day = String(yesterday.getDate()).padStart(2, '0');
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
   
   return `${year}-${month}-${day}`;
 };
+
+// 保持向后兼容，使用getTodayDateString
+export const getYesterdayDateString = getTodayDateString;
 
 interface ApiResponse {
   code: number;
@@ -236,7 +234,7 @@ export const fetchHistoryWithIntegrityCheck = async (
   // 如果没有提供时间范围，使用默认时间范围（昨天开始往前一年）
   const defaultRange = getDefaultDateRange();
   const normalizedStartDate = startDate ? normalizeTimeString(startDate) : defaultRange.startDate;
-  const normalizedEndDate = endDate ? normalizeTimeString(endDate) : defaultRange.endDate;
+  const normalizedEndDate = defaultRange.endDate;
 
   try {
     // 构建API URL

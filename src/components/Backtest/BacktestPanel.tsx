@@ -329,11 +329,21 @@ const BacktestPanel: React.FC = () => {
 
   // 处理日期变更
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setDateRange(e.target.value, dateRange.endDate));
+    const newDatePart = e.target.value;
+    // 保留原有的时间部分，只更改日期部分
+    const existingTimePart = dateRange.startDate.includes(' ') ? 
+      dateRange.startDate.split(' ')[1] : '00:00:00';
+    const newStartDate = `${newDatePart} ${existingTimePart}`;
+    dispatch(setDateRange(newStartDate, dateRange.endDate));
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setDateRange(dateRange.startDate, e.target.value));
+    const newDatePart = e.target.value;
+    // 保留原有的时间部分，只更改日期部分
+    const existingTimePart = dateRange.endDate.includes(' ') ? 
+      dateRange.endDate.split(' ')[1] : '23:59:59';
+    const newEndDate = `${newDatePart} ${existingTimePart}`;
+    dispatch(setDateRange(dateRange.startDate, newEndDate));
   };
 
   // 处理快捷时间选择
@@ -483,7 +493,7 @@ const BacktestPanel: React.FC = () => {
               <label>开始日期</label>
               <input
                 type="date"
-                value={dateRange.startDate}
+                value={dateRange.startDate.split(' ')[0]}
                 max={getYesterdayDateString()}
                 onChange={handleStartDateChange}
               />
@@ -493,7 +503,7 @@ const BacktestPanel: React.FC = () => {
               <label>结束日期</label>
               <input
                 type="date"
-                value={dateRange.endDate}
+                value={dateRange.endDate.split(' ')[0]}
                 max={getYesterdayDateString()}
                 onChange={handleEndDateChange}
               />
