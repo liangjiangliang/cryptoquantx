@@ -620,7 +620,9 @@ const BacktestPanel: React.FC = () => {
               </div>
               <div className="summary-item">
                 <span className="label">年化收益率</span>
-                <span className="value positive">{backtestResults.annualizedReturn ? (backtestResults.annualizedReturn * 100).toFixed(2) + '%' : '-'}</span>
+                <span className={`value ${backtestResults.annualizedReturn && backtestResults.annualizedReturn >= 0 ? 'positive' : 'negative'}`}>
+                  {backtestResults.annualizedReturn ? (backtestResults.annualizedReturn * 100).toFixed(2) + '%' : '-'}
+                </span>
               </div>
               <div className="summary-item">
                 <span className="label">总交易次数</span>

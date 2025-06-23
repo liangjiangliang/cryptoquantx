@@ -66,7 +66,7 @@ export const formatAmount = (amount: number, decimals: number = 4): string => {
  * 格式化百分比
  */
 export const formatPercentage = (value: number): string => {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+  return `${value.toFixed(2)}%`;
 };
 
 /**
