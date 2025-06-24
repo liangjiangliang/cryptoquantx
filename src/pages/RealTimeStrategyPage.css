@@ -199,4 +199,19 @@
   .page-header h1 {
     font-size: 20px;
   }
+}
+
+.strategy-detail-btn {
+  padding: 6px 14px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.strategy-detail-btn:hover {
+  background-color: #1976d2;
 } 

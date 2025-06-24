@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './RealTimeStrategyPage.css';
 
 interface RealTimeStrategy {
@@ -19,6 +20,7 @@ const RealTimeStrategyPage: React.FC = () => {
   const [strategies, setStrategies] = useState<RealTimeStrategy[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+  const navigate = useNavigate();
 
   // 获取实盘策略列表
   const fetchRealTimeStrategies = async () => {
@@ -98,26 +100,11 @@ const RealTimeStrategyPage: React.FC = () => {
 
   return (
     <div className="real-time-strategy-page">
-      <div className="page-header">
-        <h1>实盘策略管理</h1>
-        <div className="header-actions">
-          <button 
-            className="refresh-button" 
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            {loading ? '刷新中...' : '刷新数据'}
-          </button>
-        </div>
-      </div>
-
       {error && (
         <div className="error-message">
           <p>错误: {error}</p>
-          <button onClick={handleRefresh}>重试</button>
         </div>
       )}
-
       {loading ? (
         <div className="loading-container">
           <div className="loading-spinner"></div>
@@ -145,6 +132,7 @@ const RealTimeStrategyPage: React.FC = () => {
                     <th>交易次数</th>
                     <th>创建时间</th>
                     <th>更新时间</th>
+                    <th>操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -166,6 +154,14 @@ const RealTimeStrategyPage: React.FC = () => {
                       <td>{strategy.totalTrades || 0}</td>
                       <td>{formatDateTime(strategy.createTime)}</td>
                       <td>{formatDateTime(strategy.updateTime)}</td>
+                      <td>
+                        <button
+                          className="strategy-detail-btn"
+                          onClick={() => navigate(`/real-time-strategy-detail/${strategy.strategyCode}`)}
+                        >
+                          查看详情
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
