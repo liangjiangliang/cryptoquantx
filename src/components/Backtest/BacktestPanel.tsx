@@ -73,7 +73,7 @@ const BacktestPanel: React.FC = () => {
   
   // 实时策略状态
   const [creatingRealTimeStrategy, setCreatingRealTimeStrategy] = useState(false);
-  const [tradeAmount, setTradeAmount] = useState<string>('20'); // 默认交易金额
+  const [tradeAmount, setTradeAmount] = useState<string>('2'); // 默认交易金额
 
   // 获取可用策略列表
   useEffect(() => {
