@@ -3053,9 +3053,26 @@ const CandlestickChart: React.FC = () => {
     // 获取结束日期的日期部分进行比较
     const endDatePart = dateRange.endDate.split(' ')[0];
     
-    // 如果开始日期大于结束日期，自动调整结束日期为选择日期的23:59:59
+    // 如果开始日期大于结束日期，自动调整结束日期
     if (newDatePart > endDatePart) {
-      dispatch(setDateRange(newStartDate, `${newDatePart} 23:59:59`));
+      // 获取当前时间
+      const now = new Date();
+      const today = now.getFullYear() + '-' + 
+                   String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(now.getDate()).padStart(2, '0');
+      
+      let adjustedEndDate;
+      if (newDatePart === today) {
+        // 如果选择的是今天，使用当前精确时间
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        adjustedEndDate = `${newDatePart} ${hours}:${minutes}:${seconds}`;
+      } else {
+        // 如果选择的是其他日期，使用23:59:59
+        adjustedEndDate = `${newDatePart} 23:59:59`;
+      }
+      dispatch(setDateRange(newStartDate, adjustedEndDate));
     } else {
       dispatch(setDateRange(newStartDate, dateRange.endDate));
     }
@@ -3063,8 +3080,24 @@ const CandlestickChart: React.FC = () => {
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDatePart = e.target.value;
-    // 手动选择日期时，使用23:59:59作为结束时间
-    const newEndDate = `${newDatePart} 23:59:59`;
+    
+    // 获取当前时间
+    const now = new Date();
+    const today = now.getFullYear() + '-' + 
+                 String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                 String(now.getDate()).padStart(2, '0');
+    
+    let newEndDate;
+    if (newDatePart === today) {
+      // 如果选择的是今天，使用当前精确时间
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      newEndDate = `${newDatePart} ${hours}:${minutes}:${seconds}`;
+    } else {
+      // 如果选择的是其他日期，使用23:59:59
+      newEndDate = `${newDatePart} 23:59:59`;
+    }
     
     // 获取开始日期的日期部分进行比较
     const startDatePart = dateRange.startDate.split(' ')[0];

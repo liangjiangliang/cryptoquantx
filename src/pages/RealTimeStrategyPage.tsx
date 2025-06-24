@@ -75,7 +75,7 @@ const RealTimeStrategyPage: React.FC = () => {
 
   // 格式化金额
   const formatAmount = (amount: number | null | undefined): string => {
-    if (amount === null || amount === undefined) return '-';
+    if (amount === null || amount === undefined) return '0';
     return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
@@ -123,15 +123,16 @@ const RealTimeStrategyPage: React.FC = () => {
                 <thead>
                   <tr>
                     <th>策略名称</th>
-                    <th>策略代码</th>
+  
                     <th>交易对</th>
                     <th>时间周期</th>
                     <th>交易金额</th>
-                    <th>状态</th>
+                   
                     <th>总收益</th>
                     <th>交易次数</th>
                     <th>创建时间</th>
                     <th>更新时间</th>
+                    <th>状态</th>
                     <th>操作</th>
                   </tr>
                 </thead>
@@ -139,21 +140,22 @@ const RealTimeStrategyPage: React.FC = () => {
                   {strategies.map((strategy) => (
                     <tr key={strategy.id}>
                       <td>{strategy.strategyName || '-'}</td>
-                      <td>{strategy.strategyCode}</td>
+      
                       <td>{strategy.symbol}</td>
                       <td>{strategy.interval}</td>
                       <td>{formatAmount(strategy.tradeAmount)} USDT</td>
-                      <td>
-                        <span className={`status-badge ${getStatusClass(strategy.status)}`}>
-                          {strategy.status || 'UNKNOWN'}
-                        </span>
-                      </td>
+                    
                       <td className={strategy.totalProfit && strategy.totalProfit >= 0 ? 'positive' : 'negative'}>
                         {formatAmount(strategy.totalProfit)} USDT
                       </td>
                       <td>{strategy.totalTrades || 0}</td>
                       <td>{formatDateTime(strategy.createTime)}</td>
                       <td>{formatDateTime(strategy.updateTime)}</td>
+                      <td>
+                        <span className={`status-badge ${getStatusClass(strategy.status)}`}>
+                          {strategy.status || 'UNKNOWN'}
+                        </span>
+                      </td>
                       <td>
                         <button
                           className="strategy-detail-btn"

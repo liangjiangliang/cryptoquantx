@@ -28,16 +28,25 @@ export const TIMEFRAMES = [
   { value: '1M', label: '1月' }
 ];
 
-// 获取一年前的日期
+// 获取一年前的日期（带时间）
 export const getDefaultStartDate = (): string => {
   const date = new Date();
   date.setFullYear(date.getFullYear() - 1);
-  return date.toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
+  // 设置为当天的00:00:00
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day} 00:00:00`;
 };
 
-// 获取昨天日期
+// 获取当前时间（精确到秒）
 export const getDefaultEndDate = (): string => {
-  const date = new Date();
-  date.setDate(date.getDate() - 1); // 减去1天，获取昨天的日期
-  return date.toISOString().split('T')[0]; // 返回YYYY-MM-DD格式
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }; 

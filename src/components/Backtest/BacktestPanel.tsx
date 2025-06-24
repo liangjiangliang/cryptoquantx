@@ -401,8 +401,25 @@ const BacktestPanel: React.FC = () => {
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDatePart = e.target.value;
-    // 手动选择日期时，使用23:59:59作为结束时间
-    const newEndDate = `${newDatePart} 23:59:59`;
+    
+    // 获取当前时间
+    const now = new Date();
+    const today = now.getFullYear() + '-' + 
+                 String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                 String(now.getDate()).padStart(2, '0');
+    
+    let newEndDate;
+    if (newDatePart === today) {
+      // 如果选择的是今天，使用当前精确时间
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      newEndDate = `${newDatePart} ${hours}:${minutes}:${seconds}`;
+    } else {
+      // 如果选择的是其他日期，使用23:59:59
+      newEndDate = `${newDatePart} 23:59:59`;
+    }
+    
     dispatch(setDateRange(dateRange.startDate, newEndDate));
   };
 
