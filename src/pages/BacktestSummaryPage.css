@@ -137,11 +137,12 @@
 }
 
 .summary-table-container {
-  overflow-y: auto;
+  overflow: auto;
   flex-grow: 1;
-  margin-top: 10px;
+  margin-top: 20px;
   margin-bottom: 20px;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100vh - 280px);
+  position: relative;
 }
 
 .filter-item input:focus, .filter-item select:focus {
@@ -170,16 +171,9 @@
   color: #4a618b;
 }
 
-.summary-table-container {
-  overflow-y: auto;
-  flex-grow: 1;
-  margin-top: 20px;
-  margin-bottom: 20px;
-  max-height: calc(100vh - 240px);
-}
-
 .summary-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   color: #e6e6e6;
   font-size: 14px;
@@ -190,6 +184,8 @@
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid #2a2a3a;
+  white-space: nowrap;
+  min-width: 100px;
 }
 
 .summary-table th {
@@ -198,7 +194,27 @@
   font-weight: 500;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 10;
+}
+
+/* 操作列固定在右侧 */
+.summary-table .actions-column,
+.summary-table .actions-cell {
+  position: sticky;
+  right: 0;
+  background-color: #16213e;
+  z-index: 11;
+  border-left: 2px solid #2a2a3a;
+  min-width: 80px;
+  width: 80px;
+}
+
+.summary-table .actions-cell {
+  background-color: #171b26;
+}
+
+.summary-table tbody tr:hover .actions-cell {
+  background-color: #1a2548;
 }
 
 .summary-table tbody tr:hover {

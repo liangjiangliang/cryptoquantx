@@ -23,7 +23,24 @@ const INDICATOR_DESCRIPTIONS = {
   profitFactor: `盈利因子：总盈利与总亏损的比值\n• **判断标准**：数值越高越好\n• **评级标准**：>1表示盈利，>1.5为良好，>2为优秀\n• **主要作用**：评估策略的基本盈利逻辑和可持续性`,
   skewness: `偏度：衡量收益分布的不对称性\n• **数值含义**：正值表示右偏（大涨概率高），负值表示左偏（大跌概率高），0表示对称分布\n• **判断标准**：绝对值越小分布越对称\n• **主要作用**：评估策略的收益分布特征和极端收益倾向`,
   treynorRatio: `特雷诺比率：每单位系统性风险（Beta）的超额收益\n• **判断标准**：数值越高越好\n• **适用条件**：适用于充分分散化的投资组合\n• **主要作用**：评估承担系统性风险的补偿是否充分`,
-  ulcerIndex: `溃疡指数：衡量回撤的深度和持续时间的风险指标\n• **判断标准**：数值越小越好\n• **综合考量**：同时考虑回撤的严重程度和持续时间\n• **主要作用**：评估投资者心理承受能力和策略的平稳性`
+  ulcerIndex: `溃疡指数：衡量回撤的深度和持续时间的风险指标\n• **判断标准**：数值越小越好\n• **综合考量**：同时考虑回撤的严重程度和持续时间\n• **主要作用**：评估投资者心理承受能力和策略的平稳性`,
+  burkeRatio: `伯克比率：考虑回撤严重性的风险调整收益比率\n• **判断标准**：数值越高越好\n• **特点**：重点关注回撤的平方根，更敏感于极端回撤\n• **主要作用**：评估策略在极端风险下的收益表现`,
+  comprehensiveScore: `综合评分：基于多个风险收益指标的综合评估分数\n• **判断标准**：分数越高越好\n• **评分体系**：综合考虑收益、风险、稳定性等多个维度\n• **主要作用**：提供策略整体表现的量化评估`,
+  cvar: `条件风险价值(CVaR)：超过VaR阈值的预期损失\n• **判断标准**：数值越小越好\n• **风险意义**：比VaR更保守，考虑极端损失的期望值\n• **主要作用**：评估极端市场条件下的潜在损失`,
+  downsideDeviation: `下行偏差：只考虑负收益的波动性指标\n• **判断标准**：数值越小越好\n• **计算特点**：仅统计低于目标收益率的波动\n• **主要作用**：专注评估不利情况下的风险`,
+  downtrendCapture: `下跌捕获比率：策略在市场下跌时的相对表现\n• **判断标准**：数值越小越好，<1表示下跌时损失较小\n• **数值含义**：0.8表示市场下跌10%时策略下跌8%\n• **主要作用**：评估策略的下行保护能力`,
+  informationRatio: `信息比率：超额收益与跟踪误差的比值\n• **判断标准**：数值越高越好\n• **适用场景**：主要用于评估主动管理策略\n• **主要作用**：衡量主动管理产生超额收益的效率`,
+  kurtosis: `峰度：衡量收益分布尾部厚度的统计指标\n• **数值含义**：>3表示厚尾分布，<3表示薄尾分布\n• **风险意义**：高峰度表示极端收益出现概率较高\n• **主要作用**：评估极端事件的发生可能性`,
+  maxDrawdownDuration: `最大回撤持续时间：最长的资产净值低于前期高点的时间\n• **判断标准**：时间越短越好\n• **单位**：通常以天数或交易周期计算\n• **主要作用**：评估策略恢复能力和投资者耐心要求`,
+  modifiedSharpeRatio: `修正夏普比率：考虑收益分布偏度和峰度的夏普比率\n• **判断标准**：数值越高越好\n• **改进点**：修正了传统夏普比率假设正态分布的局限\n• **主要作用**：更准确评估非正态分布策略的风险调整收益`,
+  painIndex: `痛苦指数：衡量投资者承受回撤痛苦程度的指标\n• **判断标准**：数值越小越好\n• **计算方式**：回撤深度与持续时间的加权平均\n• **主要作用**：从投资者心理角度评估策略的可接受性`,
+  riskAdjustedReturn: `风险调整收益：考虑风险因素后的实际收益\n• **判断标准**：数值越高越好\n• **计算方法**：通常为收益率除以某种风险指标\n• **主要作用**：公平比较不同风险水平策略的表现`,
+  sterlingRatio: `斯特林比率：年化收益率与平均最大回撤的比值\n• **判断标准**：数值越高越好\n• **特点**：使用平均回撤而非单次最大回撤\n• **主要作用**：评估策略的长期稳定盈利能力`,
+  trackingError: `跟踪误差：策略收益率与基准收益率差异的标准差\n• **判断标准**：数值大小取决于策略目标\n• **应用场景**：主要用于指数化投资和主动管理评估\n• **主要作用**：衡量策略偏离基准的程度`,
+  uptrendCapture: `上涨捕获比率：策略在市场上涨时的相对表现\n• **判断标准**：数值越大越好，>1表示上涨时收益超过市场\n• **数值含义**：1.2表示市场上涨10%时策略上涨12%\n• **主要作用**：评估策略的上涨参与能力`,
+  var95: `95%风险价值(VaR)：95%置信度下的最大预期损失\n• **判断标准**：绝对值越小越好\n• **统计含义**：有5%的概率损失会超过此值\n• **主要作用**：量化正常市场条件下的风险暴露`,
+  var99: `99%风险价值(VaR)：99%置信度下的最大预期损失\n• **判断标准**：绝对值越小越好\n• **统计含义**：有1%的概率损失会超过此值\n• **主要作用**：量化极端市场条件下的风险暴露`,
+  volatility: `波动率：收益率的标准差，衡量价格变动的剧烈程度\n• **判断标准**：根据策略类型而定，通常适中为好\n• **计算方式**：收益率序列的标准差\n• **主要作用**：评估策略的稳定性和风险水平`
 };
 
 // 排序方向类型
@@ -52,7 +69,6 @@ type SortField =
   | 'calmarRatio'
   | 'sortinoRatio'
   | 'averageProfit'
-
   | 'profitableTrades'
   | 'unprofitableTrades'
   | 'maximumLoss'
@@ -62,7 +78,24 @@ type SortField =
   | 'profitFactor'
   | 'skewness'
   | 'treynorRatio'
-  | 'ulcerIndex';
+  | 'ulcerIndex'
+  | 'burkeRatio'
+  | 'comprehensiveScore'
+  | 'cvar'
+  | 'downsideDeviation'
+  | 'downtrendCapture'
+  | 'informationRatio'
+  | 'kurtosis'
+  | 'maxDrawdownDuration'
+  | 'modifiedSharpeRatio'
+  | 'painIndex'
+  | 'riskAdjustedReturn'
+  | 'sterlingRatio'
+  | 'trackingError'
+  | 'uptrendCapture'
+  | 'var95'
+  | 'var99'
+  | 'volatility';
 
 // 过滤条件类型
 interface Filters {
@@ -443,6 +476,74 @@ const BacktestSummaryPage: React.FC = () => {
         case 'ulcerIndex':
           valueA = a.ulcerIndex || 0;
           valueB = b.ulcerIndex || 0;
+          break;
+        case 'burkeRatio':
+          valueA = a.burkeRatio || 0;
+          valueB = b.burkeRatio || 0;
+          break;
+        case 'comprehensiveScore':
+          valueA = a.comprehensiveScore || 0;
+          valueB = b.comprehensiveScore || 0;
+          break;
+        case 'cvar':
+          valueA = a.cvar || 0;
+          valueB = b.cvar || 0;
+          break;
+        case 'downsideDeviation':
+          valueA = a.downsideDeviation || 0;
+          valueB = b.downsideDeviation || 0;
+          break;
+        case 'downtrendCapture':
+          valueA = a.downtrendCapture || 0;
+          valueB = b.downtrendCapture || 0;
+          break;
+        case 'informationRatio':
+          valueA = a.informationRatio || 0;
+          valueB = b.informationRatio || 0;
+          break;
+        case 'kurtosis':
+          valueA = a.kurtosis || 0;
+          valueB = b.kurtosis || 0;
+          break;
+        case 'maxDrawdownDuration':
+          valueA = a.maxDrawdownDuration || 0;
+          valueB = b.maxDrawdownDuration || 0;
+          break;
+        case 'modifiedSharpeRatio':
+          valueA = a.modifiedSharpeRatio || 0;
+          valueB = b.modifiedSharpeRatio || 0;
+          break;
+        case 'painIndex':
+          valueA = a.painIndex || 0;
+          valueB = b.painIndex || 0;
+          break;
+        case 'riskAdjustedReturn':
+          valueA = a.riskAdjustedReturn || 0;
+          valueB = b.riskAdjustedReturn || 0;
+          break;
+        case 'sterlingRatio':
+          valueA = a.sterlingRatio || 0;
+          valueB = b.sterlingRatio || 0;
+          break;
+        case 'trackingError':
+          valueA = a.trackingError || 0;
+          valueB = b.trackingError || 0;
+          break;
+        case 'uptrendCapture':
+          valueA = a.uptrendCapture || 0;
+          valueB = b.uptrendCapture || 0;
+          break;
+        case 'var95':
+          valueA = a.var95 || 0;
+          valueB = b.var95 || 0;
+          break;
+        case 'var99':
+          valueA = a.var99 || 0;
+          valueB = b.var99 || 0;
+          break;
+        case 'volatility':
+          valueA = a.volatility || 0;
+          valueB = b.volatility || 0;
           break;
         default:
           valueA = a.id;
@@ -859,10 +960,180 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
+                <th onClick={() => handleSort('burkeRatio')} className="sortable-header">
+                  伯克比率 {renderSortIcon('burkeRatio')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('burkeRatio', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('comprehensiveScore')} className="sortable-header">
+                  综合评分 {renderSortIcon('comprehensiveScore')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('comprehensiveScore', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('cvar')} className="sortable-header">
+                  CVaR {renderSortIcon('cvar')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('cvar', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('downsideDeviation')} className="sortable-header">
+                  下行偏差 {renderSortIcon('downsideDeviation')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('downsideDeviation', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('downtrendCapture')} className="sortable-header">
+                  下跌捕获比率 {renderSortIcon('downtrendCapture')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('downtrendCapture', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('informationRatio')} className="sortable-header">
+                  信息比率 {renderSortIcon('informationRatio')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('informationRatio', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('kurtosis')} className="sortable-header">
+                  峰度 {renderSortIcon('kurtosis')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('kurtosis', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('maxDrawdownDuration')} className="sortable-header">
+                  最大回撤持续天数 {renderSortIcon('maxDrawdownDuration')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('maxDrawdownDuration', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('modifiedSharpeRatio')} className="sortable-header">
+                  修正夏普比率 {renderSortIcon('modifiedSharpeRatio')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('modifiedSharpeRatio', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('painIndex')} className="sortable-header">
+                  痛苦指数 {renderSortIcon('painIndex')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('painIndex', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('riskAdjustedReturn')} className="sortable-header">
+                  风险调整收益 {renderSortIcon('riskAdjustedReturn')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('riskAdjustedReturn', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('sterlingRatio')} className="sortable-header">
+                  斯特林比率 {renderSortIcon('sterlingRatio')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('sterlingRatio', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('trackingError')} className="sortable-header">
+                  跟踪误差 {renderSortIcon('trackingError')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('trackingError', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('uptrendCapture')} className="sortable-header">
+                  上涨捕获比率 {renderSortIcon('uptrendCapture')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('uptrendCapture', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('var95')} className="sortable-header">
+                  VaR95% {renderSortIcon('var95')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('var95', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('var99')} className="sortable-header">
+                  VaR99% {renderSortIcon('var99')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('var99', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('volatility')} className="sortable-header">
+                  波动率 {renderSortIcon('volatility')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('volatility', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
                 <th onClick={() => handleSort('createTime')} className="sortable-header">
                   创建时间 {renderSortIcon('createTime')}
                 </th>
-                <th>操作</th>
+                <th className="actions-column">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -901,8 +1172,25 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{summary.profitFactor ? summary.profitFactor.toFixed(4) : '-'}</td>
                   <td>{summary.skewness ? summary.skewness.toFixed(4) : '-'}</td>
                   <td>{summary.ulcerIndex ? summary.ulcerIndex.toFixed(2) : '-'}</td>
+                  <td>{summary.burkeRatio ? summary.burkeRatio.toFixed(4) : '-'}</td>
+                  <td>{summary.comprehensiveScore ? summary.comprehensiveScore.toFixed(2) : '-'}</td>
+                  <td>{summary.cvar ? summary.cvar.toFixed(4) : '-'}</td>
+                  <td>{summary.downsideDeviation ? summary.downsideDeviation.toFixed(4) : '-'}</td>
+                  <td>{summary.downtrendCapture ? summary.downtrendCapture.toFixed(4) : '-'}</td>
+                  <td>{summary.informationRatio ? summary.informationRatio.toFixed(4) : '-'}</td>
+                  <td>{summary.kurtosis ? summary.kurtosis.toFixed(4) : '-'}</td>
+                  <td>{summary.maxDrawdownDuration ? summary.maxDrawdownDuration : '-'}</td>
+                  <td>{summary.modifiedSharpeRatio ? summary.modifiedSharpeRatio.toFixed(4) : '-'}</td>
+                  <td>{summary.painIndex ? summary.painIndex.toFixed(4) : '-'}</td>
+                  <td>{summary.riskAdjustedReturn ? summary.riskAdjustedReturn.toFixed(4) : '-'}</td>
+                  <td>{summary.sterlingRatio ? summary.sterlingRatio.toFixed(4) : '-'}</td>
+                  <td>{summary.trackingError ? summary.trackingError.toFixed(4) : '-'}</td>
+                  <td>{summary.uptrendCapture ? summary.uptrendCapture.toFixed(4) : '-'}</td>
+                  <td>{summary.var95 ? summary.var95.toFixed(4) : '-'}</td>
+                  <td>{summary.var99 ? summary.var99.toFixed(4) : '-'}</td>
+                  <td>{summary.volatility ? summary.volatility.toFixed(4) : '-'}</td>
                   <td>{summary.id === 0 ? '-' : summary.createTime.substring(0, 10)}</td>
-                  <td>
+                  <td className="actions-cell">
                     {summary.id !== 0 && (
                       <Link
                         to={`/backtest-detail/${summary.backtestId}`}

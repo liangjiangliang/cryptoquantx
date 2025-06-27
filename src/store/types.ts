@@ -37,7 +37,6 @@ export interface BacktestSummary {
   success?: boolean; // 策略是否成功执行
   calmarRatio?: number; // 卡玛比率
   sortinoRatio?: number; // 索提诺比率
-
   maximumLoss?: number; // 最大损失
   // 新增字段
   alpha?: number; // Alpha系数
@@ -47,6 +46,23 @@ export interface BacktestSummary {
   skewness?: number; // 偏度
   treynorRatio?: number; // 特雷诺比率
   ulcerIndex?: number; // 溃疡指数
+  burkeRatio?: number; // 伯克比率
+  comprehensiveScore?: number; // 综合评分
+  cvar?: number; // 条件风险价值
+  downsideDeviation?: number; // 下行偏差
+  downtrendCapture?: number; // 下跌捕获比率
+  informationRatio?: number; // 信息比率
+  kurtosis?: number; // 峰度
+  maxDrawdownDuration?: number; // 最大回撤持续时间
+  modifiedSharpeRatio?: number; // 修正夏普比率
+  painIndex?: number; // 痛苦指数
+  riskAdjustedReturn?: number; // 风险调整收益
+  sterlingRatio?: number; // 斯特林比率
+  trackingError?: number; // 跟踪误差
+  uptrendCapture?: number; // 上涨捕获比率
+  var95?: number; // 95%风险价值
+  var99?: number; // 99%风险价值
+  volatility?: number; // 波动率
 }
 
 // 订单簿数据类型
