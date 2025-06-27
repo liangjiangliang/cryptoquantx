@@ -32,7 +32,7 @@ const FailedStrategiesModal: React.FC<FailedStrategiesModalProps> = ({
     <div className="failed-strategies-modal-overlay" onClick={handleOverlayClick}>
       <div className="failed-strategies-modal">
         <div className="failed-strategies-modal-header">
-          <h3>失败的策略列表</h3>
+          <h3>失败的策略列表 {failedStrategies.length > 0 && `(${failedStrategies.length}个)`}</h3>
           <button 
             className="failed-strategies-modal-close" 
             onClick={onClose}
@@ -59,10 +59,15 @@ const FailedStrategiesModal: React.FC<FailedStrategiesModalProps> = ({
                 <tbody>
                   {failedStrategies.map((strategy, index) => (
                     <tr key={index}>
-                      <td>{strategy.strategy_code}</td>
-                      <td>{strategy.strategy_name}</td>
+                      <td className="strategy-code">{strategy.strategy_code}</td>
+                      <td className="strategy-name">{strategy.strategy_name}</td>
                       <td className="error-cell" title={strategy.error}>
-                        {strategy.error}
+                        <div className="error-text">
+                          {strategy.error.length > 50 
+                            ? `${strategy.error.substring(0, 50)}...` 
+                            : strategy.error
+                          }
+                        </div>
                       </td>
                     </tr>
                   ))}

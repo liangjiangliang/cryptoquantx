@@ -75,6 +75,9 @@ const BacktestPanel: React.FC = () => {
   const [creatingRealTimeStrategy, setCreatingRealTimeStrategy] = useState(false);
   const [tradeAmount, setTradeAmount] = useState<string>('2'); // 默认交易金额
 
+  // 保存批量回测的完整结果数据
+  const [batchBacktestResults, setBatchBacktestResults] = useState<any[]>([]);
+
   // 获取可用策略列表
   useEffect(() => {
     const fetchStrategies = async () => {
@@ -275,11 +278,20 @@ const BacktestPanel: React.FC = () => {
           
           // 获取策略执行结果和统计数据
           const strategyResults = result.data.results || [];
+          
+          // 保存完整的结果数据供失败策略查看使用
+          setBatchBacktestResults(strategyResults);
+          
           const totalStrategies = result.data.total_strategies || strategyResults.length || 0;
           const successfulBacktests = result.data.successful_backtests || 0;
           const failedBacktests = result.data.failed_backtests || (totalStrategies - successfulBacktests);
           const maxReturnStrategy = result.data.max_return_strategy || '-';
           const maxReturn = result.data.max_return || 0;
+          
+          // 统计零交易策略数量（number_of_trades = 0 的成功策略）
+          const zeroTradesStrategies = strategyResults.filter((strategy: any) => 
+            strategy.success === true && strategy.number_of_trades === 0
+          ).length;
 
           // 构建成功消息
           const successMessage = `
@@ -287,6 +299,7 @@ const BacktestPanel: React.FC = () => {
   <tr><td>总结果</td><td>${totalStrategies}</td></tr>
   <tr><td>成功</td><td>${successfulBacktests}</td></tr>
   <tr><td>失败</td><td>${failedBacktests}</td></tr>
+  <tr><td>零交易策略</td><td style="color: #ffa500;">${zeroTradesStrategies}</td></tr>
   <tr><td>平均收益率</td><td>${result.data.avg_return ? formatPercentage(result.data.avg_return * 100) : '0.00%'}</td></tr>
   <tr><td>最高收益率</td><td>${formatPercentage(maxReturn * 100)}</td></tr>
   <tr><td>最佳策略</td><td>${maxReturnStrategy}</td></tr>
@@ -477,60 +490,24 @@ const BacktestPanel: React.FC = () => {
   };
 
   // 显示失败策略列表
-  const showFailedStrategiesList = async () => {
+  const showFailedStrategiesList = () => {
     setLoadingFailedStrategies(true);
     setShowFailedStrategiesModal(true);
     
     try {
-      // 尝试从模态框消息中提取批次ID
-      const batchIdMatch = modalMessage.match(/批次ID:\s*([^\s]+)/);
-      let batchId = '';
+             // 直接从保存的批量回测结果中筛选失败策略
+       const failedStrategies = batchBacktestResults.filter((strategy: any) => 
+         strategy.success === false
+       ).map((strategy: any) => ({
+         strategy_code: strategy.strategy_code || 'UNKNOWN',
+         strategy_name: strategy.strategy_name || strategy.strategy_code || '未知策略',
+         error: strategy.error || '未知错误'
+       }));
       
-      if (batchIdMatch && batchIdMatch[1]) {
-        batchId = batchIdMatch[1];
-      } else {
-        // 如果模态框消息中没有批次ID，使用最近一次批量回测的批次ID
-        batchId = (runAllBacktests as any).lastBatchId;
-      }
-      
-      console.log('获取失败策略，批次ID:', batchId);
-      
-      // 如果有批次ID，从批量回测结果中获取失败策略
-      if (batchId) {
-        try {
-          const url = `/api/api/backtest/ta4j/run-all-results?batch_backtest_id=${batchId}`;
-          const response = await fetch(url);
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('批量回测结果数据:', data);
-            
-            if (data.code === 200 && data.data && Array.isArray(data.data.results)) {
-              // 从结果中筛选出失败的策略
-              const failedStrategies = data.data.results.filter((strategy: any) => 
-                strategy.success === false
-              ).map((strategy: any) => ({
-                strategy_code: strategy.strategy_code || 'Unknown',
-                strategy_name: strategy.strategy_name || strategy.strategy_code || 'Unknown',
-                error: strategy.error || '未知错误'
-              }));
-              
-              console.log('筛选出的失败策略:', failedStrategies);
-              setFailedStrategies(failedStrategies);
-              return;
-            }
-          }
-        } catch (error) {
-          console.error('从批量回测结果获取失败策略失败:', error);
-        }
-      }
-      
-      // 如果上面的方法失败，使用原有的API
-      const strategies = await fetchFailedStrategies(batchId);
-      console.log('从API获取的失败策略列表:', strategies);
-      setFailedStrategies(strategies);
+      console.log('从批量回测结果中筛选出的失败策略:', failedStrategies);
+      setFailedStrategies(failedStrategies);
     } catch (error) {
-      console.error('获取失败策略失败:', error);
+      console.error('筛选失败策略出错:', error);
       setFailedStrategies([]);
     } finally {
       setLoadingFailedStrategies(false);

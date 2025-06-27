@@ -102,13 +102,28 @@
   background-color: #334155;
 }
 
+.strategy-code {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #60a5fa !important;
+}
+
+.strategy-name {
+  font-weight: 500;
+  color: #34d399 !important;
+}
+
 .error-cell {
   max-width: 300px;
   word-wrap: break-word;
   white-space: pre-wrap;
-  color: #fca5a5 !important;
+}
+
+.error-text {
+  color: #fca5a5;
   font-family: 'Courier New', monospace;
   font-size: 12px;
+  line-height: 1.4;
 }
 
 .failed-strategies-modal-footer {

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
@@ -817,6 +818,16 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
+                <th onClick={() => handleSort('comprehensiveScore')} className="sortable-header">
+                  综合评分 {renderSortIcon('comprehensiveScore')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('comprehensiveScore', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
                 <th onClick={() => handleSort('totalFee')} className="sortable-header">
                   手续费 {renderSortIcon('totalFee')}
                 </th>
@@ -900,26 +911,7 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
-                <th onClick={() => handleSort('alpha')} className="sortable-header">
-                  Alpha系数 {renderSortIcon('alpha')}
-                  <span
-                    className="info-icon"
-                    onClick={(e) => { e.stopPropagation(); showTooltip('alpha', e); }}
-                    onMouseLeave={hideTooltip}
-                  >
-                    ⓘ
-                  </span>
-                </th>
-                <th onClick={() => handleSort('beta')} className="sortable-header">
-                  Beta系数 {renderSortIcon('beta')}
-                  <span
-                    className="info-icon"
-                    onClick={(e) => { e.stopPropagation(); showTooltip('beta', e); }}
-                    onMouseLeave={hideTooltip}
-                  >
-                    ⓘ
-                  </span>
-                </th>
+
                 <th onClick={() => handleSort('omega')} className="sortable-header">
                   Omega比率 {renderSortIcon('omega')}
                   <span
@@ -960,6 +952,16 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
+                <th onClick={() => handleSort('painIndex')} className="sortable-header">
+                  痛苦指数 {renderSortIcon('painIndex')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('painIndex', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
                 <th onClick={() => handleSort('burkeRatio')} className="sortable-header">
                   伯克比率 {renderSortIcon('burkeRatio')}
                   <span
@@ -970,16 +972,7 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
-                <th onClick={() => handleSort('comprehensiveScore')} className="sortable-header">
-                  综合评分 {renderSortIcon('comprehensiveScore')}
-                  <span
-                    className="info-icon"
-                    onClick={(e) => { e.stopPropagation(); showTooltip('comprehensiveScore', e); }}
-                    onMouseLeave={hideTooltip}
-                  >
-                    ⓘ
-                  </span>
-                </th>
+
                 <th onClick={() => handleSort('cvar')} className="sortable-header">
                   CVaR {renderSortIcon('cvar')}
                   <span
@@ -1005,6 +998,16 @@ const BacktestSummaryPage: React.FC = () => {
                   <span
                     className="info-icon"
                     onClick={(e) => { e.stopPropagation(); showTooltip('downtrendCapture', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('uptrendCapture')} className="sortable-header">
+                  上涨捕获比率 {renderSortIcon('uptrendCapture')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('uptrendCapture', e); }}
                     onMouseLeave={hideTooltip}
                   >
                     ⓘ
@@ -1050,16 +1053,7 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
-                <th onClick={() => handleSort('painIndex')} className="sortable-header">
-                  痛苦指数 {renderSortIcon('painIndex')}
-                  <span
-                    className="info-icon"
-                    onClick={(e) => { e.stopPropagation(); showTooltip('painIndex', e); }}
-                    onMouseLeave={hideTooltip}
-                  >
-                    ⓘ
-                  </span>
-                </th>
+
                 <th onClick={() => handleSort('riskAdjustedReturn')} className="sortable-header">
                   风险调整收益 {renderSortIcon('riskAdjustedReturn')}
                   <span
@@ -1090,16 +1084,7 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
-                <th onClick={() => handleSort('uptrendCapture')} className="sortable-header">
-                  上涨捕获比率 {renderSortIcon('uptrendCapture')}
-                  <span
-                    className="info-icon"
-                    onClick={(e) => { e.stopPropagation(); showTooltip('uptrendCapture', e); }}
-                    onMouseLeave={hideTooltip}
-                  >
-                    ⓘ
-                  </span>
-                </th>
+
                 <th onClick={() => handleSort('var95')} className="sortable-header">
                   VaR95% {renderSortIcon('var95')}
                   <span
@@ -1120,7 +1105,27 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
-                <th onClick={() => handleSort('volatility')} className="sortable-header">
+                <th onClick={() => handleSort('alpha')} className="sortable-header">
+                  Alpha系数 {renderSortIcon('alpha')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('alpha', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('beta')} className="sortable-header">
+                  Beta系数 {renderSortIcon('beta')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('beta', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                {/* <th onClick={() => handleSort('volatility')} className="sortable-header">
                   波动率 {renderSortIcon('volatility')}
                   <span
                     className="info-icon"
@@ -1129,7 +1134,7 @@ const BacktestSummaryPage: React.FC = () => {
                   >
                     ⓘ
                   </span>
-                </th>
+                </th> */}
                 <th onClick={() => handleSort('createTime')} className="sortable-header">
                   创建时间 {renderSortIcon('createTime')}
                 </th>
@@ -1154,6 +1159,7 @@ const BacktestSummaryPage: React.FC = () => {
                     {formatPercentage(summary.totalReturn * 100)}
                   </td>
                   <td className={getValueColorClass(summary.annualizedReturn)}>{summary.annualizedReturn !== null && summary.annualizedReturn !== undefined ? formatPercentage(summary.annualizedReturn * 100) : ''}</td>
+                  <td>{summary.comprehensiveScore ? summary.comprehensiveScore.toFixed(2) : '-'}</td>
                   <td>{formatAmount(summary.totalFee)}</td>
                   <td>{((summary.totalFee / summary.initialAmount) * 100).toFixed(2)}%</td>
                   <td>{summary.numberOfTrades}</td>
@@ -1166,29 +1172,32 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{summary.sortinoRatio ? summary.sortinoRatio.toFixed(2) : '-'}</td>
 
                   <td>{summary.treynorRatio ? summary.treynorRatio.toFixed(4) : '-'}</td>
-                  <td>{summary.alpha ? summary.alpha.toFixed(4) : '-'}</td>
-                  <td>{summary.beta ? summary.beta.toFixed(4) : '-'}</td>
+
                   <td>{summary.omega ? summary.omega.toFixed(4) : '-'}</td>
                   <td>{summary.profitFactor ? summary.profitFactor.toFixed(4) : '-'}</td>
                   <td>{summary.skewness ? summary.skewness.toFixed(4) : '-'}</td>
                   <td>{summary.ulcerIndex ? summary.ulcerIndex.toFixed(2) : '-'}</td>
+                  <td>{summary.painIndex ? summary.painIndex.toFixed(4) : '-'}</td>
                   <td>{summary.burkeRatio ? summary.burkeRatio.toFixed(4) : '-'}</td>
-                  <td>{summary.comprehensiveScore ? summary.comprehensiveScore.toFixed(2) : '-'}</td>
+                
                   <td>{summary.cvar ? summary.cvar.toFixed(4) : '-'}</td>
                   <td>{summary.downsideDeviation ? summary.downsideDeviation.toFixed(4) : '-'}</td>
                   <td>{summary.downtrendCapture ? summary.downtrendCapture.toFixed(4) : '-'}</td>
+                  <td>{summary.uptrendCapture ? summary.uptrendCapture.toFixed(4) : '-'}</td>
                   <td>{summary.informationRatio ? summary.informationRatio.toFixed(4) : '-'}</td>
                   <td>{summary.kurtosis ? summary.kurtosis.toFixed(4) : '-'}</td>
                   <td>{summary.maxDrawdownDuration ? summary.maxDrawdownDuration : '-'}</td>
                   <td>{summary.modifiedSharpeRatio ? summary.modifiedSharpeRatio.toFixed(4) : '-'}</td>
-                  <td>{summary.painIndex ? summary.painIndex.toFixed(4) : '-'}</td>
+             
                   <td>{summary.riskAdjustedReturn ? summary.riskAdjustedReturn.toFixed(4) : '-'}</td>
                   <td>{summary.sterlingRatio ? summary.sterlingRatio.toFixed(4) : '-'}</td>
                   <td>{summary.trackingError ? summary.trackingError.toFixed(4) : '-'}</td>
-                  <td>{summary.uptrendCapture ? summary.uptrendCapture.toFixed(4) : '-'}</td>
+
                   <td>{summary.var95 ? summary.var95.toFixed(4) : '-'}</td>
                   <td>{summary.var99 ? summary.var99.toFixed(4) : '-'}</td>
-                  <td>{summary.volatility ? summary.volatility.toFixed(4) : '-'}</td>
+                  <td>{summary.alpha ? summary.alpha.toFixed(4) : '-'}</td>
+                  <td>{summary.beta ? summary.beta.toFixed(4) : '-'}</td>
+                  {/* <td>{summary.volatility ? summary.volatility.toFixed(4) : '-'}</td> */}
                   <td>{summary.id === 0 ? '-' : summary.createTime.substring(0, 10)}</td>
                   <td className="actions-cell">
                     {summary.id !== 0 && (
