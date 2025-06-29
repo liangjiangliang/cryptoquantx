@@ -371,7 +371,7 @@ const BacktestPanel: React.FC = () => {
   </tr>
   <tr>
     <td style="padding: 8px; color: #8d8d8d;">消息:</td>
-    <td style="padding: 8px; color: #d9d9d9;">${result.data.message || '实时策略创建成功'}</td>
+    <td style="padding: 8px; color: #d9d9d9;">${result.message || '实时策略创建成功'}</td>
   </tr>
 </table>`;
         showStatusDialog(
