@@ -78,6 +78,9 @@ const BacktestPanel: React.FC = () => {
   // 保存批量回测的完整结果数据
   const [batchBacktestResults, setBatchBacktestResults] = useState<any[]>([]);
 
+  // 添加一个标记来跟踪是否通过事件设置了策略
+  const [strategySetByEvent, setStrategySetByEvent] = useState(false);
+
   // 获取可用策略列表
   useEffect(() => {
     const fetchStrategies = async () => {
@@ -94,22 +97,25 @@ const BacktestPanel: React.FC = () => {
           setStrategies(data.data);
           // console.log('策略加载成功:', Object.keys(data.data));
           
-          // 检查当前URL是否包含策略代码
-          const urlParams = new URLSearchParams(window.location.search);
-          const strategyFromUrl = urlParams.get('strategy');
-          
-          // 如果URL中有策略代码且该策略存在，则使用它
-          if (strategyFromUrl && data.data[strategyFromUrl]) {
-            console.log('使用URL中的策略:', strategyFromUrl);
-            setStrategy(strategyFromUrl);
-            // 清除可能存在的回测结果
-            dispatch(clearBacktestResults());
-          } 
-          // 否则使用第一个策略作为默认值
-          else if (Object.keys(data.data).length > 0) {
-            const firstStrategy = Object.keys(data.data)[0];
-            // console.log('使用第一个策略作为默认值:', firstStrategy);
-            setStrategy(firstStrategy);
+          // 只有在策略没有通过事件设置时才从URL读取
+          if (!strategySetByEvent) {
+            // 检查当前URL是否包含策略代码
+            const urlParams = new URLSearchParams(window.location.search);
+            const strategyFromUrl = urlParams.get('strategy');
+            
+            // 如果URL中有策略代码且该策略存在，则使用它
+            if (strategyFromUrl && data.data[strategyFromUrl]) {
+              console.log('使用URL中的策略:', strategyFromUrl);
+              setStrategy(strategyFromUrl);
+              // 清除可能存在的回测结果
+              dispatch(clearBacktestResults());
+            } 
+            // 否则使用第一个策略作为默认值
+            else if (Object.keys(data.data).length > 0) {
+              const firstStrategy = Object.keys(data.data)[0];
+              // console.log('使用第一个策略作为默认值:', firstStrategy);
+              setStrategy(firstStrategy);
+            }
           }
         } else {
           throw new Error(data.message || '获取策略列表失败');
@@ -145,15 +151,18 @@ const BacktestPanel: React.FC = () => {
         };
         setStrategies(mockStrategies);
         
-        // 同样检查URL参数
-        const urlParams = new URLSearchParams(window.location.search);
-        const strategyFromUrl = urlParams.get('strategy');
-        
-        if (strategyFromUrl && mockStrategies[strategyFromUrl]) {
-          setStrategy(strategyFromUrl);
-          dispatch(clearBacktestResults());
-        } else {
-          setStrategy(Object.keys(mockStrategies)[0]);
+        // 只有在策略没有通过事件设置时才从URL读取
+        if (!strategySetByEvent) {
+          // 同样检查URL参数
+          const urlParams = new URLSearchParams(window.location.search);
+          const strategyFromUrl = urlParams.get('strategy');
+          
+          if (strategyFromUrl && mockStrategies[strategyFromUrl]) {
+            setStrategy(strategyFromUrl);
+            dispatch(clearBacktestResults());
+          } else {
+            setStrategy(Object.keys(mockStrategies)[0]);
+          }
         }
       } finally {
         setLoading(false);
@@ -161,19 +170,37 @@ const BacktestPanel: React.FC = () => {
     };
 
     fetchStrategies();
-  }, [dispatch]); // 移除strategy依赖，防止无限循环
+  }, [dispatch, strategySetByEvent]); // 添加strategySetByEvent依赖
 
-  // 监听setStrategy事件，接收从URL传递的策略代码
+  // 监听setStrategy事件，接收从URL传递的策略代码、交易对和时间周期
   useEffect(() => {
-    const handleSetStrategy = (event: CustomEvent<{strategyCode: string}>) => {
-      const { strategyCode } = event.detail;
-      console.log('收到策略切换事件:', strategyCode, '当前可用策略:', Object.keys(strategies));
+    const handleSetStrategy = (event: CustomEvent<{strategyCode?: string, symbol?: string, interval?: string}>) => {
+      const { strategyCode, symbol, interval } = event.detail;
+      console.log('收到策略切换事件:', { strategyCode, symbol, interval }, '当前可用策略:', Object.keys(strategies));
       
       if (strategyCode) {
         // 即使当前strategies中没有该策略，也先设置，后面strategies加载完成后会再次检查
         setStrategy(strategyCode);
+        setStrategySetByEvent(true); // 标记策略是通过事件设置的
         // 无论之前是否有回测结果，都清除它们以显示配置面板
         dispatch(clearBacktestResults());
+      }
+      
+      if (symbol) {
+        console.log('设置交易对:', symbol);
+        dispatch(setSelectedPair(symbol));
+      }
+      
+      if (interval) {
+        console.log('设置时间周期:', interval);
+        // 验证interval是否为有效的时间周期
+        const validTimeframes = ['1m', '5m', '15m', '30m', '1H', '2H', '4H', '6H', '12H', '1D', '1W', '1M'];
+        if (validTimeframes.includes(interval)) {
+          console.log('时间周期有效，正在设置:', interval);
+          dispatch(setTimeframe(interval as '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M'));
+        } else {
+          console.log('时间周期无效:', interval, '有效值:', validTimeframes);
+        }
       }
     };
     

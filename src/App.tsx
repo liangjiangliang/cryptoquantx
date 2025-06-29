@@ -42,9 +42,11 @@ const HomePage = () => {
     const location = useLocation();
     const dispatch = useDispatch();
 
-    // 从URL参数中获取策略代码
+    // 从URL参数中获取策略代码、交易对和时间周期
     const searchParams = new URLSearchParams(location.search);
     const strategyCode = searchParams.get('strategy');
+    const symbol = searchParams.get('symbol');
+    const interval = searchParams.get('interval');
 
     // 在页面加载时清除回测结果
     useEffect(() => {
@@ -85,13 +87,17 @@ const HomePage = () => {
 
     // 如果有策略代码，设置自定义事件通知BacktestPanel使用此策略
     useEffect(() => {
-        if (strategyCode) {
+        if (strategyCode || symbol || interval) {
             const event = new CustomEvent('setStrategy', {
-                detail: {strategyCode}
+                detail: {
+                    strategyCode,
+                    symbol,
+                    interval
+                }
             });
             window.dispatchEvent(event);
         }
-    }, [strategyCode]);
+    }, [strategyCode, symbol, interval]);
 
     return (
         <div className="app">

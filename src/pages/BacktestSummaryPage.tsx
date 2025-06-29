@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AppState, BacktestSummary } from '../store/types';
 import { setBacktestSummaries } from '../store/actions';
 import { fetchBacktestSummaries, fetchBatchBacktestSummariesBatch } from '../services/api';
@@ -120,6 +120,7 @@ interface Strategy {
 
 const BacktestSummaryPage: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const backtestSummaries = useSelector((state: AppState) => state.backtestSummaries);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -297,6 +298,19 @@ const BacktestSummaryPage: React.FC = () => {
   const handleFilterChange = (field: keyof Filters, value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }));
     setCurrentPage(1); // 重置到第一页
+  };
+
+  // 处理上线按钮点击
+  const handleGoLive = (summary: BacktestSummary) => {
+    // 构建跳转到首页的URL，包含策略参数
+    const params = new URLSearchParams({
+      strategy: summary.strategyCode,
+      symbol: summary.symbol,
+      interval: summary.intervalVal
+    });
+    
+    // 跳转到首页并传递参数
+    navigate(`/?${params.toString()}`);
   };
 
   // 过滤和排序数据
@@ -1201,12 +1215,21 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{summary.id === 0 ? '-' : summary.createTime.substring(0, 10)}</td>
                   <td className="actions-cell">
                     {summary.id !== 0 && (
-                      <Link
-                        to={`/backtest-detail/${summary.backtestId}`}
-                        className="detail-button"
-                      >
-                        详情
-                      </Link>
+                      <>
+                        <Link
+                          to={`/backtest-detail/${summary.backtestId}`}
+                          className="detail-button"
+                        >
+                          详情
+                        </Link>
+                        <button
+                          onClick={() => handleGoLive(summary)}
+                          className="live-button"
+                          title="使用此回测参数创建实时策略"
+                        >
+                          上线
+                        </button>
+                      </>
                     )}
                   </td>
                 </tr>
