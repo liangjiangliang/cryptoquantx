@@ -821,7 +821,7 @@ export const createRealTimeStrategy = async (
   tradeAmount: number
 ): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
-    const url = '/api/api/backtest/ta4j/real-time';
+    const url = '/api/api/real-time-strategy/real-time';
     
     // 构建参数
     const params = new URLSearchParams();
