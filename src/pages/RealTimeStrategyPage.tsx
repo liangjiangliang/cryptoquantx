@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { startRealTimeStrategy, stopRealTimeStrategy } from '../services/api';
 import './RealTimeStrategyPage.css';
 
 interface RealTimeStrategy {
@@ -20,6 +21,7 @@ const RealTimeStrategyPage: React.FC = () => {
   const [strategies, setStrategies] = useState<RealTimeStrategy[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+  const [operationInProgress, setOperationInProgress] = useState<{[key: string]: boolean}>({});
   const navigate = useNavigate();
 
   // 获取实盘策略列表
@@ -98,6 +100,44 @@ const RealTimeStrategyPage: React.FC = () => {
     fetchRealTimeStrategies();
   };
 
+  // 启动策略
+  const handleStartStrategy = async (strategyId: number) => {
+    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    try {
+      const result = await startRealTimeStrategy(strategyId);
+      if (result.success) {
+        // 刷新策略列表
+        fetchRealTimeStrategies();
+      } else {
+        setError(result.message || '启动策略失败');
+      }
+    } catch (error) {
+      console.error('启动策略失败:', error);
+      setError(error instanceof Error ? error.message : '启动策略失败');
+    } finally {
+      setOperationInProgress({...operationInProgress, [strategyId]: false});
+    }
+  };
+  
+  // 停止策略
+  const handleStopStrategy = async (strategyId: number) => {
+    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    try {
+      const result = await stopRealTimeStrategy(strategyId);
+      if (result.success) {
+        // 刷新策略列表
+        fetchRealTimeStrategies();
+      } else {
+        setError(result.message || '停止策略失败');
+      }
+    } catch (error) {
+      console.error('停止策略失败:', error);
+      setError(error instanceof Error ? error.message : '停止策略失败');
+    } finally {
+      setOperationInProgress({...operationInProgress, [strategyId]: false});
+    }
+  };
+
   return (
     <div className="real-time-strategy-page">
       {error && (
@@ -163,6 +203,23 @@ const RealTimeStrategyPage: React.FC = () => {
                         >
                           查看详情
                         </button>
+                        {strategy.status === 'RUNNING' ? (
+                          <button
+                            className="strategy-stop-btn"
+                            onClick={() => handleStopStrategy(strategy.id)}
+                            disabled={operationInProgress[strategy.id]}
+                          >
+                            {operationInProgress[strategy.id] ? '处理中...' : '停止'}
+                          </button>
+                        ) : (
+                          <button
+                            className="strategy-start-btn"
+                            onClick={() => handleStartStrategy(strategy.id)}
+                            disabled={operationInProgress[strategy.id]}
+                          >
+                            {operationInProgress[strategy.id] ? '处理中...' : '启动'}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

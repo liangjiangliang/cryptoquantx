@@ -54,7 +54,7 @@ const BacktestPanel: React.FC = () => {
   // 使用useRef来保持最新的状态值，避免闭包问题
   const runningBatchBacktestRef = React.useRef(false);
   const [runningBatchBacktest, setRunningBatchBacktest] = useState<boolean>(false);
-  
+
   // 当状态变化时更新ref
   useEffect(() => {
     runningBatchBacktestRef.current = runningBatchBacktest;
@@ -70,10 +70,10 @@ const BacktestPanel: React.FC = () => {
   const [showFailedStrategiesModal, setShowFailedStrategiesModal] = useState(false);
   const [failedStrategies, setFailedStrategies] = useState<FailedStrategy[]>([]);
   const [loadingFailedStrategies, setLoadingFailedStrategies] = useState(false);
-  
+
   // 实时策略状态
   const [creatingRealTimeStrategy, setCreatingRealTimeStrategy] = useState(false);
-  const [tradeAmount, setTradeAmount] = useState<string>('2'); // 默认交易金额
+  const [tradeAmount, setTradeAmount] = useState<string>('10'); // 默认交易金额
 
   // 保存批量回测的完整结果数据
   const [batchBacktestResults, setBatchBacktestResults] = useState<any[]>([]);
@@ -96,20 +96,20 @@ const BacktestPanel: React.FC = () => {
         if (data.code === 200 && data.data) {
           setStrategies(data.data);
           // console.log('策略加载成功:', Object.keys(data.data));
-          
+
           // 只有在策略没有通过事件设置时才从URL读取
           if (!strategySetByEvent) {
             // 检查当前URL是否包含策略代码
             const urlParams = new URLSearchParams(window.location.search);
             const strategyFromUrl = urlParams.get('strategy');
-            
+
             // 如果URL中有策略代码且该策略存在，则使用它
             if (strategyFromUrl && data.data[strategyFromUrl]) {
               console.log('使用URL中的策略:', strategyFromUrl);
               setStrategy(strategyFromUrl);
               // 清除可能存在的回测结果
               dispatch(clearBacktestResults());
-            } 
+            }
             // 否则使用第一个策略作为默认值
             else if (Object.keys(data.data).length > 0) {
               const firstStrategy = Object.keys(data.data)[0];
@@ -150,13 +150,13 @@ const BacktestPanel: React.FC = () => {
           }
         };
         setStrategies(mockStrategies);
-        
+
         // 只有在策略没有通过事件设置时才从URL读取
         if (!strategySetByEvent) {
           // 同样检查URL参数
           const urlParams = new URLSearchParams(window.location.search);
           const strategyFromUrl = urlParams.get('strategy');
-          
+
           if (strategyFromUrl && mockStrategies[strategyFromUrl]) {
             setStrategy(strategyFromUrl);
             dispatch(clearBacktestResults());
@@ -177,7 +177,7 @@ const BacktestPanel: React.FC = () => {
     const handleSetStrategy = (event: CustomEvent<{strategyCode?: string, symbol?: string, interval?: string}>) => {
       const { strategyCode, symbol, interval } = event.detail;
       console.log('收到策略切换事件:', { strategyCode, symbol, interval }, '当前可用策略:', Object.keys(strategies));
-      
+
       if (strategyCode) {
         // 即使当前strategies中没有该策略，也先设置，后面strategies加载完成后会再次检查
         setStrategy(strategyCode);
@@ -185,12 +185,12 @@ const BacktestPanel: React.FC = () => {
         // 无论之前是否有回测结果，都清除它们以显示配置面板
         dispatch(clearBacktestResults());
       }
-      
+
       if (symbol) {
         console.log('设置交易对:', symbol);
         dispatch(setSelectedPair(symbol));
       }
-      
+
       if (interval) {
         console.log('设置时间周期:', interval);
         // 验证interval是否为有效的时间周期
@@ -203,9 +203,9 @@ const BacktestPanel: React.FC = () => {
         }
       }
     };
-    
+
     window.addEventListener('setStrategy', handleSetStrategy as EventListener);
-    
+
     return () => {
       window.removeEventListener('setStrategy', handleSetStrategy as EventListener);
     };
@@ -239,7 +239,7 @@ const BacktestPanel: React.FC = () => {
         // 确保API返回的backtestId字段存在且被正确保存
         const backtestId = data.data.backtestId || Date.now().toString();
         console.log('获取到回测ID:', backtestId);
-        
+
         // 转换API返回的数据为应用所需的格式
         const results: BacktestResults = {
           initialCapital: data.data.initialAmount,
@@ -302,21 +302,21 @@ const BacktestPanel: React.FC = () => {
         if (result.data && result.data.batch_backtest_id) {
           // 保存批次ID供后续使用
           (runAllBacktests as any).lastBatchId = result.data.batch_backtest_id;
-          
+
           // 获取策略执行结果和统计数据
           const strategyResults = result.data.results || [];
-          
+
           // 保存完整的结果数据供失败策略查看使用
           setBatchBacktestResults(strategyResults);
-          
+
           const totalStrategies = result.data.total_strategies || strategyResults.length || 0;
           const successfulBacktests = result.data.successful_backtests || 0;
           const failedBacktests = result.data.failed_backtests || (totalStrategies - successfulBacktests);
           const maxReturnStrategy = result.data.max_return_strategy || '-';
           const maxReturn = result.data.max_return || 0;
-          
+
           // 统计零交易策略数量（number_of_trades = 0 的成功策略）
-          const zeroTradesStrategies = strategyResults.filter((strategy: any) => 
+          const zeroTradesStrategies = strategyResults.filter((strategy: any) =>
             strategy.success === true && strategy.number_of_trades === 0
           ).length;
 
@@ -331,7 +331,7 @@ const BacktestPanel: React.FC = () => {
   <tr><td>最高收益率</td><td>${formatPercentage(maxReturn * 100)}</td></tr>
   <tr><td>最佳策略</td><td>${maxReturnStrategy}</td></tr>
 </table>`;
-            
+
             setBatchStatusMessage(successMessage);
             showStatusDialog('批量回测完成', successMessage, 'info', result.data.batch_backtest_id);
         } else {
@@ -402,8 +402,8 @@ const BacktestPanel: React.FC = () => {
   </tr>
 </table>`;
         showStatusDialog(
-          '实时策略创建成功', 
-          tableContent, 
+          '实时策略创建成功',
+          tableContent,
           'info'
         );
       } else {
@@ -420,10 +420,10 @@ const BacktestPanel: React.FC = () => {
   // 处理时间周期变更
   const handleTimeframeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newTimeframe = e.target.value as '1m' | '5m' | '15m' | '30m' | '1H' | '2H' | '4H' | '6H' | '12H' | '1D' | '1W' | '1M';
-    
+
     // 更新Redux中的时间周期
     dispatch(setTimeframe(newTimeframe));
-    
+
     // 触发自定义事件，通知K线图组件更新数据
     const event = new CustomEvent('timeframeChanged', {
       detail: { timeframe: newTimeframe }
@@ -441,13 +441,13 @@ const BacktestPanel: React.FC = () => {
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDatePart = e.target.value;
-    
+
     // 获取当前时间
     const now = new Date();
-    const today = now.getFullYear() + '-' + 
-                 String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+    const today = now.getFullYear() + '-' +
+                 String(now.getMonth() + 1).padStart(2, '0') + '-' +
                  String(now.getDate()).padStart(2, '0');
-    
+
     let newEndDate;
     if (newDatePart === today) {
       // 如果选择的是今天，使用当前精确时间
@@ -459,7 +459,7 @@ const BacktestPanel: React.FC = () => {
       // 如果选择的是其他日期，使用23:59:59
       newEndDate = `${newDatePart} 23:59:59`;
     }
-    
+
     dispatch(setDateRange(dateRange.startDate, newEndDate));
   };
 
@@ -509,7 +509,7 @@ const BacktestPanel: React.FC = () => {
     setModalMessage(message);
     setModalType(type);
     setShowStatusModal(true);
-    
+
     // 如果有批次ID，保存到状态中
     if (batchId) {
       setBatchStatusMessage(prevMessage => prevMessage + `\n\n批次ID: ${batchId}`);
@@ -520,17 +520,17 @@ const BacktestPanel: React.FC = () => {
   const showFailedStrategiesList = () => {
     setLoadingFailedStrategies(true);
     setShowFailedStrategiesModal(true);
-    
+
     try {
              // 直接从保存的批量回测结果中筛选失败策略
-       const failedStrategies = batchBacktestResults.filter((strategy: any) => 
+       const failedStrategies = batchBacktestResults.filter((strategy: any) =>
          strategy.success === false
        ).map((strategy: any) => ({
          strategy_code: strategy.strategy_code || 'UNKNOWN',
          strategy_name: strategy.strategy_name || strategy.strategy_code || '未知策略',
          error: strategy.error || '未知错误'
        }));
-      
+
       console.log('从批量回测结果中筛选出的失败策略:', failedStrategies);
       setFailedStrategies(failedStrategies);
     } catch (error) {
@@ -569,7 +569,7 @@ const BacktestPanel: React.FC = () => {
         {!backtestResults ? (
           <div className="backtest-form">
             <QuickTimeSelector onTimeRangeSelect={handleQuickTimeSelect} />
-            
+
             <div className="input-group">
               <label>开始日期</label>
               <input
@@ -686,7 +686,7 @@ const BacktestPanel: React.FC = () => {
             >
               {isBacktesting ? '运行中...' : '运行回测'}
             </button>
-            
+
 
             <button
               className="run-batch-backtest-button"
@@ -801,9 +801,9 @@ const BacktestPanel: React.FC = () => {
                   >
                     下一页
                   </button>
-                  
+
                   {backtestResults.backtestId && (
-                    <Link 
+                    <Link
                       to={`/backtest-detail/${backtestResults.backtestId}`}
                       className="detail-button"
                       style={{ marginLeft: '15px' }}
@@ -824,7 +824,7 @@ const BacktestPanel: React.FC = () => {
               {backtestResults.trades.length <= TRADES_PER_PAGE && (
                 <div className="pagination bottom">
                   {backtestResults.backtestId && (
-                    <Link 
+                    <Link
                       to={`/backtest-detail/${backtestResults.backtestId}`}
                       className="detail-button"
                       style={{ marginRight: '15px' }}
@@ -844,7 +844,7 @@ const BacktestPanel: React.FC = () => {
           </div>
         )}
       </div>
-      
+
       {/* 错误信息弹窗 */}
       <ConfirmModal
         isOpen={showErrorModal}
@@ -856,7 +856,7 @@ const BacktestPanel: React.FC = () => {
         cancelText="取消"
         type={modalType}
       />
-      
+
       {/* 状态信息弹窗 */}
       <ConfirmModal
         isOpen={showStatusModal}

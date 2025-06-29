@@ -865,3 +865,91 @@ export const createRealTimeStrategy = async (
     };
   }
 };
+
+// 启动实时策略
+export const startRealTimeStrategy = async (strategyId: number): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const url = `/api/real-time-strategy/start`;
+    
+    // 构建参数，使用表单格式
+    const params = new URLSearchParams();
+    params.append('id', strategyId.toString());
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('启动策略API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        message: data.message || '策略启动成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '启动策略失败'
+      };
+    }
+  } catch (error) {
+    console.error('启动策略失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '启动策略请求发生错误'
+    };
+  }
+};
+
+// 停止实时策略
+export const stopRealTimeStrategy = async (strategyId: number): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const url = `/api/real-time-strategy/stop`;
+    
+    // 构建参数，使用表单格式
+    const params = new URLSearchParams();
+    params.append('id', strategyId.toString());
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('停止策略API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        message: data.message || '策略停止成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '停止策略失败'
+      };
+    }
+  } catch (error) {
+    console.error('停止策略失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '停止策略请求发生错误'
+    };
+  }
+};
