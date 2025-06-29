@@ -28,7 +28,7 @@ const RealTimeStrategyPage: React.FC = () => {
     setError('');
     
     try {
-      const response = await fetch('/api/api/real-time-strategy/list');
+      const response = await fetch('/api/real-time-strategy/list');
       
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);

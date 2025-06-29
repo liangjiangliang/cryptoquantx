@@ -223,7 +223,7 @@ export const fetchCandlestickData = async (
 
   try {
     // 构建API URL，包含日期范围参数
-    let url = `/api/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}`;
+    let url = `/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}`;
     url += `&startTimeStr=${encodeURIComponent(normalizedStartDate)}`;
     url += `&endTimeStr=${encodeURIComponent(normalizedEndDate)}`;
 
@@ -277,7 +277,7 @@ export const fetchHistoryWithIntegrityCheck = async (
 
   try {
     // 构建API URL
-    const url = `/api/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}&startTimeStr=${encodeURIComponent(normalizedStartDate)}&endTimeStr=${encodeURIComponent(normalizedEndDate)}`;
+    const url = `/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}&startTimeStr=${encodeURIComponent(normalizedStartDate)}&endTimeStr=${encodeURIComponent(normalizedEndDate)}`;
 
     console.log('从API获取历史数据:', { symbol, interval, startDate: normalizedStartDate, endDate: normalizedEndDate });
     console.log('请求URL:', url); // 调试日志
@@ -321,7 +321,7 @@ export const fetchHistoryWithIntegrityCheck = async (
 // 获取回测汇总列表
 export const fetchBacktestSummaries = async (): Promise<BacktestSummary[]> => {
   try {
-    const url = `/api/api/backtest/ta4j/summaries`;
+    const url = `/api/backtest/ta4j/summaries`;
 
     const response = await fetch(url);
 
@@ -352,7 +352,7 @@ export const fetchBacktestSummaries = async (): Promise<BacktestSummary[]> => {
 // 获取回测详情
 export const fetchBacktestDetail = async (backtestId: string): Promise<any[]> => {
   try {
-    const url = `/api/api/backtest/ta4j/detail/${backtestId}`;
+    const url = `/api/backtest/ta4j/detail/${backtestId}`;
 
     const response = await fetch(url);
 
@@ -383,7 +383,7 @@ export const fetchBacktestDetail = async (backtestId: string): Promise<any[]> =>
 // 获取单个回测摘要信息
 export const fetchBacktestSummary = async (backtestId: string): Promise<any> => {
   try {
-    const url = `/api/api/backtest/ta4j/summary/${backtestId}`;
+    const url = `/api/backtest/ta4j/summary/${backtestId}`;
 
     const response = await fetch(url);
 
@@ -414,7 +414,7 @@ export const fetchBacktestSummary = async (backtestId: string): Promise<any> => 
 // 获取回测策略列表
 export const fetchBacktestStrategies = async (): Promise<any> => {
   try {
-    const url = `/api/api/backtest/ta4j/strategies`;
+    const url = `/api/backtest/ta4j/strategies`;
 
     const response = await fetch(url);
 
@@ -453,7 +453,7 @@ export const createBacktest = async (
   initialAmount: number = 10000
 ): Promise<any> => {
   try {
-    const url = `/api/api/backtest/ta4j/create`;
+    const url = `/api/backtest/ta4j/create`;
 
     // 构建请求体
     const requestBody = {
@@ -496,7 +496,7 @@ export const createBacktest = async (
 // 获取批量回测统计数据
 export const fetchBatchBacktestStatistics = async (): Promise<any> => {
   try {
-    const url = `/api/api/backtest/ta4j/summaries/batch-statistics`;
+    const url = `/api/backtest/ta4j/summaries/batch-statistics`;
 
     const response = await fetch(url);
 
@@ -539,7 +539,7 @@ export const runAllBacktests = async (
     const formattedEndTime = endDate || getCurrentTimeString();
 
     // 构建API URL
-    const url = `/api/api/backtest/ta4j/run-all?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialAmount}&symbol=${symbol}&interval=${interval}&saveResult=True&feeRatio=${feeRatio}`;
+    const url = `/api/backtest/ta4j/run-all?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialAmount}&symbol=${symbol}&interval=${interval}&saveResult=True&feeRatio=${feeRatio}`;
 
     console.log('发送批量回测请求:', url);
 
@@ -577,7 +577,7 @@ export const runAllBacktests = async (
 // 获取批量回测汇总
 export const fetchBatchBacktestSummariesBatch = async (batchBacktestId: string): Promise<BacktestSummary[]> => {
   try {
-    const url = `/api/api/backtest/ta4j/summaries/batch/${batchBacktestId}`;
+    const url = `/api/backtest/ta4j/summaries/batch/${batchBacktestId}`;
     const response = await fetch(url);
     if (!response.ok) {
       console.warn(`批量回测汇总API请求失败: ${response.status}`);
@@ -602,7 +602,7 @@ export const fetchBatchBacktestSummariesBatch = async (batchBacktestId: string):
 // 删除策略
 export const deleteStrategy = async (strategyCode: string): Promise<{ success: boolean; message?: string }> => {
   try {
-    const url = `/api/api/backtest/ta4j/delete-strategy/${strategyCode}`;
+    const url = `/api/backtest/ta4j/delete-strategy/${strategyCode}`;
     const response = await fetch(url, {
       method: 'DELETE',
       headers: {
@@ -638,7 +638,7 @@ export const deleteStrategy = async (strategyCode: string): Promise<{ success: b
 export const generateStrategy = async (description: string): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
     // 使用相对路径，由React开发服务器代理到目标API
-    const url = '/api/api/backtest/ta4j/generate-strategy';
+    const url = '/api/backtest/ta4j/generate-strategy';
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -678,7 +678,7 @@ export const generateStrategy = async (description: string): Promise<{ success: 
 // 修改策略
 export const updateStrategy = async (id :number,description: string): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
-    const url = '/api/api/backtest/ta4j/update-strategy';
+    const url = '/api/backtest/ta4j/update-strategy';
     const formData = new URLSearchParams();
     formData.append('id', id.toString());
     formData.append('description', description);
@@ -759,7 +759,7 @@ export const fetchFailedStrategies = async (batchBacktestId?: string): Promise<a
   try {
     // 如果有批次ID，先尝试从批量回测结果中获取失败策略
     if (batchBacktestId) {
-      const url = `/api/api/backtest/ta4j/run-all-results?batch_backtest_id=${batchBacktestId}`;
+      const url = `/api/backtest/ta4j/run-all-results?batch_backtest_id=${batchBacktestId}`;
       const response = await fetch(url);
       
       if (response.ok) {
@@ -782,7 +782,7 @@ export const fetchFailedStrategies = async (batchBacktestId?: string): Promise<a
     }
 
     // 如果上面的方法没有获取到数据，使用专门的失败策略API
-    let url = `/api/api/backtest/ta4j/failed-strategies`;
+    let url = `/api/backtest/ta4j/failed-strategies`;
     if (batchBacktestId) {
       url += `?batch_backtest_id=${batchBacktestId}`;
     }
@@ -821,7 +821,7 @@ export const createRealTimeStrategy = async (
   tradeAmount: number
 ): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
-    const url = '/api/api/real-time-strategy/real-time';
+    const url = '/api/real-time-strategy/real-time';
     
     // 构建参数
     const params = new URLSearchParams();

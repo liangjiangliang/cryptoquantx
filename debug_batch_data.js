@@ -5,7 +5,7 @@ const batchId = '8b5dd3cb-2c5f-4a1d-890e-8536b00283b7';
 const options = {
   hostname: 'localhost',
   port: 3000,
-  path: `/api/api/backtest/ta4j/summaries/batch/${batchId}`,
+  path: `/api/backtest/ta4j/summaries/batch/${batchId}`,
   method: 'GET',
   headers: {
     'Content-Type': 'application/json'

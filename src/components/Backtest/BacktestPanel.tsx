@@ -85,7 +85,7 @@ const BacktestPanel: React.FC = () => {
       setError(null);
       try {
         // 使用相对路径，通过React开发服务器的代理转发请求
-        const response = await fetch('/api/api/backtest/ta4j/strategies');
+        const response = await fetch('/api/backtest/ta4j/strategies');
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -194,7 +194,7 @@ const BacktestPanel: React.FC = () => {
       const formattedEndTime = dateRange.endDate;
 
       // 构建API URL，添加手续费参数
-      const url = `/api/api/backtest/ta4j/run?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialCapital}&strategyType=${strategy}&symbol=${selectedPair}&interval=${timeframe}&saveResult=True&feeRatio=${feeRatio}`;
+      const url = `/api/backtest/ta4j/run?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}&initialAmount=${initialCapital}&strategyType=${strategy}&symbol=${selectedPair}&interval=${timeframe}&saveResult=True&feeRatio=${feeRatio}`;
 
       console.log('发送回测请求:', url);
 

@@ -214,7 +214,7 @@ const BacktestSummaryPage: React.FC = () => {
   // 获取策略列表
   const fetchStrategies = async () => {
     try {
-      const response = await fetch('/api/api/backtest/ta4j/strategies');
+      const response = await fetch('/api/backtest/ta4j/strategies');
       if (!response.ok) {
         throw new Error('获取策略列表失败');
       }

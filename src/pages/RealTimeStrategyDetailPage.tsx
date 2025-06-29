@@ -25,7 +25,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
     if (!strategyCode) return;
     setLoading(true);
     setError('');
-    fetch(`/api/api/real-time-strategy/real-time/orders?strategyCode=${encodeURIComponent(strategyCode)}`)
+    fetch(`/api/real-time-strategy/real-time/orders?strategyCode=${encodeURIComponent(strategyCode)}`)
       .then(res => res.json())
       .then(data => {
         if (data.code === 200) {
