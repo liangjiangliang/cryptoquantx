@@ -31,7 +31,7 @@ interface IndicatorDistributionData {
 }
 
 // 每页显示的指标数量
-const INDICATORS_PER_PAGE = 13;
+const INDICATORS_PER_PAGE = 15;
 
 const IndicatorDistributionPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
