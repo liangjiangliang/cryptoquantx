@@ -13,6 +13,11 @@ interface RealTimeOrder {
   createTime: string;
   updateTime: string;
   profit?: number;
+  executedAmount?: number;  // 成交金额
+  executedQty?: number;     // 成交数量
+  signalPrice?: number;     // 信号价格
+  fee?: number;             // 手续费
+  feeCurrency?: string;     // 手续费币种
 }
 
 const RealTimeStrategyDetailPage: React.FC = () => {
@@ -57,7 +62,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
 
   const formatAmount = (amount: number | null | undefined): string => {
     if (amount === null || amount === undefined) return '-';
-    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
   };
 
   return (
@@ -80,8 +85,12 @@ const RealTimeStrategyDetailPage: React.FC = () => {
                 <th>ID</th>
                 <th>交易对</th>
                 <th>方向</th>
-                <th>价格</th>
-                <th>数量</th>
+                <th>成交价格</th>
+                <th>成交数量</th>
+                <th>成交金额</th>
+                <th>信号价格</th>
+                <th>手续费</th>
+                <th>手续费币种</th>
                 <th>状态</th>
                 <th>收益</th>
                 <th>创建时间</th>
@@ -90,14 +99,18 @@ const RealTimeStrategyDetailPage: React.FC = () => {
             </thead>
             <tbody>
               {orders.length === 0 ? (
-                <tr><td colSpan={9} style={{ textAlign: 'center', color: '#888' }}>暂无订单数据</td></tr>
+                <tr><td colSpan={14} style={{ textAlign: 'center', color: '#888' }}>暂无订单数据</td></tr>
               ) : orders.map(order => (
                 <tr key={order.id}>
                   <td>{order.id}</td>
                   <td>{order.symbol}</td>
                   <td>{order.side}</td>
                   <td>{formatAmount(order.price)}</td>
-                  <td>{formatAmount(order.amount)}</td>
+                  <td>{formatAmount(order.executedQty)}</td>
+                  <td>{formatAmount(order.executedAmount)}</td>
+                  <td>{formatAmount(order.signalPrice)}</td>
+                  <td>{formatAmount(order.fee)}</td>
+                  <td>{order.feeCurrency || '-'}</td>
                   <td>{order.status}</td>
                   <td className={order.profit && order.profit >= 0 ? 'positive' : 'negative'}>{order.profit !== undefined ? formatAmount(order.profit) : '-'}</td>
                   <td>{formatDateTime(order.createTime)}</td>

@@ -4,14 +4,14 @@ import { BacktestSummary } from '../store/types';
 // 统一的时间处理工具函数
 export const getDefaultDateRange = () => {
   const now = new Date();
-  
-  // 结束时间：当前精确时间  
+
+  // 结束时间：当前精确时间
   const endDate = new Date(now);
-  
+
   // 开始时间：一年前的当前时间
   const startDate = new Date(now);
   startDate.setFullYear(now.getFullYear() - 1);
-  
+
   return {
     startDate: formatDateTimeString(startDate),
     endDate: formatDateTimeString(endDate)
@@ -26,7 +26,7 @@ export const formatDateTimeString = (date: Date): string => {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
-  
+
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
@@ -36,7 +36,7 @@ export const normalizeTimeString = (timeStr: string): string => {
   if (timeStr.includes(':')) {
     return timeStr;
   }
-  
+
   // 如果只有日期部分，添加 00:00:00
   return `${timeStr} 00:00:00`;
 };
@@ -44,11 +44,11 @@ export const normalizeTimeString = (timeStr: string): string => {
 // 获取今天的日期字符串（yyyy-MM-dd格式），用于限制日期选择器的最大值
 export const getTodayDateString = (): string => {
   const today = new Date();
-  
+
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const day = String(today.getDate()).padStart(2, '0');
-  
+
   return `${year}-${month}-${day}`;
 };
 
@@ -71,7 +71,7 @@ export const extractDatePart = (timeStr: string): string => {
 // 规范化为完整的时间格式（yyyy-MM-dd HH:mm:ss）
 export const normalizeToFullTimeFormat = (timeStr: string): string => {
   if (!timeStr) return '';
-  
+
   // 如果已经包含时间部分，直接返回（但要处理重复格式问题）
   if (timeStr.includes(' ')) {
     // 处理类似 "2025-06-23 22:55:02 00:00:00" 的重复格式
@@ -82,7 +82,7 @@ export const normalizeToFullTimeFormat = (timeStr: string): string => {
     }
     return timeStr;
   }
-  
+
   // 如果只有日期部分，添加 00:00:00
   return `${timeStr} 00:00:00`;
 };
@@ -118,7 +118,7 @@ const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
     inputLength: apiData.length,
     firstItem: apiData.length > 0 ? apiData[0] : null
   });
-  
+
   const result = apiData.map((item, index) => {
     // 将日期字符串转换为时间戳（秒）
     let openTime: number;
@@ -161,20 +161,20 @@ const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
       close,
       volume
     };
-    
+
     if (index === 0) {
       console.log('转换第一个数据项:', { original: item, converted: convertedItem });
     }
-    
+
     return convertedItem;
   });
-  
+
   console.log('数据转换完成:', {
     inputLength: apiData.length,
     outputLength: result.length,
     firstConverted: result.length > 0 ? result[0] : null
   });
-  
+
   return result;
 };
 
@@ -268,10 +268,10 @@ export const fetchHistoryWithIntegrityCheck = async (
 }> => {
   // 如果没有提供时间范围，使用默认时间范围
   const defaultRange = getDefaultDateRange();
-  
+
   // startDate 需要完整的时间格式（yyyy-MM-dd HH:mm:ss）
   const normalizedStartDate = startDate ? normalizeToFullTimeFormat(startDate) : defaultRange.startDate;
-  
+
   // endDate 需要完整的时间格式（yyyy-MM-dd HH:mm:ss）
   const normalizedEndDate = endDate ? normalizeToFullTimeFormat(endDate) : getCurrentTimeString();
 
@@ -557,7 +557,7 @@ export const runAllBacktests = async (
       // 保存最近一次的批次ID到静态属性，以便其他组件可以访问
       const batchBacktestId = data.data.batch_backtest_id || '';
       (runAllBacktests as any).lastBatchId = batchBacktestId;
-      
+
       return {
         success: true,
         data: data.data
@@ -724,29 +724,29 @@ export const fetchStrategyMaxReturns = async (): Promise<Record<string, number>>
   try {
     // 获取所有回测汇总数据
     const summariesResponse = await fetchBacktestSummaries();
-    
+
     if (!summariesResponse || !Array.isArray(summariesResponse)) {
       console.warn('获取回测汇总数据失败或数据格式不正确');
       return {};
     }
-    
+
     const summaries = summariesResponse;
     const maxReturnsByStrategy: Record<string, number> = {};
-    
+
     // 遍历所有回测记录，找出每个策略的最高收益率
     summaries.forEach(summary => {
       const { strategyName, totalReturn } = summary;
-      
+
       if (!strategyName || typeof totalReturn !== 'number') {
         return;
       }
-      
+
       // 如果当前策略尚未记录或当前收益率更高，则更新
       if (!(strategyName in maxReturnsByStrategy) || totalReturn > maxReturnsByStrategy[strategyName]) {
         maxReturnsByStrategy[strategyName] = totalReturn;
       }
     });
-    
+
     return maxReturnsByStrategy;
   } catch (error) {
     console.error('计算策略最高收益率数据失败:', error);
@@ -761,19 +761,19 @@ export const fetchFailedStrategies = async (batchBacktestId?: string): Promise<a
     if (batchBacktestId) {
       const url = `/api/backtest/ta4j/run-all-results?batch_backtest_id=${batchBacktestId}`;
       const response = await fetch(url);
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.code === 200 && data.data && Array.isArray(data.data.results)) {
           // 从结果中筛选出失败的策略
-          const failedStrategies = data.data.results.filter((strategy: any) => 
+          const failedStrategies = data.data.results.filter((strategy: any) =>
             strategy.success === false || strategy.error
           ).map((strategy: any) => ({
             strategy_code: strategy.strategy_code,
             strategy_name: strategy.strategy_name,
             error: strategy.error || '未知错误'
           }));
-          
+
           if (failedStrategies.length > 0) {
             return failedStrategies;
           }
@@ -822,7 +822,7 @@ export const createRealTimeStrategy = async (
 ): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
     const url = '/api/real-time-strategy/real-time';
-    
+
     // 构建参数
     const params = new URLSearchParams();
     params.append('strategyCode', strategyCode);
@@ -869,12 +869,12 @@ export const createRealTimeStrategy = async (
 // 启动实时策略
 export const startRealTimeStrategy = async (strategyId: number): Promise<{ success: boolean; message?: string }> => {
   try {
-    const url = `/api/real-time-strategy/start`;
-    
+    const url = `/api/real-time-strategy/start/${strategyId}`;
+
     // 构建参数，使用表单格式
     const params = new URLSearchParams();
     params.append('id', strategyId.toString());
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -913,12 +913,12 @@ export const startRealTimeStrategy = async (strategyId: number): Promise<{ succe
 // 停止实时策略
 export const stopRealTimeStrategy = async (strategyId: number): Promise<{ success: boolean; message?: string }> => {
   try {
-    const url = `/api/real-time-strategy/stop`;
-    
+    const url = `/api/real-time-strategy/stop/${strategyId}`;
+
     // 构建参数，使用表单格式
     const params = new URLSearchParams();
     params.append('id', strategyId.toString());
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {

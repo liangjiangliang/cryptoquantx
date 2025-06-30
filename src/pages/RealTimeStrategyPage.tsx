@@ -14,6 +14,7 @@ interface RealTimeStrategy {
   createTime: string;
   updateTime: string;
   totalProfit?: number;
+  totalFees?: number;
   totalTrades?: number;
 }
 
@@ -28,17 +29,17 @@ const RealTimeStrategyPage: React.FC = () => {
   const fetchRealTimeStrategies = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       const response = await fetch('/api/real-time-strategy/list');
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log('实盘策略API返回数据:', data);
-      
+
       if (data.code === 200) {
         setStrategies(data.data || []);
       } else {
@@ -118,7 +119,7 @@ const RealTimeStrategyPage: React.FC = () => {
       setOperationInProgress({...operationInProgress, [strategyId]: false});
     }
   };
-  
+
   // 停止策略
   const handleStopStrategy = async (strategyId: number) => {
     setOperationInProgress({...operationInProgress, [strategyId]: true});
@@ -163,12 +164,13 @@ const RealTimeStrategyPage: React.FC = () => {
                 <thead>
                   <tr>
                     <th>策略名称</th>
-  
+
                     <th>交易对</th>
                     <th>时间周期</th>
                     <th>交易金额</th>
-                   
+
                     <th>总收益</th>
+                    <th>总佣金</th>
                     <th>交易次数</th>
                     <th>创建时间</th>
                     <th>更新时间</th>
@@ -180,13 +182,16 @@ const RealTimeStrategyPage: React.FC = () => {
                   {strategies.map((strategy) => (
                     <tr key={strategy.id}>
                       <td>{strategy.strategyName || '-'}</td>
-      
+
                       <td>{strategy.symbol}</td>
                       <td>{strategy.interval}</td>
                       <td>{formatAmount(strategy.tradeAmount)} USDT</td>
-                    
+
                       <td className={strategy.totalProfit && strategy.totalProfit >= 0 ? 'positive' : 'negative'}>
                         {formatAmount(strategy.totalProfit)} USDT
+                      </td>
+                      <td className={strategy.totalFees && strategy.totalFees >= 0 ? 'positive' : 'negative'}>
+                        {formatAmount(strategy.totalFees)} USDT
                       </td>
                       <td>{strategy.totalTrades || 0}</td>
                       <td>{formatDateTime(strategy.createTime)}</td>
@@ -201,7 +206,7 @@ const RealTimeStrategyPage: React.FC = () => {
                           className="strategy-detail-btn"
                           onClick={() => navigate(`/real-time-strategy-detail/${strategy.strategyCode}`)}
                         >
-                          查看详情
+                          详情
                         </button>
                         {strategy.status === 'RUNNING' ? (
                           <button
@@ -233,4 +238,4 @@ const RealTimeStrategyPage: React.FC = () => {
   );
 };
 
-export default RealTimeStrategyPage; 
+export default RealTimeStrategyPage;
