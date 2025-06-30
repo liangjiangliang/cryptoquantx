@@ -992,3 +992,42 @@ export const stopRealTimeStrategy = async (strategyId: number): Promise<{ succes
     };
   }
 };
+
+// 删除实时策略
+export const deleteRealTimeStrategy = async (strategyId: number): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const url = `/api/real-time-strategy/delete/${strategyId}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('删除实时策略API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        message: data.message || '策略删除成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '删除策略失败'
+      };
+    }
+  } catch (error) {
+    console.error('删除策略失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '删除策略请求发生错误'
+    };
+  }
+};

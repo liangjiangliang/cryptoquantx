@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { startRealTimeStrategy, stopRealTimeStrategy } from '../services/api';
+import { startRealTimeStrategy, stopRealTimeStrategy, deleteRealTimeStrategy } from '../services/api';
+import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import './RealTimeStrategyPage.css';
 
 interface RealTimeStrategy {
@@ -24,6 +25,13 @@ const RealTimeStrategyPage: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [operationInProgress, setOperationInProgress] = useState<{[key: string]: boolean}>({});
   const navigate = useNavigate();
+  
+  // 添加确认对话框状态
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    strategyId: -1,
+    strategyName: '',
+  });
 
   // 获取实盘策略列表
   const fetchRealTimeStrategies = async () => {
@@ -139,6 +147,49 @@ const RealTimeStrategyPage: React.FC = () => {
     }
   };
 
+  // 删除策略
+  const handleDeleteStrategy = async (strategyId: number) => {
+    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    try {
+      const result = await deleteRealTimeStrategy(strategyId);
+      if (result.success) {
+        // 刷新策略列表
+        fetchRealTimeStrategies();
+      } else {
+        setError(result.message || '删除策略失败');
+      }
+    } catch (error) {
+      console.error('删除策略失败:', error);
+      setError(error instanceof Error ? error.message : '删除策略失败');
+    } finally {
+      setOperationInProgress({...operationInProgress, [strategyId]: false});
+    }
+  };
+  
+  // 打开确认对话框
+  const openConfirmModal = (strategy: RealTimeStrategy) => {
+    setConfirmModal({
+      isOpen: true,
+      strategyId: strategy.id,
+      strategyName: strategy.strategyName || strategy.strategyCode,
+    });
+  };
+  
+  // 关闭确认对话框
+  const closeConfirmModal = () => {
+    setConfirmModal({
+      isOpen: false,
+      strategyId: -1,
+      strategyName: '',
+    });
+  };
+  
+  // 确认删除
+  const confirmDelete = () => {
+    handleDeleteStrategy(confirmModal.strategyId);
+    closeConfirmModal();
+  };
+
   return (
     <div className="real-time-strategy-page">
       {error && (
@@ -225,6 +276,13 @@ const RealTimeStrategyPage: React.FC = () => {
                             {operationInProgress[strategy.id] ? '处理中...' : '启动'}
                           </button>
                         )}
+                        <button
+                          className="strategy-delete-btn"
+                          onClick={() => openConfirmModal(strategy)}
+                          disabled={operationInProgress[strategy.id]}
+                        >
+                          删除
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -234,6 +292,18 @@ const RealTimeStrategyPage: React.FC = () => {
           )}
         </div>
       )}
+      
+      {/* 添加确认对话框 */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title="删除策略确认"
+        message={`确定要删除策略 <strong>${confirmModal.strategyName}</strong> 吗？<br/>此操作不可撤销，策略的所有关联数据将被清除。`}
+        confirmText="删除"
+        cancelText="取消"
+        onConfirm={confirmDelete}
+        onCancel={closeConfirmModal}
+        type="danger"
+      />
     </div>
   );
 };
