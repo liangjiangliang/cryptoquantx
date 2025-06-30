@@ -79,7 +79,7 @@ const RealTimeStrategyPage: React.FC = () => {
   // 格式化金额
   const formatAmount = (amount: number | null | undefined): string => {
     if (amount === null || amount === undefined) return '0';
-    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
   };
 
   // 获取状态样式
@@ -167,7 +167,7 @@ const RealTimeStrategyPage: React.FC = () => {
 
                     <th>交易对</th>
                     <th>时间周期</th>
-                    <th>交易金额</th>
+                    <th>投资金额</th>
 
                     <th>总收益</th>
                     <th>总佣金</th>
@@ -185,13 +185,13 @@ const RealTimeStrategyPage: React.FC = () => {
 
                       <td>{strategy.symbol}</td>
                       <td>{strategy.interval}</td>
-                      <td>{formatAmount(strategy.tradeAmount)} USDT</td>
+                      <td>{formatAmount(strategy.tradeAmount)} </td>
 
                       <td className={strategy.totalProfit && strategy.totalProfit >= 0 ? 'positive' : 'negative'}>
-                        {formatAmount(strategy.totalProfit)} USDT
+                        {formatAmount(strategy.totalProfit)} 
                       </td>
                       <td className={strategy.totalFees && strategy.totalFees >= 0 ? 'positive' : 'negative'}>
-                        {formatAmount(strategy.totalFees)} USDT
+                        {formatAmount(strategy.totalFees)} 
                       </td>
                       <td>{strategy.totalTrades || 0}</td>
                       <td>{formatDateTime(strategy.createTime)}</td>

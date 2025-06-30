@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy, updateStrategy, fetchStrategyMaxReturns, getDefaultDateRange, getYesterdayDateString } from '../services/api';
+import { fetchBacktestStrategies, createBacktest, deleteStrategy, generateStrategy, updateStrategy, fetchStrategyMaxReturns, getDefaultDateRange, getYesterdayDateString, updateIndicatorDistributions } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import GenerateStrategyModal from '../components/GenerateStrategyModal/GenerateStrategyModal';
 import ResultModal from '../components/ResultModal/ResultModal';
@@ -75,6 +75,9 @@ const BacktestFactoryPage: React.FC = () => {
   // 策略最高收益率相关状态
   const [strategyMaxReturns, setStrategyMaxReturns] = useState<Record<string, number>>({});
   const [isLoadingReturns, setIsLoadingReturns] = useState<boolean>(false);
+
+  // 添加更新指标分布的状态
+  const [updatingIndicators, setUpdatingIndicators] = useState<boolean>(false);
 
   // 设置默认日期范围（使用统一的默认时间范围）
   useEffect(() => {
@@ -947,7 +950,25 @@ const BacktestFactoryPage: React.FC = () => {
     );
   };
 
-  // 渲染过滤器
+  // 添加更新指标分布的处理函数
+  const handleUpdateIndicatorDistributions = async () => {
+    setUpdatingIndicators(true);
+    try {
+      const result = await updateIndicatorDistributions();
+      if (result.success) {
+        showResult('更新成功', result.message || '指标分布已成功更新', 'success');
+      } else {
+        showResult('更新失败', result.message || '指标分布更新失败', 'error');
+      }
+    } catch (error) {
+      console.error('更新指标分布时发生错误:', error);
+      showResult('更新失败', '更新指标分布时发生错误', 'error');
+    } finally {
+      setUpdatingIndicators(false);
+    }
+  };
+
+  // 修改 renderFilters 函数，添加更新指标分布按钮
   const renderFilters = () => {
     return (
       <div className="filters">
@@ -972,6 +993,14 @@ const BacktestFactoryPage: React.FC = () => {
               }}
             >
               {hideUnavailable ? '显示全部策略' : '隐藏不可用策略'}
+            </button>
+            
+            <button
+              className="filter-btn"
+              onClick={handleUpdateIndicatorDistributions}
+              disabled={updatingIndicators}
+            >
+              {updatingIndicators ? '更新中...' : '更新指标分布'}
             </button>
             
             <button

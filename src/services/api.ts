@@ -754,6 +754,45 @@ export const fetchStrategyMaxReturns = async (): Promise<Record<string, number>>
   }
 };
 
+// 更新指标分布
+export const updateIndicatorDistributions = async (): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const url = '/api/real-time-strategy/update-indicator-distributions';
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('更新指标分布API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        message: data.message || '指标分布更新成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '更新指标分布失败'
+      };
+    }
+  } catch (error) {
+    console.error('更新指标分布失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '更新指标分布请求发生错误'
+    };
+  }
+};
+
 // 获取失败的策略列表
 export const fetchFailedStrategies = async (batchBacktestId?: string): Promise<any[]> => {
   try {
