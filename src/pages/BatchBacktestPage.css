@@ -9,21 +9,21 @@
   position: relative;
 }
 
-.page-header {
-  margin-bottom: 30px;
-  padding: 0 20px; /* 添加左右内边距 */
-}
+/*.page-header {*/
+/*  margin-bottom: 30px;*/
+/*  padding: 0 20px; !* 添加左右内边距 *!*/
+/*}*/
 
-.page-header h2 {
-  font-size: 24px;
-  margin-bottom: 10px;
-  color: #e6e6e6;
-}
+/*.page-header h2 {*/
+/*  font-size: 24px;*/
+/*  margin-bottom: 10px;*/
+/*  color: #e6e6e6;*/
+/*}*/
 
-.page-header p {
-  color: #a0a0a0;
-  font-size: 14px;
-}
+/*.page-header p {*/
+/*  color: #a0a0a0;*/
+/*  font-size: 14px;*/
+/*}*/
 
 .error-message {
   color: #ff6b6b;

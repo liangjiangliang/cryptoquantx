@@ -68,3 +68,11 @@
 .real-time-strategy-link:hover {
   background-color: #8e24aa;
 }
+
+.indicator-distribution-link {
+  background-color: #2196F3;
+}
+
+.indicator-distribution-link:hover {
+  background-color: #1976D2;
+}

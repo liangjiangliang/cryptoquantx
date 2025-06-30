@@ -12,6 +12,7 @@ import BatchBacktestPage from './pages/BatchBacktestPage';
 import BatchBacktestDetailPage from './pages/BatchBacktestDetailPage';
 import RealTimeStrategyPage from './pages/RealTimeStrategyPage';
 import RealTimeStrategyDetailPage from './pages/RealTimeStrategyDetailPage';
+import IndicatorDistributionPage from './pages/IndicatorDistributionPage';
 import DataLoader from './components/DataLoader';
 import GlobalNavbar from './components/GlobalNavbar';
 import {clearBacktestResults} from './store/actions';
@@ -169,6 +170,7 @@ function App() {
                         <Route path="/batch-backtest-detail/:batchId" element={<BatchBacktestDetailPage/>}/>
                         <Route path="/real-time-strategy" element={<RealTimeStrategyPage/>}/>
                         <Route path="/real-time-strategy-detail/:strategyCode" element={<RealTimeStrategyDetailPage/>}/>
+                        <Route path="/indicator-distribution" element={<IndicatorDistributionPage/>}/>
                         <Route path="/" element={<HomePage/>}/>
                     </Routes>
                 </div>

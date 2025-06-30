@@ -754,11 +754,46 @@ export const fetchStrategyMaxReturns = async (): Promise<Record<string, number>>
   }
 };
 
+// 获取指标分布详情
+export const fetchIndicatorDistributions = async (): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    const url = '/api/indicator-distribution/current';
+    
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('获取指标分布详情API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || '获取指标分布详情成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '获取指标分布详情失败'
+      };
+    }
+  } catch (error) {
+    console.error('获取指标分布详情失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '获取指标分布详情请求发生错误'
+    };
+  }
+};
+
 // 更新指标分布
 export const updateIndicatorDistributions = async (): Promise<{ success: boolean; message?: string }> => {
   try {
-    const url = '/api/real-time-strategy/update-indicator-distributions';
-    
+    const url = '/api/indicator-distribution/update';
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
