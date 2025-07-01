@@ -59,6 +59,19 @@ const BacktestPanel: React.FC = () => {
   const [accountBalance, setAccountBalance] = useState<number | null>(null);
   const [loadingBalance, setLoadingBalance] = useState<boolean>(false);
 
+  // 添加交易对选择器所需的状态变量
+  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
+  const [searchPair, setSearchPair] = useState<string>('');
+  const [allTickers, setAllTickers] = useState<any[]>([]);
+  const [displayedPairs, setDisplayedPairs] = useState<any[]>([]);
+  const [sortedPairs, setSortedPairs] = useState<any[]>([]);
+  const [filteredPairs, setFilteredPairs] = useState<any[]>([]);
+  const [isLoadingTickers, setIsLoadingTickers] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<string>('volume');
+  const [sortDirection, setSortDirection] = useState<string>('desc');
+  const [displayLimit, setDisplayLimit] = useState<number>(20);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
   // 当状态变化时更新ref
   useEffect(() => {
     runningBatchBacktestRef.current = runningBatchBacktest;
@@ -570,6 +583,115 @@ const BacktestPanel: React.FC = () => {
     }
   };
 
+  // 添加交易对选择器所需的函数
+  // 设置价格颜色样式
+  const getPriceChangeClass = (percent: number) => {
+    if (percent > 0) return 'price-up';
+    if (percent < 0) return 'price-down';
+    return '';
+  };
+
+  // 添加滚动加载更多的处理函数
+  const handlePairsScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    // 当滚动到底部附近时（距离底部20px以内），加载更多数据
+    if (scrollHeight - scrollTop - clientHeight < 20 && !isLoadingTickers && displayedPairs.length < sortedPairs.length) {
+      setDisplayLimit(prevLimit => prevLimit + 20);
+    }
+  };
+
+  // 处理排序方式变更
+  const handleSortChange = (newSortBy: string) => {
+    if (sortBy === newSortBy) {
+      // 如果点击的是当前排序字段，则切换排序方向
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 如果点击的是新字段，则设置为该字段的默认排序方向
+      setSortBy(newSortBy);
+      setSortDirection(newSortBy === 'volume' ? 'desc' : 'desc');
+    }
+  };
+
+  // 选择交易对
+  const selectPair = (symbol: string) => {
+    dispatch(setSelectedPair(symbol));
+    setDropdownOpen(false); // 选择后关闭下拉框
+  };
+
+  // 加载所有交易对数据
+  useEffect(() => {
+    const loadAllTickers = async () => {
+      setIsLoadingTickers(true);
+      try {
+        // 使用模拟数据代替API调用
+        const mockTickers = COMMON_PAIRS.map(pair => ({
+          symbol: pair,
+          lastPrice: Math.random() * 10000,
+          priceChangePercent: (Math.random() * 10) - 5,
+          volume: Math.random() * 10000000,
+          quoteVolume: Math.random() * 100000000
+        }));
+        
+        setAllTickers(mockTickers);
+        
+        // 默认按交易量排序
+        const sorted = [...mockTickers].sort((a, b) => {
+          const volumeA = a.quoteVolume || a.volume || 0;
+          const volumeB = b.quoteVolume || b.volume || 0;
+          return sortDirection === 'desc' ? volumeB - volumeA : volumeA - volumeB;
+        });
+        
+        setSortedPairs(sorted);
+        setFilteredPairs(sorted);
+        setDisplayedPairs(sorted.slice(0, displayLimit));
+      } catch (error) {
+        console.error('加载交易对数据失败:', error);
+      } finally {
+        setIsLoadingTickers(false);
+      }
+    };
+    
+    loadAllTickers();
+  }, [sortBy, sortDirection]);
+
+  // 处理搜索交易对
+  useEffect(() => {
+    if (allTickers.length === 0) return;
+    
+    const filtered = allTickers.filter(ticker => 
+      ticker.symbol.toLowerCase().includes(searchPair.toLowerCase())
+    );
+    
+    // 应用排序
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === 'volume') {
+        const volumeA = a.quoteVolume || a.volume || 0;
+        const volumeB = b.quoteVolume || b.volume || 0;
+        return sortDirection === 'desc' ? volumeB - volumeA : volumeA - volumeB;
+      } else if (sortBy === 'change') {
+        return sortDirection === 'desc' ? b.priceChangePercent - a.priceChangePercent : a.priceChangePercent - b.priceChangePercent;
+      }
+      return 0;
+    });
+    
+    setFilteredPairs(sorted);
+    setDisplayedPairs(sorted.slice(0, displayLimit));
+  }, [searchPair, allTickers, sortBy, sortDirection, displayLimit]);
+
+  // 点击外部关闭下拉框
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownRef]);
+
   return (
     <div className="backtest-panel">
       <div className="backtest-panel-header">
@@ -689,15 +811,78 @@ const BacktestPanel: React.FC = () => {
 
             <div className="input-group">
               <label>交易对</label>
-              <select
-                className="pair-selector"
-                value={selectedPair}
-                onChange={(e) => dispatch(setSelectedPair(e.target.value))}
-              >
-                {COMMON_PAIRS.map((pair: string) => (
-                  <option key={pair} value={pair}>{pair}</option>
-                ))}
-              </select>
+              <div className="pair-selector-wrapper" ref={dropdownRef}>
+                <div className="selected-pair-display" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                  <span>{selectedPair}</span>
+                  <span className="dropdown-arrow">{dropdownOpen ? '▲' : '▼'}</span>
+                </div>
+
+                {dropdownOpen && (
+                  <div className="pairs-dropdown">
+                    <input
+                      type="text"
+                      placeholder="搜索币种..."
+                      value={searchPair}
+                      onChange={(e) => setSearchPair(e.target.value)}
+                      className="pair-search-input"
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                    />
+
+                    <div className="sort-options">
+                      <button
+                        className={`sort-button ${sortBy === 'volume' ? 'active' : ''}`}
+                        onClick={() => handleSortChange('volume')}
+                      >
+                        交易量 {sortBy === 'volume' && (sortDirection === 'desc' ? '↓' : '↑')}
+                      </button>
+                      <button
+                        className={`sort-button ${sortBy === 'change' ? 'active' : ''}`}
+                        onClick={() => handleSortChange('change')}
+                      >
+                        涨跌幅 {sortBy === 'change' && (sortDirection === 'desc' ? '↓' : '↑')}
+                      </button>
+                    </div>
+
+                    <div className="pair-list-container" onScroll={handlePairsScroll}>
+                      {isLoadingTickers ? (
+                        <div className="pairs-loading">加载中...</div>
+                      ) : displayedPairs.length > 0 ? (
+                        <div className="pair-list">
+                          {displayedPairs.map(ticker => (
+                            <div
+                              key={ticker.symbol}
+                              className={`pair-item ${ticker.symbol === selectedPair ? 'selected' : ''}`}
+                              onClick={() => selectPair(ticker.symbol)}
+                            >
+                              <div className="pair-item-left">
+                                <span className="pair-item-symbol">{ticker.symbol}</span>
+                              </div>
+                              <div className="pair-item-right">
+                                <span className="pair-item-price">{ticker.lastPrice > 0 ? ticker.lastPrice.toFixed(2) : '--'}</span>
+                                <span className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
+                                  {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
+                                </span>
+                                <span className="pair-item-volume">
+                                  {(ticker.volume && ticker.volume > 1000000) ? (ticker.volume / 1000000).toFixed(2) + 'M' :
+                                  (ticker.volume && ticker.volume > 1000) ? (ticker.volume / 1000).toFixed(2) + 'K' :
+                                  ticker.volume ? ticker.volume.toFixed(2) : '0'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {displayedPairs.length < filteredPairs.length && (
+                            <div className="load-more-indicator">滚动加载更多...</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="no-results">无匹配结果</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="input-group">

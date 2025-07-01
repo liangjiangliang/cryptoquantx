@@ -1683,35 +1683,22 @@ const CandlestickChart: React.FC = () => {
           macd.every(v => isNaN(v)) ||
           signal.every(v => isNaN(v)) ||
           histogram.every(v => isNaN(v))) {
-        // console.warn('MACD数据全为NaN，跳过绘制');
         return;
       }
 
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
 
-      // 深度复制数组，避免直接修改原始数据
-      const macdCopy = [...macd];
-      const signalCopy = [...signal];
-      const histogramCopy = [...histogram];
-
-      // 安全处理：将所有NaN值替换为null，以避免图表绘制错误
-      for (let i = 0; i < macdCopy.length; i++) {
-        if (isNaN(macdCopy[i])) macdCopy[i] = 0;
-        if (isNaN(signalCopy[i])) signalCopy[i] = 0;
-        if (isNaN(histogramCopy[i])) histogramCopy[i] = 0;
-      }
-
       // 准备数据，过滤掉无效值
-      const macdData = prepareTimeSeriesData(macdCopy, times);
-      const signalData = prepareTimeSeriesData(signalCopy, times);
+      const macdData = prepareTimeSeriesData(macd, times);
+      const signalData = prepareTimeSeriesData(signal, times);
 
       // 特殊处理柱状图数据
       const histogramData: {time: Time, value: number, color: string}[] = [];
 
       // 小心地构建柱状图数据，避免任何可能的null值
-      for (let i = 0; i < Math.min(histogramCopy.length, times.length); i++) {
-        const value = histogramCopy[i];
+      for (let i = 0; i < Math.min(histogram.length, times.length); i++) {
+        const value = histogram[i];
         const time = times[i];
 
         if (value !== undefined && !isNaN(value) && time !== undefined) {
@@ -1725,7 +1712,6 @@ const CandlestickChart: React.FC = () => {
 
       // 如果没有有效数据，不添加指标
       if (macdData.length === 0 || signalData.length === 0 || histogramData.length === 0) {
-        // console.warn('MACD处理后数据为空，跳过绘制');
         return;
       }
 
@@ -1843,27 +1829,17 @@ const CandlestickChart: React.FC = () => {
       const rsiData = calculateRSI(closePrices);
 
       if (!rsiData || rsiData.length === 0 || rsiData.every(v => isNaN(v))) {
-        // console.warn('RSI数据全为NaN，跳过绘制');
         return;
-      }
-
-      // 深度复制数组，避免直接修改原始数据
-      const rsiCopy = [...rsiData];
-
-      // 安全处理：将所有NaN值替换为null，以避免图表绘制错误
-      for (let i = 0; i < rsiCopy.length; i++) {
-        if (isNaN(rsiCopy[i])) rsiCopy[i] = 50; // 使用中间值50代替NaN
       }
 
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
 
       // 准备数据，过滤掉无效值
-      const formattedData = prepareTimeSeriesData(rsiCopy, times);
+      const formattedData = prepareTimeSeriesData(rsiData, times);
 
       // 如果没有有效数据，不添加指标
       if (formattedData.length === 0) {
-        // console.warn('RSI处理后数据为空，跳过绘制');
         return;
       }
 
@@ -1992,27 +1968,17 @@ const CandlestickChart: React.FC = () => {
       const stockRsiData = calculateStockRSI(closePrices);
 
       if (!stockRsiData || stockRsiData.length === 0 || stockRsiData.every(v => isNaN(v))) {
-        // console.warn('StockRSI数据全为NaN，跳过绘制');
         return;
-      }
-
-      // 深度复制数组，避免直接修改原始数据
-      const stockRsiCopy = [...stockRsiData];
-
-      // 安全处理：将所有NaN值替换为null，以避免图表绘制错误
-      for (let i = 0; i < stockRsiCopy.length; i++) {
-        if (isNaN(stockRsiCopy[i])) stockRsiCopy[i] = 50; // 使用中间值50代替NaN
       }
 
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
 
       // 准备数据，过滤掉无效值
-      const formattedData = prepareTimeSeriesData(stockRsiCopy, times);
+      const formattedData = prepareTimeSeriesData(stockRsiData, times);
 
       // 如果没有有效数据，不添加指标
       if (formattedData.length === 0) {
-        // console.warn('StockRSI处理后数据为空，跳过绘制');
         return;
       }
 
@@ -2168,33 +2134,19 @@ const CandlestickChart: React.FC = () => {
           k.every(v => isNaN(v)) ||
           d.every(v => isNaN(v)) ||
           j.every(v => isNaN(v))) {
-        // console.warn('KDJ数据全为NaN，跳过绘制');
         return;
-      }
-
-      // 深度复制数组，避免直接修改原始数据
-      const kCopy = [...k];
-      const dCopy = [...d];
-      const jCopy = [...j];
-
-      // 安全处理：将所有NaN值替换为50，以避免图表绘制错误
-      for (let i = 0; i < kCopy.length; i++) {
-        if (isNaN(kCopy[i])) kCopy[i] = 50;
-        if (isNaN(dCopy[i])) dCopy[i] = 50;
-        if (isNaN(jCopy[i])) jCopy[i] = 50;
       }
 
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
 
       // 准备数据，过滤掉无效值
-      const kData = prepareTimeSeriesData(kCopy, times);
-      const dData = prepareTimeSeriesData(dCopy, times);
-      const jData = prepareTimeSeriesData(jCopy, times);
+      const kData = prepareTimeSeriesData(k, times);
+      const dData = prepareTimeSeriesData(d, times);
+      const jData = prepareTimeSeriesData(j, times);
 
       // 如果没有有效数据，不添加指标
       if (kData.length === 0 || dData.length === 0 || jData.length === 0) {
-        // console.warn('KDJ处理后数据为空，跳过绘制');
         return;
       }
 

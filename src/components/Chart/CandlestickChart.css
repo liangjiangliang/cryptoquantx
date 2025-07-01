@@ -194,7 +194,8 @@
   flex: 1;
   overflow: hidden;
   transition: all 0.3s ease;
-  padding-bottom: 0; /* 移除底部填充，使用专门的元素代替 */
+  padding-bottom: 0; /* 移除底部填充 */
+  gap: 0; /* 移除子元素之间的间距 */
 }
 
 .chart-content {
@@ -210,6 +211,7 @@
   flex: 4; /* 增加主图所占比例 */
   transition: flex 0.3s ease, height 0.3s ease;
   margin-bottom: 0; /* 去掉底部间距 */
+  padding-bottom: 0; /* 确保没有内边距 */
 }
 
 .sub-chart {
@@ -218,7 +220,8 @@
   min-height: 150px;
   margin-top: 0; /* 紧贴主图 */
   margin-bottom: 0; /* 去掉底部间距 */
-  border-top: 1px solid #2e3241;
+  padding-top: 0; /* 确保没有内边距 */
+  border-top: 1px solid #2e3241; /* 保留分隔线 */
   flex: 1;
 }
 
