@@ -16,11 +16,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
+  padding: 10px 15px;
   background-color: #1e222d;
   border-bottom: 1px solid #2e3241;
   flex-wrap: nowrap;
   min-height: 60px;
+  gap: 15px;
 }
 
 .chart-title {
@@ -60,13 +61,17 @@
 .chart-buttons {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: nowrap;
   flex-shrink: 0;
+  height: 36px;
 }
 
-.query-button, .load-data-button, .toggle-panels-button, .history-backtest-button {
-  padding: 8px 16px;
+.query-button, 
+.load-data-button, 
+.toggle-panels-button, 
+.history-backtest-button {
+  padding: 0 16px;
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
@@ -78,6 +83,8 @@
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  height: 36px;
 }
 
 .query-button:hover:not(:disabled), 
@@ -121,9 +128,10 @@
   align-items: center;
   gap: 8px;
   background-color: #2e3241;
-  padding: 4px 8px;
+  padding: 0 10px;
   border-radius: 4px;
   border: 1px solid #555;
+  height: 36px;
 }
 
 .sub-indicators-selector label {
@@ -136,6 +144,8 @@
 .checkbox-group {
   display: flex;
   gap: 10px;
+  height: 36px;
+  align-items: center;
 }
 
 .checkbox-label {
@@ -450,6 +460,44 @@
   font-weight: 500;
 }
 
+/* 主图指标选择器样式 */
+.indicator-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #2e3241;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid #555;
+  height: 36px;
+}
+
+.indicator-selector label {
+  color: #d9d9d9;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.indicator-selector select {
+  background-color: transparent;
+  color: #d9d9d9;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  padding: 0 5px;
+  height: 34px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238d8d8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  background-size: 12px;
+  padding-right: 20px;
+}
+
 /* 主图指标显示位置 */
 .main-indicator {
   top: 10px;
@@ -486,6 +534,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  height: 36px;
 }
 
 .selector-group label {
@@ -505,6 +554,7 @@
   font-size: 14px;
   min-width: 120px;
   cursor: pointer;
+  height: 36px;
 }
 
 .pair-selector:hover,
@@ -526,12 +576,14 @@
   margin-right: 10px;
   flex-wrap: nowrap;
   flex-shrink: 0;
+  height: 36px;
 }
 
 .date-input-group {
   display: flex;
   align-items: center;
   gap: 5px;
+  height: 36px;
 }
 
 .date-input-group label {
@@ -550,6 +602,7 @@
   font-size: 14px;
   width: 130px;
   cursor: pointer;
+  height: 36px;
 }
 
 .date-input:hover {
@@ -681,14 +734,15 @@
 /* 新版交易对选择器样式 */
 .pair-selector-wrapper {
   position: relative;
-  width: 240px;
+  width: 180px;
+  height: 36px;
 }
 
 .selected-pair-display {
   background-color: #2e3241;
   color: #d9d9d9;
   border: 1px solid #3a3f4c;
-  padding: 8px 12px;
+  padding: 0 12px;
   border-radius: 4px;
   font-size: 14px;
   width: 100%;
@@ -696,6 +750,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 36px;
 }
 
 .selected-pair-display:hover {
@@ -746,6 +801,8 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #5d6274 #2e3241;
+  margin: 5px 0;
+  padding: 5px;
 }
 
 .pair-list-container::-webkit-scrollbar {
@@ -838,4 +895,146 @@
 .scroll-hint {
   font-style: italic;
   opacity: 0.8;
+}
+
+/* 修改排序按钮样式 */
+.sort-options {
+  display: flex;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 0 5px;
+  justify-content: space-between;
+}
+
+.sort-button {
+  background-color: #2e3241;
+  color: #d9d9d9;
+  border: 1px solid #3a3f4c;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+}
+
+.sort-button:hover {
+  background-color: #3a3f4c;
+}
+
+.sort-button.active {
+  background-color: #2962ff;
+  border-color: #2962ff;
+}
+
+/* 加载更多按钮样式 */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.load-more-button {
+  background-color: #2e3241;
+  color: #d9d9d9;
+  border: 1px solid #3a3f4c;
+  border-radius: 4px;
+  padding: 8px 15px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.load-more-button:hover {
+  background-color: #3a3f4c;
+}
+
+/* 调试信息样式 */
+.debug-info {
+  font-size: 10px;
+  color: #8d8d8d;
+  padding: 2px 5px;
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+/* 交易量显示样式 */
+.pair-item-volume {
+  font-size: 11px;
+  color: #8d8d8d;
+  margin-top: 2px;
+}
+
+/* 添加成交量和涨跌幅在同一行显示的样式 */
+.pair-item-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.pair-item-change {
+  font-size: 11px;
+}
+
+.pair-item-volume {
+  font-size: 11px;
+  color: #8d8d8d;
+  margin-left: 5px;
+}
+
+/* 修改pairs-container样式，支持滚动加载 */
+.pairs-container {
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3f4c #1e222d;
+  padding: 0 5px;
+}
+
+/* 加载指示器样式 */
+.loading-indicator {
+  text-align: center;
+  padding: 10px;
+  color: #8d8d8d;
+  font-size: 12px;
+}
+
+/* 修改快捷时间选择器样式 */
+.quick-time-selector {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+}
+
+.quick-time-button {
+  background-color: #2e3241;
+  color: #d9d9d9;
+  border: 1px solid #3a3f4c;
+  border-radius: 4px;
+  padding: 0 10px;
+  font-size: 14px;
+  cursor: pointer;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.quick-time-button:hover {
+  background-color: #3a3f4c;
+}
+
+.quick-time-button.active {
+  background-color: #2962ff;
+  border-color: #2962ff;
 }

@@ -42,7 +42,6 @@ const QuickTimeSelector: React.FC<QuickTimeSelectorProps> = ({ onTimeRangeSelect
 
   return (
     <div className="quick-time-selector">
-      <label>快捷选择:</label>
       <div className="quick-time-buttons">
         {timeOptions.map(option => (
           <button

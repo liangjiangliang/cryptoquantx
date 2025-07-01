@@ -216,6 +216,7 @@ const CandlestickChart: React.FC = () => {
     symbol: string;
     lastPrice: number;
     priceChangePercent: number;
+    volume?: number;
   }>>([]);
   const [searchPair, setSearchPair] = useState<string>('');
   const [isLoadingTickers, setIsLoadingTickers] = useState<boolean>(false);
@@ -223,6 +224,11 @@ const CandlestickChart: React.FC = () => {
   // 添加state来控制下拉列表的显示/隐藏状态
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 添加排序状态
+  const [sortBy, setSortBy] = useState<string>('volume'); // 默认按交易量排序
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [displayLimit, setDisplayLimit] = useState<number>(20);
 
   const dispatch = useDispatch();
   const location = useLocation();
@@ -248,7 +254,7 @@ const CandlestickChart: React.FC = () => {
     //   dateRange,
     //   candlestickDataLength: candlestickData.length
     // });
-    
+
     // 强制检查localStorage并恢复数据
     const forceDataRecovery = () => {
       try {
@@ -257,14 +263,14 @@ const CandlestickChart: React.FC = () => {
         //   hasLocalStorageData: !!savedData,
         //   reduxDataLength: candlestickData.length
         // });
-        
+
         if (savedData) {
           const parsedData = JSON.parse(savedData);
           // console.log('从localStorage强制恢复数据:', {
           //   dataLength: parsedData.length,
           //   firstItem: parsedData[0]
           // });
-          
+
           // 无论Redux中是否有数据，都强制更新一次
           dispatch(updateCandlestickData(parsedData));
         }
@@ -272,7 +278,7 @@ const CandlestickChart: React.FC = () => {
         console.error('强制数据恢复失败:', error);
       }
     };
-    
+
     // 添加强制数据恢复事件监听
     const handleForceDataRestore = (event: CustomEvent) => {
       console.log('接收到强制数据恢复事件:', event.detail);
@@ -280,12 +286,12 @@ const CandlestickChart: React.FC = () => {
         dispatch(updateCandlestickData(event.detail.data));
       }
     };
-    
+
     window.addEventListener('forceDataRestore', handleForceDataRestore as EventListener);
-    
+
     // 立即执行一次数据恢复检查
     forceDataRecovery();
-    
+
     // 再延迟执行一次，确保组件完全初始化
     setTimeout(forceDataRecovery, 200);
     setTimeout(forceDataRecovery, 1000);
@@ -680,7 +686,7 @@ const CandlestickChart: React.FC = () => {
                 // 忽略错误
               }
             }
-            
+
             if (rsiChart.current && rsiChart.current.timeScale()) {
               try {
                 rsiChart.current.timeScale().setVisibleLogicalRange(range);
@@ -691,7 +697,7 @@ const CandlestickChart: React.FC = () => {
                 // 忽略错误
               }
             }
-            
+
             if (kdjChart.current && kdjChart.current.timeScale()) {
               try {
                 kdjChart.current.timeScale().setVisibleLogicalRange(range);
@@ -788,7 +794,7 @@ const CandlestickChart: React.FC = () => {
     // 当组件卸载时，清除所有图表
     return () => {
       clearTimeout(timer);
-      
+
       if (chart.current) {
         chart.current.remove();
         chart.current = null;
@@ -828,7 +834,7 @@ const CandlestickChart: React.FC = () => {
     const handleTimeframeChange = (event: CustomEvent) => {
       const { timeframe: newTimeframe } = event.detail;
       console.log('K线图接收到时间周期变更事件:', newTimeframe);
-      
+
       // 清空当前K线数据
       if (candleSeries.current && volumeSeries.current) {
         candleSeries.current.setData([]);
@@ -960,7 +966,7 @@ const CandlestickChart: React.FC = () => {
           // 如果图表还没初始化，先创建图表
           if (chartContainerRef.current) {
             createCharts();
-            
+
             // 延迟处理数据，给图表初始化时间
             const timer = setTimeout(() => {
               // console.log('延迟重试，检查图表状态:', {
@@ -1003,20 +1009,20 @@ const CandlestickChart: React.FC = () => {
     function setDataToChart() {
       try {
         // console.log('开始处理数据，原始数据长度:', candlestickData.length);
-        
+
         // 格式化数据，过滤掉包含 null 或 undefined 的数据项
         const formattedData = candlestickData
           .filter((item: CandlestickData) => {
             // 基本检查：确保item存在且有必要的字段
             if (!item || typeof item !== 'object') return false;
-            
+
             // 时间检查：确保时间字段存在且有效
             if (item.time === null || item.time === undefined) return false;
-            
+
             // 价格检查：确保OHLC数据存在且为有效数字
             const priceFields = [item.open, item.high, item.low, item.close];
-            return priceFields.every(price => 
-              price !== null && price !== undefined && 
+            return priceFields.every(price =>
+              price !== null && price !== undefined &&
               typeof price === 'number' && !isNaN(price) && isFinite(price)
             );
           })
@@ -1033,14 +1039,14 @@ const CandlestickChart: React.FC = () => {
           .filter((item: CandlestickData) => {
             // 基本检查
             if (!item || typeof item !== 'object') return false;
-            
+
             // 时间和价格检查
             if (item.time === null || item.time === undefined) return false;
             if (item.open === null || item.open === undefined || isNaN(item.open)) return false;
             if (item.close === null || item.close === undefined || isNaN(item.close)) return false;
-            
+
             // 成交量检查：允许0值，但不允许null/undefined/NaN
-            return item.volume !== null && item.volume !== undefined && 
+            return item.volume !== null && item.volume !== undefined &&
                    typeof item.volume === 'number' && !isNaN(item.volume) && isFinite(item.volume);
           })
           .sort((a, b) => Number(a.time) - Number(b.time)) // 确保时间序列排序
@@ -1068,7 +1074,7 @@ const CandlestickChart: React.FC = () => {
             // 先清空现有数据，避免数组大小冲突
             candleSeries.current.setData([]);
             volumeSeries.current.setData([]);
-            
+
             // 短暂延迟后设置新数据
             setTimeout(() => {
               if (candleSeries.current && volumeSeries.current) {
@@ -1106,7 +1112,7 @@ const CandlestickChart: React.FC = () => {
             if (chart.current && formattedData.length > 0) {
               // console.log('调整图表视图');
               chart.current.timeScale().fitContent();
-              
+
               // 强制设置可见范围为全部数据
               setTimeout(() => {
                 if (chart.current) {
@@ -1132,7 +1138,7 @@ const CandlestickChart: React.FC = () => {
 
             // 重新设置十字线事件处理器，确保使用最新的数据
             setupCrosshairMoveHandler();
-            
+
             // console.log('K线图数据更新完成，应该可以看到图表了');
           }, 100);
         } else {
@@ -2603,21 +2609,21 @@ const CandlestickChart: React.FC = () => {
           .filter((item: any) => {
             // 基本数据验证
             if (!item) return false;
-            
+
             // 时间验证
             if (!item.time) return false;
-            
+
             // 价格数据验证
             const prices = [item.open, item.high, item.low, item.close];
             if (prices.some(price => price === null || price === undefined || isNaN(Number(price)))) {
               return false;
             }
-            
+
             // 成交量验证
             if (item.volume === null || item.volume === undefined || isNaN(Number(item.volume))) {
               return false;
             }
-            
+
             return true;
           })
           .map((item: any) => {
@@ -2653,22 +2659,22 @@ const CandlestickChart: React.FC = () => {
             firstItem: candlestickData[0],
             lastItem: candlestickData[candlestickData.length - 1]
           });
-          
+
           // 更新Redux中的数据
           dispatch(updateCandlestickData(candlestickData));
-          
+
           // 保存K线数据到localStorage
           saveCandlestickData(candlestickData);
-          
+
           // 保存图表设置到localStorage
           saveChartSettings({
             selectedPair,
             timeframe,
             dateRange
           });
-          
+
           // console.log('Redux数据更新调用完成，已保存到localStorage');
-          
+
           // 显示成功消息
           setResponseMessage(`成功加载 ${candlestickData.length} 条数据`);
         } else {
@@ -2870,11 +2876,11 @@ const CandlestickChart: React.FC = () => {
   useEffect(() => {
     if (location.pathname === '/') {
       // console.log('检测到路由变化到首页，准备清除买卖点标记');
-      
+
       // 尝试多次清除，确保candleSeries已初始化
       let retryCount = 0;
       const maxRetries = 10;
-      
+
       const attemptClear = () => {
         retryCount++;
         if (candleSeries.current) {
@@ -2887,7 +2893,7 @@ const CandlestickChart: React.FC = () => {
           console.log('达到最大重试次数，停止尝试清除买卖点标记');
         }
       };
-      
+
       // 立即尝试一次，然后延迟尝试
       attemptClear();
     }
@@ -3026,7 +3032,7 @@ const CandlestickChart: React.FC = () => {
       volumeSeries.current.setData([]);
       dispatch(updateCandlestickData([]));
       clearIndicators();
-      
+
       // 清除localStorage中的数据
       try {
         localStorage.removeItem(CANDLESTICK_DATA_KEY);
@@ -3047,7 +3053,7 @@ const CandlestickChart: React.FC = () => {
       volumeSeries.current.setData([]);
       dispatch(updateCandlestickData([]));
       clearIndicators();
-      
+
       // 清除localStorage中的数据
       try {
         localStorage.removeItem(CANDLESTICK_DATA_KEY);
@@ -3062,18 +3068,18 @@ const CandlestickChart: React.FC = () => {
     const newDatePart = e.target.value;
     // 手动选择日期时，使用00:00:00作为开始时间
     const newStartDate = `${newDatePart} 00:00:00`;
-    
+
     // 获取结束日期的日期部分进行比较
     const endDatePart = dateRange.endDate.split(' ')[0];
-    
+
     // 如果开始日期大于结束日期，自动调整结束日期
     if (newDatePart > endDatePart) {
       // 获取当前时间
       const now = new Date();
-      const today = now.getFullYear() + '-' + 
-                   String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+      const today = now.getFullYear() + '-' +
+                   String(now.getMonth() + 1).padStart(2, '0') + '-' +
                    String(now.getDate()).padStart(2, '0');
-      
+
       let adjustedEndDate;
       if (newDatePart === today) {
         // 如果选择的是今天，使用当前精确时间
@@ -3093,13 +3099,13 @@ const CandlestickChart: React.FC = () => {
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDatePart = e.target.value;
-    
+
     // 获取当前时间
     const now = new Date();
-    const today = now.getFullYear() + '-' + 
-                 String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+    const today = now.getFullYear() + '-' +
+                 String(now.getMonth() + 1).padStart(2, '0') + '-' +
                  String(now.getDate()).padStart(2, '0');
-    
+
     let newEndDate;
     if (newDatePart === today) {
       // 如果选择的是今天，使用当前精确时间
@@ -3111,10 +3117,10 @@ const CandlestickChart: React.FC = () => {
       // 如果选择的是其他日期，使用23:59:59
       newEndDate = `${newDatePart} 23:59:59`;
     }
-    
+
     // 获取开始日期的日期部分进行比较
     const startDatePart = dateRange.startDate.split(' ')[0];
-    
+
     // 如果结束日期小于开始日期，自动调整开始日期为选择日期的00:00:00
     if (newDatePart < startDatePart) {
       dispatch(setDateRange(`${newDatePart} 00:00:00`, newEndDate));
@@ -3136,11 +3142,12 @@ const CandlestickChart: React.FC = () => {
       setIsLoadingTickers(true);
       const response = await fetchAllTickers('all', 2000);
       if (response.success && response.data) {
-        // 格式化数据，只保留需要的字段
+        // 格式化数据，保留需要的字段包括交易量
         const formattedTickers = response.data.map((ticker: any) => ({
           symbol: ticker.symbol,
           lastPrice: parseFloat(ticker.lastPrice),
-          priceChangePercent: parseFloat(ticker.priceChangePercent || '0')
+          priceChangePercent: parseFloat(ticker.priceChangePercent || '0'),
+          volume: parseFloat(ticker.quoteVolume || ticker.volume || '0') // 优先使用quoteVolume，因为API返回的主要是这个字段
         }));
         setAllTickers(formattedTickers);
         console.log('获取所有币种行情成功:', formattedTickers.length);
@@ -3153,16 +3160,16 @@ const CandlestickChart: React.FC = () => {
       setIsLoadingTickers(false);
     }
   };
-  
+
   // 在组件加载时获取所有币种行情
   useEffect(() => {
     loadAllTickers();
-    
+
     // 每5分钟刷新一次行情数据
     const tickerInterval = setInterval(() => {
       loadAllTickers();
     }, 5 * 60 * 1000);
-    
+
     // 处理点击外部关闭下拉框
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -3171,35 +3178,82 @@ const CandlestickChart: React.FC = () => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    
+
     return () => {
       clearInterval(tickerInterval);
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-  
+
   // 根据搜索关键词和已加载的行情过滤交易对
-  const filteredPairs = searchPair.trim() 
+  const filteredPairs = searchPair.trim()
     ? allTickers.filter(ticker => ticker.symbol.toLowerCase().includes(searchPair.toLowerCase()))
     : allTickers;
-  
-  // 设置每次显示的结果数量
-  const maxDisplayCount = 20;
-  // 限制显示前20个结果
-  const displayedPairs = filteredPairs.slice(0, maxDisplayCount);
-  
+
+  // 根据排序选项对结果进行排序
+  const sortedPairs = React.useMemo(() => {
+    let sorted = [...filteredPairs];
+
+    if (sortBy === 'volume') {
+      sorted.sort((a, b) => {
+        // 确保volume字段存在且是数字
+        const volumeA = a.volume || 0;
+        const volumeB = b.volume || 0;
+        return sortDirection === 'desc' ? volumeB - volumeA : volumeA - volumeB;
+      });
+    } else if (sortBy === 'change') {
+      sorted.sort((a, b) => {
+        return sortDirection === 'desc'
+          ? b.priceChangePercent - a.priceChangePercent
+          : a.priceChangePercent - b.priceChangePercent;
+      });
+    } else {
+      // 默认也按交易量排序
+      sorted.sort((a, b) => {
+        const volumeA = a.volume || 0;
+        const volumeB = b.volume || 0;
+        return volumeB - volumeA; // 默认降序
+      });
+    }
+
+    return sorted;
+  }, [filteredPairs, sortBy, sortDirection]);
+
+  // 限制显示的结果数量
+  const displayedPairs = sortedPairs.slice(0, displayLimit);
+
+  // 处理排序变更
+  const handleSortChange = (newSortBy: string) => {
+    if (sortBy === newSortBy) {
+      // 如果点击的是当前排序字段，切换排序方向
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 如果点击的是新的排序字段，设置为该字段并默认降序
+      setSortBy(newSortBy);
+      setSortDirection('desc');
+    }
+
+    // 重置显示限制，确保排序后从头开始显示
+    setDisplayLimit(20);
+  };
+
+  // 加载更多结果
+  const loadMorePairs = () => {
+    setDisplayLimit(prevLimit => prevLimit + 20);
+  };
+
   // 选择交易对的函数
   const selectPair = (symbol: string) => {
     dispatch(setSelectedPair(symbol));
     setDropdownOpen(false); // 选择后关闭下拉框
-    
+
     // 清空K线数据，等待用户点击查询按钮重新加载
     if (candleSeries.current && volumeSeries.current) {
       candleSeries.current.setData([]);
       volumeSeries.current.setData([]);
       dispatch(updateCandlestickData([]));
       clearIndicators();
-      
+
       // 清除localStorage中的数据
       try {
         localStorage.removeItem(CANDLESTICK_DATA_KEY);
@@ -3208,20 +3262,29 @@ const CandlestickChart: React.FC = () => {
       }
     }
   };
-  
+
   // 设置价格颜色样式
   const getPriceChangeClass = (percent: number) => {
     if (percent > 0) return 'price-up';
     if (percent < 0) return 'price-down';
     return '';
   };
-  
+
   // 如果API尚未加载，使用常用交易对
-  const pairsToDisplay = allTickers.length > 0 ? allTickers : COMMON_PAIRS.map(pair => ({ 
-    symbol: pair, 
-    lastPrice: 0, 
-    priceChangePercent: 0 
+  const pairsToDisplay = allTickers.length > 0 ? allTickers : COMMON_PAIRS.map(pair => ({
+    symbol: pair,
+    lastPrice: 0,
+    priceChangePercent: 0
   }));
+
+  // 添加滚动加载更多的处理函数
+  const handlePairsScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    // 当滚动到底部附近时（距离底部20px以内），加载更多数据
+    if (scrollHeight - scrollTop - clientHeight < 20 && !isLoadingTickers && displayedPairs.length < sortedPairs.length) {
+      setDisplayLimit(prevLimit => prevLimit + 20);
+    }
+  };
 
   return (
     <div className={`candlestick-chart-container ${showPanels ? '' : 'panels-hidden'}`}>
@@ -3234,10 +3297,10 @@ const CandlestickChart: React.FC = () => {
                 <span>{selectedPair}</span>
                 <span className="dropdown-arrow">{dropdownOpen ? '▲' : '▼'}</span>
               </div>
-              
+
               {dropdownOpen && (
                 <div className="pair-dropdown">
-                  <input 
+                  <input
                     type="text"
                     placeholder="搜索币种..."
                     value={searchPair}
@@ -3246,44 +3309,71 @@ const CandlestickChart: React.FC = () => {
                     onClick={(e) => e.stopPropagation()}
                     autoFocus
                   />
-                  
+
+                  <div className="sort-options">
+                    <button
+                      className={`sort-button ${sortBy === 'volume' ? 'active' : ''}`}
+                      onClick={() => handleSortChange('volume')}
+                    >
+                      交易量 {sortBy === 'volume' && (sortDirection === 'desc' ? '↓' : '↑')}
+                    </button>
+                    <button
+                      className={`sort-button ${sortBy === 'change' ? 'active' : ''}`}
+                      onClick={() => handleSortChange('change')}
+                    >
+                      涨跌幅 {sortBy === 'change' && (sortDirection === 'desc' ? '↓' : '↑')}
+                    </button>
+                  </div>
+
                   <div className="pair-list-container">
                     {isLoadingTickers ? (
                       <div className="pairs-loading">加载中...</div>
                     ) : displayedPairs.length > 0 ? (
                       <div className="pair-list">
                         {displayedPairs.map(ticker => (
-                          <div 
-                            key={ticker.symbol} 
+                          <div
+                            key={ticker.symbol}
                             className={`pair-item ${ticker.symbol === selectedPair ? 'selected' : ''}`}
                             onClick={() => selectPair(ticker.symbol)}
                           >
                             <div className="pair-item-symbol">{ticker.symbol}</div>
                             <div className="pair-item-price-container">
                               <div className="pair-item-price">{ticker.lastPrice > 0 ? ticker.lastPrice.toFixed(2) : '--'}</div>
-                              <div className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
-                                {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
+                              <div className="pair-item-details">
+                                <div className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
+                                  {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
+                                </div>
+                                <div className="pair-item-volume">
+                                  {(ticker.volume && ticker.volume > 1000000) ? (ticker.volume / 1000000).toFixed(2) + 'M' :
+                                   (ticker.volume && ticker.volume > 1000) ? (ticker.volume / 1000).toFixed(2) + 'K' :
+                                   ticker.volume ? ticker.volume.toFixed(2) : '0'}
+                                </div>
                               </div>
                             </div>
                           </div>
                         ))}
+
+                        {displayedPairs.length < filteredPairs.length && (
+                          <div className="load-more-container">
+                            <button className="load-more-button" onClick={loadMorePairs}>
+                              加载更多 ({displayedPairs.length}/{filteredPairs.length})
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="no-results">无匹配结果</div>
                     )}
                   </div>
-                  
+
                   <div className="pair-selector-footer">
                     显示 {displayedPairs.length} / {filteredPairs.length} 币种
-                    {filteredPairs.length > maxDisplayCount && (
-                      <span className="scroll-hint"> (滚动查看更多)</span>
-                    )}
                   </div>
                 </div>
               )}
             </div>
           </div>
-          
+
           {/* 其余选择器保持不变 */}
           <div className="selector-group">
             <label>时间周期:</label>
@@ -3298,7 +3388,7 @@ const CandlestickChart: React.FC = () => {
             </select>
           </div>
         </div>
-        
+
         {/* 其余部分保持不变 */}
         <div className="chart-buttons">
           <div className="date-range-selector">
@@ -3371,7 +3461,7 @@ const CandlestickChart: React.FC = () => {
           </button>
         </div>
       </div>
-      
+
       {/* 其余部分保持不变 */}
       <div className="chart-container">
         <div className="chart-wrapper">
@@ -3404,7 +3494,7 @@ const CandlestickChart: React.FC = () => {
               <div className="indicator-label">KDJ</div>
             </div>
           )}
-          
+
           {/* 底部填充区域 - 始终显示 */}
           <div className={`chart-bottom-padding ${showPanels ? '' : 'panels-hidden'}`}></div>
         </div>
