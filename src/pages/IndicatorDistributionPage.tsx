@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchIndicatorDistributions, updateIndicatorDistributions } from '../services/api';
+import { fetchIndicatorDistributions, updateIndicatorDistributions, fetchAccountBalance } from '../services/api';
 import './IndicatorDistributionPage.css';
 
 interface IndicatorDetail {
@@ -43,6 +43,9 @@ const IndicatorDistributionPage: React.FC = () => {
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(INDICATORS_PER_PAGE);
+  // 添加账户余额状态
+  const [accountBalance, setAccountBalance] = useState<number | null>(null);
+  const [loadingBalance, setLoadingBalance] = useState<boolean>(false);
 
   // 加载指标分布数据
   const loadIndicatorDistributions = async () => {
@@ -83,9 +86,34 @@ const IndicatorDistributionPage: React.FC = () => {
     }
   };
 
+  // 加载账户余额
+  const loadAccountBalance = async () => {
+    setLoadingBalance(true);
+    try {
+      const result = await fetchAccountBalance();
+      if (result.success && result.data) {
+        // 查找USDT资产并使用其available值
+        const usdtAsset = result.data.assetBalances?.find((asset: { asset: string; available: number }) => asset.asset === 'USDT');
+        if (usdtAsset) {
+          setAccountBalance(usdtAsset.available);
+        } else {
+          // 如果没有找到USDT资产，回退到使用availableBalance
+          setAccountBalance(result.data.availableBalance);
+        }
+      } else {
+        console.error('获取账户余额失败:', result.message);
+      }
+    } catch (error) {
+      console.error('获取账户余额时发生错误:', error);
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
+
   // 初始加载
   useEffect(() => {
     loadIndicatorDistributions();
+    loadAccountBalance(); // 加载账户余额
   }, []);
 
   // 格式化指标值
@@ -263,6 +291,31 @@ const IndicatorDistributionPage: React.FC = () => {
 
     return (
       <div className="filters" style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', overflowX: 'auto' }}>
+        {/* 添加账户余额显示 */}
+        <div className="account-balance" style={{ display: 'flex', alignItems: 'center', marginRight: 'auto', padding: '0 10px' }}>
+          <span style={{ fontWeight: 'bold', marginRight: '8px', color: '#8d8d8d', fontSize: '14px' }}>可用余额:</span>
+          {loadingBalance ? (
+            <span style={{ color: '#d9d9d9', fontSize: '14px' }}>加载中...</span>
+          ) : (
+            <span style={{ color: '#4caf50', fontWeight: 'bold', fontSize: '16px' }}>
+              {accountBalance !== null ? `${accountBalance.toFixed(2)} USDT` : '未知'}
+            </span>
+          )}
+          <button
+            onClick={loadAccountBalance}
+            style={{ 
+              marginLeft: '8px', 
+              background: 'none', 
+              border: 'none', 
+              cursor: 'pointer', 
+              color: '#1890ff',
+              fontSize: '12px' 
+            }}
+            title="刷新余额"
+          >
+            ↻
+          </button>
+        </div>
         <div className="action-buttons" style={{ display: 'flex', gap: '5px', marginLeft: 'auto', flexShrink: 0 }}>
           <button
             className="refresh-btn"

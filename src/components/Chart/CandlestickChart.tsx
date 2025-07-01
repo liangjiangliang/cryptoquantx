@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState, CandlestickData, BacktestTrade } from '../../store/types';
 import { updateCandlestickData, setSelectedPair, setTimeframe, setDateRange } from '../../store/actions';
-import { fetchHistoryWithIntegrityCheck, getDefaultDateRange, formatDateTimeString, getYesterdayDateString } from '../../services/api';
+import { fetchHistoryWithIntegrityCheck, getDefaultDateRange, formatDateTimeString, getYesterdayDateString, fetchAllTickers } from '../../services/api';
 import DataLoadModal from '../DataLoadModal/DataLoadModal';
 import IndicatorSelector, { IndicatorType } from './IndicatorSelector';
 import {
@@ -210,6 +210,19 @@ const CandlestickChart: React.FC = () => {
   const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
   // 添加面板显示/隐藏状态
   const [showPanels, setShowPanels] = useState<boolean>(true);
+
+  // 添加新的状态用于存储所有币种行情
+  const [allTickers, setAllTickers] = useState<Array<{
+    symbol: string;
+    lastPrice: number;
+    priceChangePercent: number;
+  }>>([]);
+  const [searchPair, setSearchPair] = useState<string>('');
+  const [isLoadingTickers, setIsLoadingTickers] = useState<boolean>(false);
+
+  // 添加state来控制下拉列表的显示/隐藏状态
+  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch();
   const location = useLocation();
@@ -3117,22 +3130,161 @@ const CandlestickChart: React.FC = () => {
     dispatch(setDateRange(startDate, endDate));
   };
 
+  // 添加获取所有币种行情的函数
+  const loadAllTickers = async () => {
+    try {
+      setIsLoadingTickers(true);
+      const response = await fetchAllTickers('all', 2000);
+      if (response.success && response.data) {
+        // 格式化数据，只保留需要的字段
+        const formattedTickers = response.data.map((ticker: any) => ({
+          symbol: ticker.symbol,
+          lastPrice: parseFloat(ticker.lastPrice),
+          priceChangePercent: parseFloat(ticker.priceChangePercent || '0')
+        }));
+        setAllTickers(formattedTickers);
+        console.log('获取所有币种行情成功:', formattedTickers.length);
+      } else {
+        console.error('获取所有币种行情失败:', response.message);
+      }
+    } catch (error) {
+      console.error('获取所有币种行情时发生错误:', error);
+    } finally {
+      setIsLoadingTickers(false);
+    }
+  };
+  
+  // 在组件加载时获取所有币种行情
+  useEffect(() => {
+    loadAllTickers();
+    
+    // 每5分钟刷新一次行情数据
+    const tickerInterval = setInterval(() => {
+      loadAllTickers();
+    }, 5 * 60 * 1000);
+    
+    // 处理点击外部关闭下拉框
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      clearInterval(tickerInterval);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  // 根据搜索关键词和已加载的行情过滤交易对
+  const filteredPairs = searchPair.trim() 
+    ? allTickers.filter(ticker => ticker.symbol.toLowerCase().includes(searchPair.toLowerCase()))
+    : allTickers;
+  
+  // 设置每次显示的结果数量
+  const maxDisplayCount = 20;
+  // 限制显示前20个结果
+  const displayedPairs = filteredPairs.slice(0, maxDisplayCount);
+  
+  // 选择交易对的函数
+  const selectPair = (symbol: string) => {
+    dispatch(setSelectedPair(symbol));
+    setDropdownOpen(false); // 选择后关闭下拉框
+    
+    // 清空K线数据，等待用户点击查询按钮重新加载
+    if (candleSeries.current && volumeSeries.current) {
+      candleSeries.current.setData([]);
+      volumeSeries.current.setData([]);
+      dispatch(updateCandlestickData([]));
+      clearIndicators();
+      
+      // 清除localStorage中的数据
+      try {
+        localStorage.removeItem(CANDLESTICK_DATA_KEY);
+      } catch (error) {
+        console.error('清除K线数据缓存失败:', error);
+      }
+    }
+  };
+  
+  // 设置价格颜色样式
+  const getPriceChangeClass = (percent: number) => {
+    if (percent > 0) return 'price-up';
+    if (percent < 0) return 'price-down';
+    return '';
+  };
+  
+  // 如果API尚未加载，使用常用交易对
+  const pairsToDisplay = allTickers.length > 0 ? allTickers : COMMON_PAIRS.map(pair => ({ 
+    symbol: pair, 
+    lastPrice: 0, 
+    priceChangePercent: 0 
+  }));
+
   return (
     <div className={`candlestick-chart-container ${showPanels ? '' : 'panels-hidden'}`}>
       <div className="chart-header">
         <div className="chart-selectors">
           <div className="selector-group">
             <label>交易对:</label>
-            <select
-              className="pair-selector"
-              value={selectedPair}
-              onChange={handlePairChange}
-            >
-              {COMMON_PAIRS.map(pair => (
-                <option key={pair} value={pair}>{pair}</option>
-              ))}
-            </select>
+            <div className="pair-selector-wrapper" ref={dropdownRef}>
+              <div className="selected-pair-display" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                <span>{selectedPair}</span>
+                <span className="dropdown-arrow">{dropdownOpen ? '▲' : '▼'}</span>
+              </div>
+              
+              {dropdownOpen && (
+                <div className="pair-dropdown">
+                  <input 
+                    type="text"
+                    placeholder="搜索币种..."
+                    value={searchPair}
+                    onChange={(e) => setSearchPair(e.target.value)}
+                    className="pair-search-input"
+                    onClick={(e) => e.stopPropagation()}
+                    autoFocus
+                  />
+                  
+                  <div className="pair-list-container">
+                    {isLoadingTickers ? (
+                      <div className="pairs-loading">加载中...</div>
+                    ) : displayedPairs.length > 0 ? (
+                      <div className="pair-list">
+                        {displayedPairs.map(ticker => (
+                          <div 
+                            key={ticker.symbol} 
+                            className={`pair-item ${ticker.symbol === selectedPair ? 'selected' : ''}`}
+                            onClick={() => selectPair(ticker.symbol)}
+                          >
+                            <div className="pair-item-symbol">{ticker.symbol}</div>
+                            <div className="pair-item-price-container">
+                              <div className="pair-item-price">{ticker.lastPrice > 0 ? ticker.lastPrice.toFixed(2) : '--'}</div>
+                              <div className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
+                                {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="no-results">无匹配结果</div>
+                    )}
+                  </div>
+                  
+                  <div className="pair-selector-footer">
+                    显示 {displayedPairs.length} / {filteredPairs.length} 币种
+                    {filteredPairs.length > maxDisplayCount && (
+                      <span className="scroll-hint"> (滚动查看更多)</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+          
+          {/* 其余选择器保持不变 */}
           <div className="selector-group">
             <label>时间周期:</label>
             <select
@@ -3146,6 +3298,8 @@ const CandlestickChart: React.FC = () => {
             </select>
           </div>
         </div>
+        
+        {/* 其余部分保持不变 */}
         <div className="chart-buttons">
           <div className="date-range-selector">
             <QuickTimeSelector onTimeRangeSelect={handleQuickTimeSelect} />
@@ -3217,6 +3371,8 @@ const CandlestickChart: React.FC = () => {
           </button>
         </div>
       </div>
+      
+      {/* 其余部分保持不变 */}
       <div className="chart-container">
         <div className="chart-wrapper">
           <div ref={chartContainerRef} className={`chart-content main-chart ${showPanels ? '' : 'panels-hidden'}`} style={{ minHeight: '400px' }}>

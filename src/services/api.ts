@@ -758,7 +758,7 @@ export const fetchStrategyMaxReturns = async (): Promise<Record<string, number>>
 export const fetchIndicatorDistributions = async (): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
     const url = '/api/indicator-distribution/current';
-    
+
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -1063,6 +1063,76 @@ export const deleteRealTimeStrategy = async (strategyId: number): Promise<{ succ
     return {
       success: false,
       message: error instanceof Error ? error.message : '删除策略请求发生错误'
+    };
+  }
+};
+
+// 获取账户余额
+export const fetchAccountBalance = async (): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    const url = '/account/balance';
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('获取账户余额API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || '获取账户余额成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '获取账户余额失败'
+      };
+    }
+  } catch (error) {
+    console.error('获取账户余额失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '获取账户余额请求发生错误'
+    };
+  }
+};
+
+// 获取所有币种的最新行情
+export const fetchAllTickers = async (filter: string = 'all', limit: number = 2000): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    const url = `/market/all_tickers?filter=${filter}&limit=${limit}`;
+    
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('获取所有币种行情API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || '获取所有币种行情成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '获取所有币种行情失败'
+      };
+    }
+  } catch (error) {
+    console.error('获取所有币种行情失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '获取所有币种行情请求发生错误'
     };
   }
 };

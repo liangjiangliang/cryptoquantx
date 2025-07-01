@@ -11,7 +11,7 @@ import FailedStrategiesModal, { FailedStrategy } from '../FailedStrategiesModal/
 
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
-import { runAllBacktests, fetchFailedStrategies, getYesterdayDateString, createRealTimeStrategy } from '../../services/api';
+import { runAllBacktests, fetchFailedStrategies, getYesterdayDateString, createRealTimeStrategy, fetchAccountBalance } from '../../services/api';
 import QuickTimeSelector from '../Chart/QuickTimeSelector';
 
 // 策略接口定义
@@ -55,6 +55,10 @@ const BacktestPanel: React.FC = () => {
   const runningBatchBacktestRef = React.useRef(false);
   const [runningBatchBacktest, setRunningBatchBacktest] = useState<boolean>(false);
 
+  // 添加账户余额状态
+  const [accountBalance, setAccountBalance] = useState<number | null>(null);
+  const [loadingBalance, setLoadingBalance] = useState<boolean>(false);
+
   // 当状态变化时更新ref
   useEffect(() => {
     runningBatchBacktestRef.current = runningBatchBacktest;
@@ -81,7 +85,31 @@ const BacktestPanel: React.FC = () => {
   // 添加一个标记来跟踪是否通过事件设置了策略
   const [strategySetByEvent, setStrategySetByEvent] = useState(false);
 
-  // 获取可用策略列表
+  // 加载账户余额
+  const loadAccountBalance = async () => {
+    setLoadingBalance(true);
+    try {
+      const result = await fetchAccountBalance();
+      if (result.success && result.data) {
+        // 查找USDT资产并使用其available值
+        const usdtAsset = result.data.assetBalances?.find((asset: { asset: string; available: number }) => asset.asset === 'USDT');
+        if (usdtAsset) {
+          setAccountBalance(usdtAsset.available);
+        } else {
+          // 如果没有找到USDT资产，回退到使用availableBalance
+          setAccountBalance(result.data.availableBalance);
+        }
+      } else {
+        console.error('获取账户余额失败:', result.message);
+      }
+    } catch (error) {
+      console.error('获取账户余额时发生错误:', error);
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
+
+  // 获取可用策略列表和账户余额
   useEffect(() => {
     const fetchStrategies = async () => {
       setLoading(true);
@@ -170,6 +198,7 @@ const BacktestPanel: React.FC = () => {
     };
 
     fetchStrategies();
+    loadAccountBalance(); // 加载账户余额
   }, [dispatch, strategySetByEvent]); // 添加strategySetByEvent依赖
 
   // 监听setStrategy事件，接收从URL传递的策略代码、交易对和时间周期
@@ -615,7 +644,12 @@ const BacktestPanel: React.FC = () => {
             </div>
 
             <div className="input-group">
-              <label>交易金额 (USDT) - 用于执行实盘策略金额</label>
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>投资金额 (USDT) - 用于执行实盘策略金额</span>
+                <span style={{ fontSize: '12px', color: '#4caf50', marginLeft: '8px' }}>
+                  {loadingBalance ? '加载中...' : accountBalance !== null ? `可用: ${accountBalance.toFixed(2)} USDT` : ''}
+                </span>
+              </label>
               <input
                 type="number"
                 value={tradeAmount}

@@ -610,3 +610,232 @@
     margin-right: 0;
   }
 }
+
+/* 新增: 交易对选择器容器样式 */
+.pair-selector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 240px;
+}
+
+/* 新增: 交易对搜索输入框样式 */
+.pair-search-input {
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid #3a3f4c;
+  background-color: #2e3241;
+  color: #d9d9d9;
+  font-size: 14px;
+  width: 100%;
+}
+
+/* 新增: 交易对计数器样式 */
+.pair-selector-count {
+  font-size: 12px;
+  color: #8d8d8d;
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* 修改: 交易对下拉框样式 */
+.pair-selector {
+  background-color: #2e3241;
+  color: #d9d9d9;
+  border: 1px solid #3a3f4c;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  cursor: pointer;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #5d6274 #2e3241;
+}
+
+/* 滚动条样式 */
+.pair-selector::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pair-selector::-webkit-scrollbar-track {
+  background: #2e3241;
+}
+
+.pair-selector::-webkit-scrollbar-thumb {
+  background-color: #5d6274;
+  border-radius: 3px;
+}
+
+.pair-selector option {
+  background-color: #2e3241;
+  color: #d9d9d9;
+  padding: 8px;
+}
+
+.pair-selector option:hover {
+  background-color: #3a3f4c;
+}
+
+/* 新版交易对选择器样式 */
+.pair-selector-wrapper {
+  position: relative;
+  width: 240px;
+}
+
+.selected-pair-display {
+  background-color: #2e3241;
+  color: #d9d9d9;
+  border: 1px solid #3a3f4c;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selected-pair-display:hover {
+  border-color: #4a5169;
+}
+
+.dropdown-arrow {
+  color: #8d8d8d;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.pair-dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  min-width: 260px;
+  background-color: #1e222d;
+  border: 1px solid #3a3f4c;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pair-search-input {
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid #3a3f4c;
+  background-color: #2e3241;
+  color: #d9d9d9;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+}
+
+.pair-search-input:focus {
+  border-color: #2962ff;
+  box-shadow: 0 0 0 2px rgba(41, 98, 255, 0.2);
+}
+
+.pair-list-container {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #5d6274 #2e3241;
+}
+
+.pair-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pair-list-container::-webkit-scrollbar-track {
+  background: #2e3241;
+}
+
+.pair-list-container::-webkit-scrollbar-thumb {
+  background-color: #5d6274;
+  border-radius: 3px;
+}
+
+.pair-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pair-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pair-item:hover {
+  background-color: #2e3241;
+}
+
+.pair-item.selected {
+  background-color: rgba(41, 98, 255, 0.1);
+}
+
+.pair-item-symbol {
+  font-weight: 500;
+  color: #d9d9d9;
+}
+
+.pair-item-price-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.pair-item-price {
+  font-weight: 500;
+  color: #d9d9d9;
+}
+
+.pair-item-change {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.pair-item-change.price-up {
+  color: #ff5555; /* 红色, 表示上涨 */
+}
+
+.pair-item-change.price-down {
+  color: #32a852; /* 绿色, 表示下跌 */
+}
+
+.pairs-loading {
+  text-align: center;
+  padding: 20px;
+  color: #8d8d8d;
+}
+
+.no-results {
+  text-align: center;
+  padding: 20px;
+  color: #8d8d8d;
+}
+
+.pair-selector-footer {
+  font-size: 12px;
+  color: #8d8d8d;
+  text-align: center;
+  padding-top: 5px;
+  border-top: 1px solid #3a3f4c;
+}
+
+.scroll-hint {
+  font-style: italic;
+  opacity: 0.8;
+}
