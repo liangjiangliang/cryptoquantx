@@ -25,7 +25,7 @@ const RealTimeStrategyPage: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [operationInProgress, setOperationInProgress] = useState<{[key: string]: boolean}>({});
   const navigate = useNavigate();
-  
+
   // 添加确认对话框状态
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -87,7 +87,7 @@ const RealTimeStrategyPage: React.FC = () => {
   // 格式化金额
   const formatAmount = (amount: number | null | undefined): string => {
     if (amount === null || amount === undefined) return '0';
-    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 8, maximumFractionDigits: 8 });
   };
 
   // 获取状态样式
@@ -165,7 +165,7 @@ const RealTimeStrategyPage: React.FC = () => {
       setOperationInProgress({...operationInProgress, [strategyId]: false});
     }
   };
-  
+
   // 打开确认对话框
   const openConfirmModal = (strategy: RealTimeStrategy) => {
     setConfirmModal({
@@ -174,7 +174,7 @@ const RealTimeStrategyPage: React.FC = () => {
       strategyName: strategy.strategyName || strategy.strategyCode,
     });
   };
-  
+
   // 关闭确认对话框
   const closeConfirmModal = () => {
     setConfirmModal({
@@ -183,7 +183,7 @@ const RealTimeStrategyPage: React.FC = () => {
       strategyName: '',
     });
   };
-  
+
   // 确认删除
   const confirmDelete = () => {
     handleDeleteStrategy(confirmModal.strategyId);
@@ -239,10 +239,10 @@ const RealTimeStrategyPage: React.FC = () => {
                       <td>{formatAmount(strategy.tradeAmount)} </td>
 
                       <td className={strategy.totalProfit && strategy.totalProfit >= 0 ? 'positive' : 'negative'}>
-                        {formatAmount(strategy.totalProfit)} 
+                        {formatAmount(strategy.totalProfit)}
                       </td>
                       <td className={strategy.totalFees && strategy.totalFees >= 0 ? 'positive' : 'negative'}>
-                        {formatAmount(strategy.totalFees)} 
+                        {formatAmount(strategy.totalFees)}
                       </td>
                       <td>{strategy.totalTrades || 0}</td>
                       <td>{formatDateTime(strategy.createTime)}</td>
@@ -292,7 +292,7 @@ const RealTimeStrategyPage: React.FC = () => {
           )}
         </div>
       )}
-      
+
       {/* 添加确认对话框 */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}

@@ -3118,9 +3118,9 @@ const CandlestickChart: React.FC = () => {
     loadAllTickers();
 
     // 每5分钟刷新一次行情数据
-    const tickerInterval = setInterval(() => {
-      loadAllTickers();
-    }, 5 * 60 * 1000);
+    // const tickerInterval = setInterval(() => {
+    //   loadAllTickers();
+    // }, 5 * 60 * 1000);
 
     // 处理点击外部关闭下拉框
     const handleClickOutside = (event: MouseEvent) => {
@@ -3131,10 +3131,10 @@ const CandlestickChart: React.FC = () => {
 
     document.addEventListener('mousedown', handleClickOutside);
 
-    return () => {
-      clearInterval(tickerInterval);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    // return () => {
+    //   clearInterval(tickerInterval);
+    //   document.removeEventListener('mousedown', handleClickOutside);
+    // };
   }, []);
 
   // 根据搜索关键词和已加载的行情过滤交易对
