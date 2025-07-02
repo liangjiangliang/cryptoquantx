@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { startRealTimeStrategy, stopRealTimeStrategy, deleteRealTimeStrategy } from '../services/api';
+import { startRealTimeStrategy, stopRealTimeStrategy, deleteRealTimeStrategy, copyRealTimeStrategy } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import './RealTimeStrategyPage.css';
 
@@ -166,6 +166,25 @@ const RealTimeStrategyPage: React.FC = () => {
     }
   };
 
+  // 复制策略
+  const handleCopyStrategy = async (strategyId: number) => {
+    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    try {
+      const result = await copyRealTimeStrategy(strategyId);
+      if (result.success) {
+        // 刷新策略列表
+        fetchRealTimeStrategies();
+      } else {
+        setError(result.message || '复制策略失败');
+      }
+    } catch (error) {
+      console.error('复制策略失败:', error);
+      setError(error instanceof Error ? error.message : '复制策略失败');
+    } finally {
+      setOperationInProgress({...operationInProgress, [strategyId]: false});
+    }
+  };
+
   // 打开确认对话框
   const openConfirmModal = (strategy: RealTimeStrategy) => {
     setConfirmModal({
@@ -214,6 +233,7 @@ const RealTimeStrategyPage: React.FC = () => {
               <table className="strategies-table">
                 <thead>
                   <tr>
+                    <th>ID</th>
                     <th>策略名称</th>
 
                     <th>交易对</th>
@@ -232,6 +252,7 @@ const RealTimeStrategyPage: React.FC = () => {
                 <tbody>
                   {strategies.map((strategy) => (
                     <tr key={strategy.id}>
+                      <td>{strategy.id}</td>
                       <td>{strategy.strategyName || '-'}</td>
 
                       <td>{strategy.symbol}</td>
@@ -282,6 +303,13 @@ const RealTimeStrategyPage: React.FC = () => {
                           disabled={operationInProgress[strategy.id]}
                         >
                           删除
+                        </button>
+                        <button
+                          className="strategy-copy-btn"
+                          onClick={() => handleCopyStrategy(strategy.id)}
+                          disabled={operationInProgress[strategy.id]}
+                        >
+                          复制
                         </button>
                       </td>
                     </tr>

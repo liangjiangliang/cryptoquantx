@@ -1067,6 +1067,45 @@ export const deleteRealTimeStrategy = async (strategyId: number): Promise<{ succ
   }
 };
 
+// 复制实时策略
+export const copyRealTimeStrategy = async (strategyId: number): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const url = `/api/real-time-strategy/copy/${strategyId}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('复制实时策略API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        message: data.message || '策略复制成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '复制策略失败'
+      };
+    }
+  } catch (error) {
+    console.error('复制策略失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '复制策略请求发生错误'
+    };
+  }
+};
+
 // 获取账户余额
 export const fetchAccountBalance = async (): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
