@@ -46,9 +46,9 @@
     ]
   },
   "devDependencies": {
-    "@stagewise-plugins/react": "0.4.8",
-    "@stagewise/toolbar": "0.4.8",
-    "@stagewise/toolbar-react": "0.4.8",
+    "@stagewise-plugins/react": "^0.4.9",
+    "@stagewise/toolbar": "^0.4.9",
+    "@stagewise/toolbar-react": "^0.4.9",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/react-redux": "^7.1.34",
