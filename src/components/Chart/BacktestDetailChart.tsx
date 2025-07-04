@@ -83,6 +83,9 @@ const BacktestDetailChart = forwardRef<{
   const [originalData, setOriginalData] = useState<any[]>([]);
   const [intervalVal, setIntervalVal] = useState<string>('1D');
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
+  const [highlightStyle, setHighlightStyle] = useState<React.CSSProperties | null>(null);
+  const highlightOverlayRef = useRef<HTMLDivElement>(null);
+  const [selectedKlineIndices, setSelectedKlineIndices] = useState<{start: number, end: number} | null>(null);
 
   // 生成缓存键 - 使用useMemo优化
   const cacheKey = useMemo(() => {
@@ -733,51 +736,48 @@ const BacktestDetailChart = forwardRef<{
     }
   }, [symbol, startTime, endTime, cacheKey, debouncedLoadKlineData]);
 
-  // 添加一个辅助函数来安全地移除高亮元素
+  // 修改safelyRemoveHighlight函数
   const safelyRemoveHighlight = useCallback(() => {
-    if (!highlightedAreaRef.current) return;
+    // 移除DOM高亮覆盖层
+    setHighlightStyle(null);
     
-    try {
-      if (Array.isArray(highlightedAreaRef.current)) {
-        // 处理数组类型的高亮元素
-        highlightedAreaRef.current.forEach(item => {
-          try {
-            if (!item) return;
-            
-            // 不再处理价格线，只处理高亮区域系列
-            if (chart.current && typeof item === 'object' && 'setData' in item) {
-              try {
-                // 首先检查 item 是否有效
-                if (item && typeof item.setData === 'function') {
-                  // 清空数据而不是移除系列，这样可以避免潜在的错误
-                  item.setData([]);
-                  // 如果确实需要移除系列，确保 chart.current 和 item 都有效
-                  if (chart.current && chart.current.removeSeries) {
-                    chart.current.removeSeries(item);
-                  }
-                }
-              } catch (innerError) {
-                console.error('移除图表系列失败:', innerError);
-                // 如果移除失败，至少尝试清空数据
+    // 同时清理任何可能存在的图表高亮元素
+    if (highlightedAreaRef.current) {
+      try {
+        if (Array.isArray(highlightedAreaRef.current)) {
+          highlightedAreaRef.current.forEach(item => {
+            try {
+              if (!item) return;
+              
+              if (chart.current && typeof item === 'object' && 'setData' in item) {
                 try {
                   if (item && typeof item.setData === 'function') {
                     item.setData([]);
+                    if (chart.current && chart.current.removeSeries) {
+                      chart.current.removeSeries(item);
+                    }
                   }
-                } catch (e) {
-                  console.error('清空系列数据失败:', e);
+                } catch (innerError) {
+                  console.error('移除图表系列失败:', innerError);
+                  try {
+                    if (item && typeof item.setData === 'function') {
+                      item.setData([]);
+                    }
+                  } catch (e) {
+                    console.error('清空系列数据失败:', e);
+                  }
                 }
               }
+            } catch (err) {
+              console.error('移除高亮元素失败:', err);
             }
-          } catch (err) {
-            console.error('移除高亮元素失败:', err);
-          }
-        });
+          });
+        }
+        
+        highlightedAreaRef.current = null;
+      } catch (error) {
+        console.error('清除高亮区域错误:', error);
       }
-      
-      // 重置高亮引用
-      highlightedAreaRef.current = null;
-    } catch (error) {
-      console.error('清除高亮区域错误:', error);
     }
   }, []);
   
@@ -794,55 +794,142 @@ const BacktestDetailChart = forwardRef<{
     };
   }, [safelyRemoveHighlight]);
 
+  // 添加一个函数来找到交易对应的K线索引
+  const findKlineIndexByTime = (time: string, data: any[]): number => {
+    if (!data || data.length === 0) return -1;
+    
+    const targetTime = new Date(time).getTime();
+    
+    // 找到最接近的K线
+    let closestIndex = -1;
+    let minTimeDiff = Number.MAX_VALUE;
+    
+    data.forEach((kline, index) => {
+      const klineTime = typeof kline.time === 'number' 
+        ? kline.time * 1000 // 秒转毫秒
+        : new Date(kline.time.toString()).getTime();
+      
+      const timeDiff = Math.abs(klineTime - targetTime);
+      if (timeDiff < minTimeDiff) {
+        minTimeDiff = timeDiff;
+        closestIndex = index;
+      }
+    });
+    
+    return closestIndex;
+  };
+
   // 暴露给父组件的方法
   useImperativeHandle(ref, () => ({
     // 高亮显示指定时间范围
     highlightTimeRange: (startTime: string, endTime: string) => {
-      if (!chart.current || !candleSeries.current || !originalData || originalData.length === 0) return;
+      if (!chart.current || !candleSeries.current || !originalData || originalData.length === 0 || !chartContainerRef.current) return;
       
       try {
         // 清除之前的高亮区域
         safelyRemoveHighlight();
         
-        // 转换入场和出场时间，使用通用的时间格式化函数
-        const entryTimeFormatted = formatChartTime(startTime);
-        const exitTimeFormatted = formatChartTime(endTime);
+        console.log('高亮时间范围:', startTime, endTime);
         
-        console.log('高亮时间范围:', entryTimeFormatted, exitTimeFormatted);
+        // 找到对应的K线索引
+        const startIndex = findKlineIndexByTime(startTime, originalData);
+        const endIndex = findKlineIndexByTime(endTime, originalData);
         
-        // 滚动到对应的时间位置
-        chart.current?.timeScale().scrollToPosition(0, false);
-        
-        // 设置可见范围，使入场和出场时间都在视图内
-        chart.current?.timeScale().setVisibleRange({
-          from: entryTimeFormatted,
-          to: exitTimeFormatted
-        });
-        
-        // 创建高亮区域系列 - 使用半透明色块标记交易区间
-        const highlightSeries = chart.current?.addAreaSeries({
-          topColor: 'rgba(255, 192, 0, 0.2)',
-          bottomColor: 'rgba(255, 192, 0, 0.1)',
-          lineColor: 'rgba(255, 192, 0, 0.5)',
-          lineWidth: 1,
-          priceLineVisible: false,
-          lastValueVisible: false,
-          crosshairMarkerVisible: false,
-        });
-        
-        if (highlightSeries) {
-          // 在两个时间点之间创建高亮区域数据
-          const highlightData = [
-            { time: entryTimeFormatted, value: 0 },
-            { time: exitTimeFormatted, value: 0 }
-          ];
-          
-          // 设置高亮区域数据
-          highlightSeries.setData(highlightData);
-          
-          // 保存高亮元素引用，以便后续清理
-          highlightedAreaRef.current = [highlightSeries];
+        if (startIndex === -1 || endIndex === -1) {
+          console.error('无法找到对应的K线');
+          return;
         }
+        
+        console.log('找到K线索引:', startIndex, endIndex);
+        
+        // 获取这些K线的时间值
+        const startKline = originalData[startIndex];
+        const endKline = originalData[endIndex];
+        
+        if (!startKline || !endKline) {
+          console.error('无法获取K线数据');
+          return;
+        }
+        
+        // 转换为图表时间格式
+        const startTimeFormatted = typeof startKline.time === 'number' 
+          ? startKline.time 
+          : formatChartTime(startKline.time.toString());
+        
+        const endTimeFormatted = typeof endKline.time === 'number' 
+          ? endKline.time 
+          : formatChartTime(endKline.time.toString());
+        
+        console.log('格式化后的时间:', startTimeFormatted, endTimeFormatted);
+        
+        // 计算需要显示的时间范围，使交易区间居中
+        const visibleStartIndex = Math.max(0, Math.min(startIndex, endIndex) - 20);
+        const visibleEndIndex = Math.min(originalData.length - 1, Math.max(startIndex, endIndex) + 20);
+        
+        const visibleStartKline = originalData[visibleStartIndex];
+        const visibleEndKline = originalData[visibleEndIndex];
+        
+        const visibleStartTime = typeof visibleStartKline.time === 'number' 
+          ? visibleStartKline.time 
+          : formatChartTime(visibleStartKline.time.toString());
+        
+        const visibleEndTime = typeof visibleEndKline.time === 'number' 
+          ? visibleEndKline.time 
+          : formatChartTime(visibleEndKline.time.toString());
+        
+        // 获取当前K线宽度
+        const currentOptions = chart.current.timeScale().options();
+        const currentBarSpacing = currentOptions.barSpacing;
+        
+        // 设置可见范围
+        chart.current.timeScale().setVisibleRange({
+          from: visibleStartTime,
+          to: visibleEndTime
+        });
+        
+        // 确保K线宽度不变
+        chart.current.timeScale().applyOptions({
+          barSpacing: currentBarSpacing
+        });
+        
+        // 使用setTimeout等待图表渲染完成
+        setTimeout(() => {
+          if (!chart.current || !chartContainerRef.current) return;
+          
+          try {
+            // 获取K线在图表上的坐标
+            const startCoord = chart.current.timeScale().timeToCoordinate(startTimeFormatted);
+            const endCoord = chart.current.timeScale().timeToCoordinate(endTimeFormatted);
+            
+            if (startCoord === null || endCoord === null) {
+              console.error('无法获取K线坐标');
+              return;
+            }
+            
+            console.log('K线坐标:', startCoord, endCoord);
+            
+            // 计算高亮区域的位置和尺寸
+            const left = Math.min(startCoord, endCoord);
+            // 确保宽度至少包含一根K线
+            const width = Math.max(Math.abs(endCoord - startCoord), currentBarSpacing);
+            
+            // 设置高亮样式
+            setHighlightStyle({
+              position: 'absolute',
+              left: `${left}px`,
+              top: '0',
+              width: `${width}px`,
+              height: '100%',
+              backgroundColor: 'rgba(255, 192, 0, 0.15)',
+              borderLeft: '1px solid rgba(255, 192, 0, 0.5)',
+              borderRight: '1px solid rgba(255, 192, 0, 0.5)',
+              pointerEvents: 'none', // 允许点击穿透
+              zIndex: 2 // 确保在K线上方，但在工具提示下方
+            });
+          } catch (error) {
+            console.error('计算高亮区域位置错误:', error);
+          }
+        }, 300);
       } catch (error) {
         console.error('高亮时间范围错误:', error);
       }
@@ -855,49 +942,82 @@ const BacktestDetailChart = forwardRef<{
     
     // 清除之前的高亮区域
     safelyRemoveHighlight();
+    setSelectedKlineIndices(null);
     
     if (selectedTrade) {
       // 延迟执行，确保图表已经完全加载
       setTimeout(() => {
         try {
-          // 转换入场和出场时间，使用通用的时间格式化函数
-          const entryTimeFormatted = formatChartTime(selectedTrade.entryTime);
-          const exitTimeFormatted = formatChartTime(selectedTrade.exitTime);
+          if (!chart.current || !chartContainerRef.current) return;
           
-          console.log('选中交易时间范围:', entryTimeFormatted, exitTimeFormatted);
+          console.log('选中交易时间范围:', selectedTrade.entryTime, selectedTrade.exitTime);
           
-          // 设置可见范围，使入场和出场时间都在视图内
-          if (chart.current) {
-            chart.current.timeScale().setVisibleRange({
-              from: entryTimeFormatted,
-              to: exitTimeFormatted
-            });
-            
-            // 创建高亮区域系列 - 使用半透明色块标记交易区间
-            const highlightSeries = chart.current.addAreaSeries({
-              topColor: 'rgba(255, 192, 0, 0.2)',
-              bottomColor: 'rgba(255, 192, 0, 0.1)',
-              lineColor: 'rgba(255, 192, 0, 0.5)',
-              lineWidth: 1,
-              priceLineVisible: false,
-              lastValueVisible: false,
-              crosshairMarkerVisible: false,
-            });
-            
-            if (highlightSeries) {
-              // 在两个时间点之间创建高亮区域数据
-              const highlightData = [
-                { time: entryTimeFormatted, value: 0 },
-                { time: exitTimeFormatted, value: 0 }
-              ];
-              
-              // 设置高亮区域数据
-              highlightSeries.setData(highlightData);
-              
-              // 保存高亮元素引用，以便后续清理
-              highlightedAreaRef.current = [highlightSeries];
-            }
+          // 找到对应的K线索引
+          const startIndex = findKlineIndexByTime(selectedTrade.entryTime, originalData);
+          const endIndex = findKlineIndexByTime(selectedTrade.exitTime, originalData);
+          
+          if (startIndex === -1 || endIndex === -1) {
+            console.error('无法找到对应的K线');
+            return;
           }
+          
+          // 保存选中的K线索引，用于后续更新高亮区域
+          setSelectedKlineIndices({start: startIndex, end: endIndex});
+          
+          console.log('找到K线索引:', startIndex, endIndex);
+          
+          // 获取这些K线的时间值
+          const startKline = originalData[startIndex];
+          const endKline = originalData[endIndex];
+          
+          if (!startKline || !endKline) {
+            console.error('无法获取K线数据');
+            return;
+          }
+          
+          // 转换为图表时间格式
+          const startTimeFormatted = typeof startKline.time === 'number' 
+            ? startKline.time 
+            : formatChartTime(startKline.time.toString());
+          
+          const endTimeFormatted = typeof endKline.time === 'number' 
+            ? endKline.time 
+            : formatChartTime(endKline.time.toString());
+          
+          console.log('格式化后的时间:', startTimeFormatted, endTimeFormatted);
+          
+          // 计算需要显示的时间范围，使交易区间居中
+          const visibleStartIndex = Math.max(0, Math.min(startIndex, endIndex) - 20);
+          const visibleEndIndex = Math.min(originalData.length - 1, Math.max(startIndex, endIndex) + 20);
+          
+          const visibleStartKline = originalData[visibleStartIndex];
+          const visibleEndKline = originalData[visibleEndIndex];
+          
+          const visibleStartTime = typeof visibleStartKline.time === 'number' 
+            ? visibleStartKline.time 
+            : formatChartTime(visibleStartKline.time.toString());
+          
+          const visibleEndTime = typeof visibleEndKline.time === 'number' 
+            ? visibleEndKline.time 
+            : formatChartTime(visibleEndKline.time.toString());
+          
+          // 获取当前K线宽度
+          const currentOptions = chart.current.timeScale().options();
+          const currentBarSpacing = currentOptions.barSpacing;
+          
+          // 设置可见范围
+          chart.current.timeScale().setVisibleRange({
+            from: visibleStartTime,
+            to: visibleEndTime
+          });
+          
+          // 确保K线宽度不变
+          chart.current.timeScale().applyOptions({
+            barSpacing: currentBarSpacing
+          });
+          
+          // 更新高亮区域
+          updateHighlightArea();
         } catch (error) {
           console.error('高亮选中交易时间范围错误:', error);
         }
@@ -908,6 +1028,100 @@ const BacktestDetailChart = forwardRef<{
     }
   }, [selectedTrade, dataLoaded, originalData, intervalVal, safelyRemoveHighlight]);
 
+  // 添加一个函数来更新高亮区域
+  const updateHighlightArea = useCallback(() => {
+    if (!chart.current || !chartContainerRef.current || !selectedKlineIndices || !originalData || originalData.length === 0) return;
+    
+    try {
+      const { start: startIndex, end: endIndex } = selectedKlineIndices;
+      
+      // 获取这些K线的时间值
+      const startKline = originalData[startIndex];
+      const endKline = originalData[endIndex];
+      
+      if (!startKline || !endKline) return;
+      
+      // 转换为图表时间格式
+      const startTimeFormatted = typeof startKline.time === 'number' 
+        ? startKline.time 
+        : formatChartTime(startKline.time.toString());
+      
+      const endTimeFormatted = typeof endKline.time === 'number' 
+        ? endKline.time 
+        : formatChartTime(endKline.time.toString());
+      
+      // 获取K线在图表上的坐标
+      const startCoord = chart.current.timeScale().timeToCoordinate(startTimeFormatted);
+      const endCoord = chart.current.timeScale().timeToCoordinate(endTimeFormatted);
+      
+      if (startCoord === null || endCoord === null) {
+        console.error('无法获取K线坐标');
+        return;
+      }
+      
+      // 获取当前K线宽度
+      const currentOptions = chart.current.timeScale().options();
+      const currentBarSpacing = currentOptions.barSpacing;
+      
+      // 计算高亮区域的位置和尺寸
+      const left = Math.min(startCoord, endCoord);
+      // 确保宽度至少包含一根K线
+      const width = Math.max(Math.abs(endCoord - startCoord), currentBarSpacing);
+      
+      // 设置高亮样式
+      setHighlightStyle({
+        position: 'absolute',
+        left: `${left}px`,
+        top: '0',
+        width: `${width}px`,
+        height: '100%',
+        backgroundColor: 'rgba(255, 192, 0, 0.15)',
+        borderLeft: '1px solid rgba(255, 192, 0, 0.5)',
+        borderRight: '1px solid rgba(255, 192, 0, 0.5)',
+        pointerEvents: 'none', // 允许点击穿透
+        zIndex: 2 // 确保在K线上方，但在工具提示下方
+      });
+    } catch (error) {
+      console.error('更新高亮区域位置错误:', error);
+    }
+  }, [selectedKlineIndices, originalData]);
+
+  // 添加图表滚动事件监听
+  useEffect(() => {
+    if (!chart.current) return;
+    
+    const handleScroll = () => {
+      if (selectedKlineIndices) {
+        updateHighlightArea();
+      }
+    };
+    
+    // 订阅图表的可见范围变化事件
+    chart.current.timeScale().subscribeVisibleLogicalRangeChange(handleScroll);
+    
+    return () => {
+      // 取消订阅
+      if (chart.current) {
+        chart.current.timeScale().unsubscribeVisibleLogicalRangeChange(handleScroll);
+      }
+    };
+  }, [chart, selectedKlineIndices, updateHighlightArea]);
+
+  // 在图表大小变化时更新高亮区域位置
+  useEffect(() => {
+    const handleResize = () => {
+      if (selectedKlineIndices) {
+        updateHighlightArea();
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [selectedKlineIndices, updateHighlightArea]);
+
   return (
     <div className="backtest-detail-chart-container">
       <div 
@@ -917,9 +1131,19 @@ const BacktestDetailChart = forwardRef<{
           height: 'auto', // 由固定600px改为自适应
           minHeight: 300,
           maxHeight: 600,
-          visibility: loading ? 'hidden' : 'visible'
+          visibility: loading ? 'hidden' : 'visible',
+          position: 'relative' // 添加相对定位，作为高亮覆盖层的定位参考
         }}
-      />
+      >
+        {/* 高亮覆盖层 */}
+        {highlightStyle && (
+          <div
+            ref={highlightOverlayRef}
+            style={highlightStyle}
+            className="highlight-overlay"
+          />
+        )}
+      </div>
       
       {/* K线详细信息浮层 */}
       {hoveredData && (
