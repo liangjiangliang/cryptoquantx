@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { createChart, CrosshairMode, Time, ISeriesApi, IChartApi, SeriesMarkerPosition } from 'lightweight-charts';
 import { BacktestTradeDetail, CandlestickData } from '../../store/types';
 import { formatPrice } from '../../utils/helpers';
-import { fetchHistoryWithIntegrityCheck } from '../../services/api';
+import { fetchHistoryWithIntegrityCheck, fetchBacktestSummary } from '../../services/api';
 import './BacktestDetailChart.css';
 
 interface BacktestDetailChartProps {
@@ -38,17 +38,41 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [originalData, setOriginalData] = useState<any[]>([]);
+  const [intervalVal, setIntervalVal] = useState<string>('1D');
 
   // 格式化日期为显示格式
-  const formatDate = (timestamp: number): string => {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleDateString('zh-CN', {
+  const formatDate = (timestamp: number | string): string => {
+    let date;
+    
+    // 处理不同格式的时间戳
+    if (typeof timestamp === 'number') {
+      // 如果是10位时间戳（秒），转换为毫秒
+      if (timestamp < 10000000000) {
+        date = new Date(timestamp * 1000);
+      } else {
+        // 如果是13位时间戳（毫秒）
+        date = new Date(timestamp);
+      }
+    } else if (typeof timestamp === 'string') {
+      // 处理字符串格式日期
+      date = new Date(timestamp);
+    } else {
+      return '无效日期';
+    }
+    
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) {
+      return '无效日期';
+    }
+    
+    // 格式化为 YYYY-MM-DD HH:MM 格式
+    return date.toLocaleString('zh-CN', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
-    });
+    }).replace(/\//g, '-'); // 将斜杠替换为短横线
   };
 
   // 格式化成交量
@@ -186,46 +210,58 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       
       if (candleData && volumeData && candleData.open != null && candleData.high != null && candleData.low != null && candleData.close != null && volumeData != null) {
         // 调试信息，查看param.time的实际类型和值
-        console.log('param.time类型:', typeof param.time, 'param.time值:', param.time);
+        // console.log('param.time类型:', typeof param.time, 'param.time值:', param.time);
         
         let time;
         
-        // 处理param.time是对象的情况
-        let dateStr = '';
+        // 处理不同格式的时间
         if (typeof param.time === 'object' && param.time !== null) {
           // 从对象中提取年月日并格式化
           const { year, month, day } = param.time;
           // 确保月份和日期是两位数
           const formattedMonth = String(month).padStart(2, '0');
           const formattedDay = String(day).padStart(2, '0');
-          dateStr = `${year}-${formattedMonth}-${formattedDay}`;
-          console.log('格式化后的日期:', dateStr);
+          
+          // 创建一个日期对象用于格式化
+          const dateObj = new Date(year, month - 1, day);
+          time = formatDate(dateObj.getTime()); // 转换为时间戳再格式化
+        } else if (typeof param.time === 'number') {
+          // 如果是时间戳，使用formatDate格式化
+          time = formatDate(param.time);
         } else {
-          // 如果不是对象，转为字符串
-          dateStr = String(param.time);
-          console.log('转换为字符串的日期:', dateStr);
+          // 如果是字符串，直接使用
+          time = String(param.time);
         }
         
-        // 尝试从原始数据中找到对应的K线
+        // 尝试从原始数据中找到对应的K线，以获取准确的时间
         if (originalData && originalData.length > 0) {
-          const originalCandle = originalData.find(item => {
-            // 检查item是否存在且有openTime属性
-            if (!item || !item.openTime) return false;
-            // 从openTime提取日期部分（不含时间）
-            const itemDate = item.openTime.split(' ')[0];
-            return itemDate === dateStr;
-          });
+          let matchedCandle = null;
           
-          if (originalCandle) {
-            // 直接使用原始数据中的日期时间格式
-            time = originalCandle.openTime;
-          } else {
-            // 如果找不到匹配的原始数据，则使用格式化的日期字符串
-            time = dateStr;
+          // 根据param.time的类型采用不同的匹配策略
+          if (typeof param.time === 'object' && param.time.year && param.time.month && param.time.day) {
+            const paramDateStr = `${param.time.year}-${String(param.time.month).padStart(2, '0')}-${String(param.time.day).padStart(2, '0')}`;
+            matchedCandle = originalData.find(item => {
+              if (!item || !item.openTime) return false;
+              return item.openTime.includes(paramDateStr);
+            });
+          } else if (typeof param.time === 'number') {
+            // 将时间戳转换为日期字符串进行匹配
+            const dateFromTimestamp = new Date(param.time < 10000000000 ? param.time * 1000 : param.time);
+            const year = dateFromTimestamp.getFullYear();
+            const month = String(dateFromTimestamp.getMonth() + 1).padStart(2, '0');
+            const day = String(dateFromTimestamp.getDate()).padStart(2, '0');
+            const paramDateStr = `${year}-${month}-${day}`;
+            
+            matchedCandle = originalData.find(item => {
+              if (!item || !item.openTime) return false;
+              return item.openTime.includes(paramDateStr);
+            });
           }
-        } else {
-          // 没有原始数据，使用格式化的日期字符串
-          time = dateStr;
+          
+          if (matchedCandle) {
+            // 使用原始K线数据的完整时间
+            time = matchedCandle.openTime;
+          }
         }
         
         const open = formatPrice(candleData.open);
@@ -303,6 +339,39 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       const startDate = startTime.split(' ')[0];
       const endDate = endTime.split(' ')[0];
       
+      // 获取回测使用的周期
+      // 从URL中获取interval参数，如果没有则使用props中的interval或默认为1D
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlInterval = urlParams.get('interval');
+      
+      // 尝试从URL中获取backtestId
+      const backtestId = urlParams.get('backtestId') || 
+                        (tradeDetails.length > 0 ? tradeDetails[0].backtestId : '');
+      
+      // 默认使用1D
+      let dataInterval = '1D';
+      
+      // 优先使用URL中指定的interval
+      if (urlInterval) {
+        dataInterval = urlInterval;
+      } 
+      // 否则尝试从回测汇总中获取
+      else if (backtestId) {
+        try {
+          const backtestSummary = await fetchBacktestSummary(backtestId);
+          if (backtestSummary && backtestSummary.intervalVal) {
+            dataInterval = backtestSummary.intervalVal;
+          }
+        } catch (err) {
+          console.error('获取回测汇总失败:', err);
+        }
+      }
+      
+      console.log('使用K线周期:', dataInterval);
+      
+      // 保存当前使用的周期，供其他函数使用
+      setIntervalVal(dataInterval);
+      
       // 为了确保有足够的上下文，我们获取稍微扩展的时间范围
       // 计算开始日期前30天的日期作为请求开始日期
       const extendedStartDate = new Date(startDate);
@@ -319,7 +388,7 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       try {
         result = await fetchHistoryWithIntegrityCheck(
           symbol,
-          '1D',
+          dataInterval, // 使用确定的interval值
           requestStartDate, // formatDateString会自动添加 00:00:00
           requestEndDate    // formatDateString会自动添加 00:00:00
         );
@@ -409,38 +478,87 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
     if (!candleSeries.current || !chart.current || !tradeDetails || tradeDetails.length === 0) return;
 
     try {
+      console.log('开始绘制交易标记，交易数量:', tradeDetails.length, '当前周期:', intervalVal);
+      
+      // 根据周期调整交易标记的时间精度
+      const adjustTimeByInterval = (timeStr: string): string => {
+        // 只保留日期部分用于日线及以上周期
+        if (intervalVal === '1D' || intervalVal === '3D' || intervalVal === '1W' || intervalVal === '1M') {
+          // 对于日线或更高周期，只保留日期部分
+          return timeStr.split(' ')[0];
+        } else {
+          // 对于小时线，保留日期和小时
+          if (intervalVal.includes('H')) {
+            const [datePart, timePart] = timeStr.split(' ');
+            if (!timePart) return datePart; // 如果没有时间部分，直接返回日期
+            
+            const hour = timePart.split(':')[0];
+            // 根据小时周期调整（例如4H就只保留0,4,8,12,16,20小时的整点）
+            const intervalHours = parseInt(intervalVal.replace('H', ''));
+            const adjustedHour = Math.floor(parseInt(hour) / intervalHours) * intervalHours;
+            
+            return `${datePart} ${adjustedHour.toString().padStart(2, '0')}:00`;
+          } 
+          // 对于分钟线，处理更精确的时间
+          else if (intervalVal.includes('m')) {
+            const [datePart, timePart] = timeStr.split(' ');
+            if (!timePart) return datePart; // 如果没有时间部分，直接返回日期
+            
+            const [hour, minute] = timePart.split(':');
+            // 根据分钟周期调整
+            const intervalMinutes = parseInt(intervalVal.replace('m', ''));
+            const adjustedMinute = Math.floor(parseInt(minute) / intervalMinutes) * intervalMinutes;
+            
+            return `${datePart} ${hour}:${adjustedMinute.toString().padStart(2, '0')}`;
+          }
+          
+          // 默认情况下返回完整的时间字符串
+          return timeStr;
+        }
+      };
+      
       // 准备交易标记
       const markers: any[] = tradeDetails
         .filter(trade => trade && trade.entryTime && trade.exitTime && trade.entryPrice != null && trade.exitPrice != null && trade.type && trade.profit != null)
         .flatMap(trade => {
           const markers = [];
           
-          // 将交易时间字符串转换为日期格式 YYYY-MM-DD
-          const entryDate = trade.entryTime.split(' ')[0];
-          const exitDate = trade.exitTime.split(' ')[0];
-        
-        // 添加入场标记 - 使用与主图相同的颜色
-        markers.push({
-          time: entryDate,
-          position: trade.type === 'BUY' ? 'belowBar' : 'aboveBar',
-          color: trade.type === 'BUY' ? '#00FFFF' : '#FF00FF', // 买入青色，卖出品红色
-          shape: trade.type === 'BUY' ? 'arrowUp' : 'arrowDown',
-          text: `${trade.type === 'BUY' ? '买入' : '卖出'} ${formatPrice(trade.entryPrice)}`,
-          size: 2,
+          // 根据当前周期调整交易时间
+          const adjustedEntryTime = adjustTimeByInterval(trade.entryTime);
+          const adjustedExitTime = adjustTimeByInterval(trade.exitTime);
+          
+          console.log('交易记录:', {
+            原始入场时间: trade.entryTime,
+            调整后入场时间: adjustedEntryTime,
+            原始出场时间: trade.exitTime,
+            调整后出场时间: adjustedExitTime,
+            交易类型: trade.type
+          });
+          
+          // 添加入场标记
+          markers.push({
+            time: adjustedEntryTime,  // 使用调整后的时间
+            position: trade.type === 'BUY' ? 'belowBar' : 'aboveBar',
+            color: trade.type === 'BUY' ? '#00FFFF' : '#FF00FF', // 买入青色，卖出品红色
+            shape: trade.type === 'BUY' ? 'arrowUp' : 'arrowDown',
+            text: `${trade.type === 'BUY' ? '买入' : '卖出'} ${formatPrice(trade.entryPrice)}`,
+            size: 2,
+          });
+          
+          // 添加出场标记
+          markers.push({
+            time: adjustedExitTime,  // 使用调整后的时间
+            position: trade.type === 'BUY' ? 'aboveBar' : 'belowBar',
+            color: trade.type === 'BUY' ? '#FFFF00' : '#00FF00', // 买入平仓黄色，卖出平仓绿色
+            shape: trade.type === 'BUY' ? 'arrowDown' : 'arrowUp',
+            text: `平仓 ${formatPrice(trade.exitPrice)} (${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})`,
+            size: 2,
+          });
+          
+          return markers;
         });
-        
-        // 添加出场标记 - 使用与主图相同的颜色
-        markers.push({
-          time: exitDate,
-          position: trade.type === 'BUY' ? 'aboveBar' : 'belowBar',
-          color: trade.type === 'BUY' ? '#FFFF00' : '#00FF00', // 买入平仓黄色，卖出平仓绿色
-          shape: trade.type === 'BUY' ? 'arrowDown' : 'arrowUp',
-          text: `平仓 ${formatPrice(trade.exitPrice)} (${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})`,
-          size: 2,
-        });
-        
-        return markers;
-      });
+      
+      console.log('生成的标记:', markers);
       
       // 设置标记
       candleSeries.current.setMarkers(markers);
@@ -464,12 +582,19 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
     };
   }, []);
 
-  // 当交易详情更新时，重新绘制标记
+  // 当交易详情或周期更新时，重新绘制标记
   useEffect(() => {
     if (candleSeries.current && tradeDetails && tradeDetails.length > 0) {
       drawTradeMarkers();
     }
-  }, [tradeDetails]);
+  }, [tradeDetails, intervalVal]);
+  
+  // 当周期发生变化时，重新加载K线数据
+  useEffect(() => {
+    if (intervalVal && symbol && startTime && endTime) {
+      loadKlineData();
+    }
+  }, [intervalVal]);
 
   return (
     <div className="backtest-detail-chart-container">

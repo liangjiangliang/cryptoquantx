@@ -17,6 +17,10 @@ import DataLoader from './components/DataLoader';
 import GlobalNavbar from './components/GlobalNavbar';
 import {clearBacktestResults} from './store/actions';
 import './App.css';
+// 引入 stagewise 补丁
+import './utils/stagewise-patch.js';
+// 引入 stagewise 插件修复
+import './utils/stagewise-plugins-fix.js';
 
 // 懒加载StagewiseToolbar组件和配置
 const StagewiseToolbar = lazy(async () => {
