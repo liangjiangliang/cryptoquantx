@@ -840,6 +840,9 @@ const BacktestDetailChart = forwardRef<{
           return;
         }
         
+        // 保存选中的K线索引，用于后续更新高亮区域
+        setSelectedKlineIndices({start: startIndex, end: endIndex});
+        
         console.log('找到K线索引:', startIndex, endIndex);
         
         // 获取这些K线的时间值
@@ -862,9 +865,17 @@ const BacktestDetailChart = forwardRef<{
         
         console.log('格式化后的时间:', startTimeFormatted, endTimeFormatted);
         
+        // 计算交易区间的中心点索引
+        const midIndex = Math.floor((startIndex + endIndex) / 2);
+        
         // 计算需要显示的时间范围，使交易区间居中
-        const visibleStartIndex = Math.max(0, Math.min(startIndex, endIndex) - 20);
-        const visibleEndIndex = Math.min(originalData.length - 1, Math.max(startIndex, endIndex) + 20);
+        // 在交易区间两侧各添加足够的K线，确保交易区间居中
+        const visibleRange = 40; // 总共显示的K线数量
+        const halfRange = Math.floor(visibleRange / 2);
+        
+        // 计算可见范围的起始和结束索引
+        const visibleStartIndex = Math.max(0, midIndex - halfRange);
+        const visibleEndIndex = Math.min(originalData.length - 1, midIndex + halfRange);
         
         const visibleStartKline = originalData[visibleStartIndex];
         const visibleEndKline = originalData[visibleEndIndex];
@@ -892,44 +903,8 @@ const BacktestDetailChart = forwardRef<{
           barSpacing: currentBarSpacing
         });
         
-        // 使用setTimeout等待图表渲染完成
-        setTimeout(() => {
-          if (!chart.current || !chartContainerRef.current) return;
-          
-          try {
-            // 获取K线在图表上的坐标
-            const startCoord = chart.current.timeScale().timeToCoordinate(startTimeFormatted);
-            const endCoord = chart.current.timeScale().timeToCoordinate(endTimeFormatted);
-            
-            if (startCoord === null || endCoord === null) {
-              console.error('无法获取K线坐标');
-              return;
-            }
-            
-            console.log('K线坐标:', startCoord, endCoord);
-            
-            // 计算高亮区域的位置和尺寸
-            const left = Math.min(startCoord, endCoord);
-            // 确保宽度至少包含一根K线
-            const width = Math.max(Math.abs(endCoord - startCoord), currentBarSpacing);
-            
-            // 设置高亮样式
-            setHighlightStyle({
-              position: 'absolute',
-              left: `${left}px`,
-              top: '0',
-              width: `${width}px`,
-              height: '100%',
-              backgroundColor: 'rgba(255, 192, 0, 0.15)',
-              borderLeft: '1px solid rgba(255, 192, 0, 0.5)',
-              borderRight: '1px solid rgba(255, 192, 0, 0.5)',
-              pointerEvents: 'none', // 允许点击穿透
-              zIndex: 2 // 确保在K线上方，但在工具提示下方
-            });
-          } catch (error) {
-            console.error('计算高亮区域位置错误:', error);
-          }
-        }, 300);
+        // 更新高亮区域
+        updateHighlightArea();
       } catch (error) {
         console.error('高亮时间范围错误:', error);
       }
@@ -986,9 +961,17 @@ const BacktestDetailChart = forwardRef<{
           
           console.log('格式化后的时间:', startTimeFormatted, endTimeFormatted);
           
+          // 计算交易区间的中心点索引
+          const midIndex = Math.floor((startIndex + endIndex) / 2);
+          
           // 计算需要显示的时间范围，使交易区间居中
-          const visibleStartIndex = Math.max(0, Math.min(startIndex, endIndex) - 20);
-          const visibleEndIndex = Math.min(originalData.length - 1, Math.max(startIndex, endIndex) + 20);
+          // 在交易区间两侧各添加足够的K线，确保交易区间居中
+          const visibleRange = 40; // 总共显示的K线数量
+          const halfRange = Math.floor(visibleRange / 2);
+          
+          // 计算可见范围的起始和结束索引
+          const visibleStartIndex = Math.max(0, midIndex - halfRange);
+          const visibleEndIndex = Math.min(originalData.length - 1, midIndex + halfRange);
           
           const visibleStartKline = originalData[visibleStartIndex];
           const visibleEndKline = originalData[visibleEndIndex];
