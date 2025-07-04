@@ -25,7 +25,7 @@ const strategyNameMap: Record<string, string> = {
 const TRADES_PER_PAGE = 14;
 
 // 排序类型
-type SortField = 'profit' | 'profitPercentage' | 'totalAssets' | 'maxDrawdown' | 'maxLoss' | null;
+type SortField = 'type' | 'entryTime' | 'entryPrice' | 'entryAmount' | 'exitTime' | 'exitPrice' | 'exitAmount' | 'fee' | 'profit' | 'profitPercentage' | 'periods' | 'profitPercentagePerPeriod' | 'totalAssets' | 'maxDrawdown' | 'maxLoss' | null;
 type SortOrder = 'asc' | 'desc';
 
 const BacktestDetailPage: React.FC = () => {
@@ -176,29 +176,95 @@ const BacktestDetailPage: React.FC = () => {
     // 根据排序字段排序
     if (sortField) {
       sortedTrades.sort((a, b) => {
-        let aValue: number = 0;
-        let bValue: number = 0;
+        let aValue: any = null;
+        let bValue: any = null;
 
-        if (sortField === 'profit') {
-          aValue = ((a.exitAmount || 0) - (a.entryAmount || 0) - (a.fee || 0));
-          bValue = ((b.exitAmount || 0) - (b.entryAmount || 0) - (b.fee || 0));
-        } else if (sortField === 'profitPercentage') {
-          const aProfit = ((a.exitAmount || 0) - (a.entryAmount || 0) - (a.fee || 0));
-          const bProfit = ((b.exitAmount || 0) - (b.entryAmount || 0) - (b.fee || 0));
-          aValue = a.entryAmount ? (aProfit / a.entryAmount) * 100 : 0;
-          bValue = b.entryAmount ? (bProfit / b.entryAmount) * 100 : 0;
-        } else if (sortField === 'totalAssets') {
-          aValue = a.totalAssets || 0;
-          bValue = b.totalAssets || 0;
-        } else if (sortField === 'maxDrawdown') {
-          aValue = a.maxDrawdown || 0;
-          bValue = b.maxDrawdown || 0;
-        } else if (sortField === 'maxLoss') {
-          aValue = a.maxLoss || 0;
-          bValue = b.maxLoss || 0;
+        switch(sortField) {
+          case 'type':
+            aValue = a.type || '';
+            bValue = b.type || '';
+            // 字符串比较需要特殊处理
+            return sortOrder === 'asc' 
+              ? aValue.localeCompare(bValue) 
+              : bValue.localeCompare(aValue);
+          
+          case 'entryTime':
+            aValue = a.entryTime ? new Date(a.entryTime).getTime() : 0;
+            bValue = b.entryTime ? new Date(b.entryTime).getTime() : 0;
+            break;
+          
+          case 'entryPrice':
+            aValue = a.entryPrice || 0;
+            bValue = b.entryPrice || 0;
+            break;
+          
+          case 'entryAmount':
+            aValue = a.entryAmount || 0;
+            bValue = b.entryAmount || 0;
+            break;
+          
+          case 'exitTime':
+            aValue = a.exitTime ? new Date(a.exitTime).getTime() : 0;
+            bValue = b.exitTime ? new Date(b.exitTime).getTime() : 0;
+            break;
+          
+          case 'exitPrice':
+            aValue = a.exitPrice || 0;
+            bValue = b.exitPrice || 0;
+            break;
+          
+          case 'exitAmount':
+            aValue = a.exitAmount || 0;
+            bValue = b.exitAmount || 0;
+            break;
+          
+          case 'fee':
+            aValue = a.fee || 0;
+            bValue = b.fee || 0;
+            break;
+          
+          case 'profit':
+            aValue = ((a.exitAmount || 0) - (a.entryAmount || 0) - (a.fee || 0));
+            bValue = ((b.exitAmount || 0) - (b.entryAmount || 0) - (b.fee || 0));
+            break;
+          
+          case 'profitPercentage':
+            const aProfit = ((a.exitAmount || 0) - (a.entryAmount || 0) - (a.fee || 0));
+            const bProfit = ((b.exitAmount || 0) - (b.entryAmount || 0) - (b.fee || 0));
+            aValue = a.entryAmount ? (aProfit / a.entryAmount) * 100 : 0;
+            bValue = b.entryAmount ? (bProfit / b.entryAmount) * 100 : 0;
+            break;
+          
+          case 'periods':
+            aValue = a.periods || 0;
+            bValue = b.periods || 0;
+            break;
+          
+          case 'profitPercentagePerPeriod':
+            aValue = a.profitPercentagePerPeriod || 0;
+            bValue = b.profitPercentagePerPeriod || 0;
+            break;
+          
+          case 'totalAssets':
+            aValue = a.totalAssets || 0;
+            bValue = b.totalAssets || 0;
+            break;
+          
+          case 'maxDrawdown':
+            aValue = a.maxDrawdown || 0;
+            bValue = b.maxDrawdown || 0;
+            break;
+          
+          case 'maxLoss':
+            aValue = a.maxLoss || 0;
+            bValue = b.maxLoss || 0;
+            break;
+          
+          default:
+            return 0; // 默认不排序
         }
 
-        // 根据排序顺序返回比较结果
+        // 对于非字符串类型的排序
         return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
       });
     }
@@ -428,22 +494,42 @@ const BacktestDetailPage: React.FC = () => {
               <thead>
                 <tr>
                   <th>序号</th>
-                  <th>类型</th>
-                  <th>入场时间</th>
-                  <th>入场价格</th>
-                  <th>入场金额</th>
-                  <th>出场时间</th>
-                  <th>出场价格</th>
-                  <th>出场金额</th>
-                  <th>手续费</th>
+                  <th onClick={() => handleSort('type')} style={{ cursor: 'pointer' }}>
+                    类型 {getSortIcon('type')}
+                  </th>
+                  <th onClick={() => handleSort('entryTime')} style={{ cursor: 'pointer' }}>
+                    入场时间 {getSortIcon('entryTime')}
+                  </th>
+                  <th onClick={() => handleSort('entryPrice')} style={{ cursor: 'pointer' }}>
+                    入场价格 {getSortIcon('entryPrice')}
+                  </th>
+                  <th onClick={() => handleSort('entryAmount')} style={{ cursor: 'pointer' }}>
+                    入场金额 {getSortIcon('entryAmount')}
+                  </th>
+                  <th onClick={() => handleSort('exitTime')} style={{ cursor: 'pointer' }}>
+                    出场时间 {getSortIcon('exitTime')}
+                  </th>
+                  <th onClick={() => handleSort('exitPrice')} style={{ cursor: 'pointer' }}>
+                    出场价格 {getSortIcon('exitPrice')}
+                  </th>
+                  <th onClick={() => handleSort('exitAmount')} style={{ cursor: 'pointer' }}>
+                    出场金额 {getSortIcon('exitAmount')}
+                  </th>
+                  <th onClick={() => handleSort('fee')} style={{ cursor: 'pointer' }}>
+                    手续费 {getSortIcon('fee')}
+                  </th>
                   <th onClick={() => handleSort('profit')} style={{ cursor: 'pointer' }}>
                     盈亏 {getSortIcon('profit')}
                   </th>
                   <th onClick={() => handleSort('profitPercentage')} style={{ cursor: 'pointer' }}>
                     收益率 {getSortIcon('profitPercentage')}
                   </th>
-                  <th>周期数</th>
-                  <th>每周期收益率</th>
+                  <th onClick={() => handleSort('periods')} style={{ cursor: 'pointer' }}>
+                    周期数 {getSortIcon('periods')}
+                  </th>
+                  <th onClick={() => handleSort('profitPercentagePerPeriod')} style={{ cursor: 'pointer' }}>
+                    每周期收益率 {getSortIcon('profitPercentagePerPeriod')}
+                  </th>
                   <th onClick={() => handleSort('totalAssets')} style={{ cursor: 'pointer' }}>
                     总资产 {getSortIcon('totalAssets')}
                   </th>

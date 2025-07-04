@@ -1,9 +1,41 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { createChart, CrosshairMode, Time, ISeriesApi, IChartApi, SeriesMarkerPosition } from 'lightweight-charts';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import { createChart, CrosshairMode, Time, ISeriesApi, IChartApi, SeriesMarkerPosition, HistogramData } from 'lightweight-charts';
 import { BacktestTradeDetail, CandlestickData } from '../../store/types';
 import { formatPrice } from '../../utils/helpers';
 import { fetchHistoryWithIntegrityCheck, fetchBacktestSummary } from '../../services/api';
 import './BacktestDetailChart.css';
+
+// 扩展Window接口，添加klineDataCache属性
+declare global {
+  interface Window {
+    klineDataCache: Map<string, {
+      data: CandlestickData[],
+      timestamp: number
+    }>;
+  }
+}
+
+// 添加缓存对象，用于存储已加载的K线数据
+// 使用window对象存储全局缓存，确保在页面刷新前一直有效
+if (!window.klineDataCache) {
+  window.klineDataCache = new Map();
+}
+const klineDataCache = window.klineDataCache;
+
+// 缓存有效期（毫秒）
+const CACHE_TTL = 30 * 60 * 1000; // 30分钟
+
+// 添加防抖函数
+const debounce = (fn: Function, delay: number) => {
+  let timer: NodeJS.Timeout | null = null;
+  return (...args: any[]) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn(...args);
+      timer = null;
+    }, delay);
+  };
+};
 
 interface BacktestDetailChartProps {
   symbol: string;
@@ -23,6 +55,9 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
   const candleSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeries = useRef<ISeriesApi<'Histogram'> | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const isInitialLoad = useRef<boolean>(true);
+  const dataLoadedRef = useRef<boolean>(false);
+  const apiCallInProgressRef = useRef<boolean>(false);
   
   const [hoveredData, setHoveredData] = useState<{
     time: string;
@@ -39,6 +74,37 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [originalData, setOriginalData] = useState<any[]>([]);
   const [intervalVal, setIntervalVal] = useState<string>('1D');
+  const [dataLoaded, setDataLoaded] = useState<boolean>(false);
+
+  // 生成缓存键 - 使用useMemo优化
+  const cacheKey = useMemo(() => {
+    if (!symbol || !startTime || !endTime) return '';
+    
+    const startDate = startTime.split(' ')[0];
+    const endDate = endTime.split(' ')[0];
+    
+    // 为了确保有足够的上下文，我们获取稍微扩展的时间范围
+    const extendedStartDate = new Date(startDate);
+    extendedStartDate.setDate(extendedStartDate.getDate() - 30);
+    const requestStartDate = extendedStartDate.toISOString().split('T')[0];
+    
+    const extendedEndDate = new Date(endDate);
+    extendedEndDate.setDate(extendedEndDate.getDate() + 15);
+    const requestEndDate = extendedEndDate.toISOString().split('T')[0];
+    
+    // 从URL中获取interval参数，如果没有则使用默认值1D
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlInterval = urlParams.get('interval') || '1D';
+    
+    return `${symbol}_${urlInterval}_${requestStartDate}_${requestEndDate}`;
+  }, [symbol, startTime, endTime]);
+
+  // 检查缓存是否有效
+  const isCacheValid = (cacheEntry: { data: CandlestickData[], timestamp: number } | undefined): boolean => {
+    if (!cacheEntry) return false;
+    const now = Date.now();
+    return (now - cacheEntry.timestamp) < CACHE_TTL;
+  };
 
   // 格式化日期为显示格式
   const formatDate = (timestamp: number | string): string => {
@@ -86,8 +152,11 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
   };
 
   // 创建图表
-  const createCharts = () => {
+  const createCharts = useCallback(() => {
     if (!chartContainerRef.current) return;
+    
+    // 如果图表已经创建，不要重复创建
+    if (chart.current) return;
     
     try {
       // 创建主图表
@@ -151,9 +220,6 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       // 设置十字线移动事件
       setupCrosshairMoveHandler();
       
-      // 加载K线数据
-      loadKlineData();
-      
       // 响应窗口大小变化
       const handleResize = () => {
         if (!chartContainerRef.current || !chart.current) return;
@@ -181,7 +247,7 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       candleSeries.current = null;
       volumeSeries.current = null;
     }
-  };
+  }, []);
 
   // 设置十字线移动事件监听
   const setupCrosshairMoveHandler = () => {
@@ -329,8 +395,21 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
     });
   };
 
-  // 加载K线数据
-  const loadKlineData = async () => {
+  // 加载K线数据 - 使用useCallback优化
+  const loadKlineData = useCallback(async () => {
+    // 防止重复调用
+    if (apiCallInProgressRef.current || dataLoadedRef.current) {
+      console.log('API调用正在进行中或数据已加载，跳过重复调用');
+      return;
+    }
+    
+    if (!symbol || !startTime || !endTime || !cacheKey) {
+      console.warn('缺少必要的参数，无法加载K线数据');
+      return;
+    }
+
+    // 标记API调用开始
+    apiCallInProgressRef.current = true;
     setLoading(true);
     setError(null);
 
@@ -356,7 +435,7 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         dataInterval = urlInterval;
       } 
       // 否则尝试从回测汇总中获取
-      else if (backtestId) {
+      else if (backtestId && isInitialLoad.current) {
         try {
           const backtestSummary = await fetchBacktestSummary(backtestId);
           if (backtestSummary && backtestSummary.intervalVal) {
@@ -383,7 +462,59 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       extendedEndDate.setDate(extendedEndDate.getDate() + 15);
       const requestEndDate = extendedEndDate.toISOString().split('T')[0];
       
+      // 检查缓存
+      const cachedData = klineDataCache.get(cacheKey);
+      
+      if (isCacheValid(cachedData)) {
+        console.log('使用缓存的K线数据');
+        setOriginalData(cachedData!.data);
+        
+        // 更新图表
+        if (candleSeries.current && volumeSeries.current && chart.current) {
+          const convertedData = cachedData!.data.map(item => ({
+            ...item,
+            time: item.time as Time
+          }));
+          
+          // 设置K线数据
+          candleSeries.current.setData(convertedData);
+          
+          // 设置成交量数据
+          const volumeData = convertedData
+            .filter(item => item && item.time != null && item.volume != null && item.close != null && item.open != null)
+            .map(item => ({
+              time: item.time,
+              value: item.volume,
+              color: item.close > item.open ? '#ff5555' : '#32a852',
+            })) as HistogramData[];
+          
+          if (volumeData.length > 0) {
+            volumeSeries.current.setData(volumeData);
+          }
+          
+          // 绘制交易标记
+          drawTradeMarkers();
+          
+          // 设置图表时间范围
+          chart.current.timeScale().fitContent();
+          setTimeout(() => {
+            if (chart.current) {
+              chart.current.timeScale().setVisibleRange({
+                from: startDate,
+                to: endDate,
+              });
+            }
+          }, 100);
+        }
+        
+        setLoading(false);
+        setDataLoaded(true);
+        dataLoadedRef.current = true;
+        return;
+      }
+      
       // 获取K线数据，使用fetchHistoryWithIntegrityCheck函数
+      console.log('从API获取K线数据:', { symbol, interval: dataInterval, startDate: requestStartDate, endDate: requestEndDate });
       let result;
       try {
         result = await fetchHistoryWithIntegrityCheck(
@@ -405,6 +536,12 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         return;
       }
       
+      // 保存到缓存
+      klineDataCache.set(cacheKey, {
+        data: result.data,
+        timestamp: Date.now()
+      });
+      
       // 保存原始K线数据，包含完整的日期时间信息
       setOriginalData(result.data);
       
@@ -420,9 +557,6 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
           time: item.time as Time
         }));
       
-      // 调试信息，查看转换后的数据格式
-      console.log('转换后的K线数据示例:', convertedData.length > 0 ? convertedData[0] : '无数据');
-      
       // 更新K线图 - 添加更严格的检查
       if (candleSeries.current && volumeSeries.current && chart.current && convertedData.length > 0) {
         // 直接使用转换好的数据
@@ -431,11 +565,11 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         // 创建成交量数据
         const volumeData = convertedData
           .filter(item => item && item.time != null && item.volume != null && item.close != null && item.open != null)
-          .map((item) => ({
+          .map(item => ({
             time: item.time,
             value: item.volume,
             color: item.close > item.open ? '#ff5555' : '#32a852',
-          }));
+          })) as HistogramData[];
         
         if (volumeData.length > 0) {
             volumeSeries.current.setData(volumeData);
@@ -466,12 +600,26 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       }
       
       setLoading(false);
+      setDataLoaded(true);
+      dataLoadedRef.current = true;
     } catch (err) {
       console.error('加载K线数据失败:', err);
       setError('加载K线数据失败');
       setLoading(false);
+    } finally {
+      isInitialLoad.current = false;
+      apiCallInProgressRef.current = false;
     }
-  };
+  }, [symbol, startTime, endTime, cacheKey]);
+
+  // 防抖处理的加载函数
+  const debouncedLoadKlineData = useMemo(() => 
+    debounce(() => {
+      if (!dataLoadedRef.current) {
+        loadKlineData();
+      }
+    }, 300)
+  , [loadKlineData]);
 
   // 绘制交易标记
   const drawTradeMarkers = () => {
@@ -480,39 +628,33 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
     try {
       console.log('开始绘制交易标记，交易数量:', tradeDetails.length, '当前周期:', intervalVal);
       
-      // 根据周期调整交易标记的时间精度
-      const adjustTimeByInterval = (timeStr: string): string => {
-        // 只保留日期部分用于日线及以上周期
-        if (intervalVal === '1D' || intervalVal === '3D' || intervalVal === '1W' || intervalVal === '1M') {
-          // 对于日线或更高周期，只保留日期部分
-          return timeStr.split(' ')[0];
-        } else {
-          // 对于小时线，保留日期和小时
-          if (intervalVal.includes('H')) {
-            const [datePart, timePart] = timeStr.split(' ');
-            if (!timePart) return datePart; // 如果没有时间部分，直接返回日期
-            
-            const hour = timePart.split(':')[0];
-            // 根据小时周期调整（例如4H就只保留0,4,8,12,16,20小时的整点）
-            const intervalHours = parseInt(intervalVal.replace('H', ''));
-            const adjustedHour = Math.floor(parseInt(hour) / intervalHours) * intervalHours;
-            
-            return `${datePart} ${adjustedHour.toString().padStart(2, '0')}:00`;
-          } 
-          // 对于分钟线，处理更精确的时间
-          else if (intervalVal.includes('m')) {
-            const [datePart, timePart] = timeStr.split(' ');
-            if (!timePart) return datePart; // 如果没有时间部分，直接返回日期
-            
-            const [hour, minute] = timePart.split(':');
-            // 根据分钟周期调整
-            const intervalMinutes = parseInt(intervalVal.replace('m', ''));
-            const adjustedMinute = Math.floor(parseInt(minute) / intervalMinutes) * intervalMinutes;
-            
-            return `${datePart} ${hour}:${adjustedMinute.toString().padStart(2, '0')}`;
+      // 检查K线数据的时间格式
+      let timeFormat = 'string';
+      if (originalData && originalData.length > 0) {
+        const firstItem = originalData[0];
+        if (typeof firstItem.time === 'number') {
+          timeFormat = 'number';
+        }
+        console.log('K线数据时间格式:', timeFormat, '样本:', firstItem.time);
+      }
+      
+      // 将日期字符串转换为时间戳或适当的格式
+      const convertTimeToChartFormat = (timeStr: string): any => {
+        if (!timeStr) return null;
+        
+        // 如果K线数据使用数字时间戳
+        if (timeFormat === 'number') {
+          // 转换为Unix时间戳（秒）
+          const timestamp = Math.floor(new Date(timeStr).getTime() / 1000);
+          return timestamp;
+        } 
+        // 如果K线数据使用日期字符串
+        else {
+          // 如果是日线周期，只保留日期部分
+          if (intervalVal === '1D' || intervalVal === '3D' || intervalVal === '1W' || intervalVal === '1M') {
+            return timeStr.split(' ')[0];
           }
-          
-          // 默认情况下返回完整的时间字符串
+          // 否则使用完整日期时间
           return timeStr;
         }
       };
@@ -523,36 +665,39 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
         .flatMap(trade => {
           const markers = [];
           
-          // 根据当前周期调整交易时间
-          const adjustedEntryTime = adjustTimeByInterval(trade.entryTime);
-          const adjustedExitTime = adjustTimeByInterval(trade.exitTime);
+          // 转换时间为图表所需格式
+          const entryTime = convertTimeToChartFormat(trade.entryTime);
+          const exitTime = convertTimeToChartFormat(trade.exitTime);
           
-          console.log('交易记录:', {
+          console.log('处理交易记录:', {
+            交易类型: trade.type,
             原始入场时间: trade.entryTime,
-            调整后入场时间: adjustedEntryTime,
+            转换后入场时间: entryTime,
             原始出场时间: trade.exitTime,
-            调整后出场时间: adjustedExitTime,
-            交易类型: trade.type
+            转换后出场时间: exitTime,
+            周期: intervalVal
           });
           
           // 添加入场标记
           markers.push({
-            time: adjustedEntryTime,  // 使用调整后的时间
+            time: entryTime,  // 使用转换后的时间
             position: trade.type === 'BUY' ? 'belowBar' : 'aboveBar',
             color: trade.type === 'BUY' ? '#00FFFF' : '#FF00FF', // 买入青色，卖出品红色
             shape: trade.type === 'BUY' ? 'arrowUp' : 'arrowDown',
             text: `${trade.type === 'BUY' ? '买入' : '卖出'} ${formatPrice(trade.entryPrice)}`,
             size: 2,
+            id: `entry-${Math.random().toString(36).substring(2, 9)}`,
           });
           
           // 添加出场标记
           markers.push({
-            time: adjustedExitTime,  // 使用调整后的时间
+            time: exitTime,  // 使用转换后的时间
             position: trade.type === 'BUY' ? 'aboveBar' : 'belowBar',
             color: trade.type === 'BUY' ? '#FFFF00' : '#00FF00', // 买入平仓黄色，卖出平仓绿色
             shape: trade.type === 'BUY' ? 'arrowDown' : 'arrowUp',
             text: `平仓 ${formatPrice(trade.exitPrice)} (${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})`,
             size: 2,
+            id: `exit-${Math.random().toString(36).substring(2, 9)}`,
           });
           
           return markers;
@@ -567,7 +712,7 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
     }
   };
 
-  // 初始化图表
+  // 初始化图表 - 仅在组件挂载时执行一次
   useEffect(() => {
     createCharts();
     
@@ -579,22 +724,25 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       }
       candleSeries.current = null;
       volumeSeries.current = null;
+      // 重置数据加载状态
+      dataLoadedRef.current = false;
     };
-  }, []);
+  }, [createCharts]);
 
-  // 当交易详情或周期更新时，重新绘制标记
+  // 当交易详情更新时，重新绘制标记
   useEffect(() => {
-    if (candleSeries.current && tradeDetails && tradeDetails.length > 0) {
+    if (candleSeries.current && tradeDetails && tradeDetails.length > 0 && dataLoaded) {
       drawTradeMarkers();
     }
-  }, [tradeDetails, intervalVal]);
+  }, [tradeDetails, dataLoaded]);
   
-  // 当周期发生变化时，重新加载K线数据
+  // 加载K线数据 - 使用防抖处理，避免重复调用
   useEffect(() => {
-    if (intervalVal && symbol && startTime && endTime) {
-      loadKlineData();
+    if (symbol && startTime && endTime && cacheKey && !dataLoadedRef.current) {
+      console.log('触发K线数据加载');
+      debouncedLoadKlineData();
     }
-  }, [intervalVal]);
+  }, [symbol, startTime, endTime, cacheKey, debouncedLoadKlineData]);
 
   return (
     <div className="backtest-detail-chart-container">
