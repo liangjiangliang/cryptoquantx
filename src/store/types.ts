@@ -63,6 +63,8 @@ export interface BacktestSummary {
   var95?: number; // 95%风险价值
   var99?: number; // 99%风险价值
   volatility?: number; // 波动率
+  periods?: number; // 周期数
+  profitPercentagePerPeriod?: number; // 每周期收益率
 }
 
 // 订单簿数据类型
@@ -190,4 +192,6 @@ export interface BacktestTradeDetail {
   totalAssets: number;
   type: string;
   volume: number | null;
+  periods?: number; // 周期数
+  profitPercentagePerPeriod?: number; // 每周期收益率
 }

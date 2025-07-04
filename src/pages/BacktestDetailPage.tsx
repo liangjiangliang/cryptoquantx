@@ -442,6 +442,8 @@ const BacktestDetailPage: React.FC = () => {
                   <th onClick={() => handleSort('profitPercentage')} style={{ cursor: 'pointer' }}>
                     收益率 {getSortIcon('profitPercentage')}
                   </th>
+                  <th>周期数</th>
+                  <th>每周期收益率</th>
                   <th onClick={() => handleSort('totalAssets')} style={{ cursor: 'pointer' }}>
                     总资产 {getSortIcon('totalAssets')}
                   </th>
@@ -459,14 +461,12 @@ const BacktestDetailPage: React.FC = () => {
                   if (!trade) {
                     return (
                       <tr key={index}>
-                        <td colSpan={14} style={{ textAlign: 'center', color: '#8d8d8d' }}>数据异常</td>
+                        <td colSpan={16} style={{ textAlign: 'center', color: '#8d8d8d' }}>数据异常</td>
                       </tr>
                     );
                   }
                   
                   const actualIndex = (currentPage - 1) * TRADES_PER_PAGE + index + 1;
-                  const profit = (trade.exitAmount || 0) - (trade.entryAmount || 0) - (trade.fee || 0);
-                  const profitPercentage = trade.entryAmount ? (profit / trade.entryAmount) * 100 : 0;
                   
                   return (
                     <tr key={index}>
@@ -479,8 +479,10 @@ const BacktestDetailPage: React.FC = () => {
                       <td>{trade.exitPrice || '-'}</td>
                       <td>{formatAmount(trade.exitAmount || 0)}</td>
                       <td>{formatAmount(trade.fee || 0)}</td>
-                      <td className={profit >= 0 ? 'positive' : 'negative'}>{formatAmount(profit)}</td>
-                      <td className={profitPercentage >= 0 ? 'positive' : 'negative'}>{formatPercentage(profitPercentage)}</td>
+                      <td className={trade.profit >= 0 ? 'positive' : 'negative'}>{formatAmount(trade.profit)}</td>
+                      <td className={trade.profitPercentage >= 0 ? 'positive' : 'negative'}>{formatPercentage(trade.profitPercentage)}</td>
+                      <td>{trade.periods || '-'}</td>
+                      <td>{formatPercentage((trade.profitPercentagePerPeriod || 0))}</td>
                       <td>{formatAmount(trade.totalAssets || 0)}</td>
                       <td>{formatPercentage((trade.maxDrawdown || 0) * 100)}</td>
                       <td>{trade.maxLoss ? formatPercentage(trade.maxLoss * 100) : '-'}</td>
