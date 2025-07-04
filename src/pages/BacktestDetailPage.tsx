@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchBacktestDetail, fetchBacktestSummary } from '../services/api';
 import { BacktestTradeDetail, BacktestSummary } from '../store/types';
@@ -43,6 +43,10 @@ const BacktestDetailPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   // 添加回测指标折叠状态
   const [isMetricsCollapsed, setIsMetricsCollapsed] = useState(true);
+  // 添加选中的交易行状态
+  const [selectedTradeIndex, setSelectedTradeIndex] = useState<number | null>(null);
+  // 添加图表引用
+  const chartRef = useRef<any>(null);
 
   useEffect(() => {
     if (backtestId) {
@@ -287,6 +291,17 @@ const BacktestDetailPage: React.FC = () => {
 
   const { startTime, endTime, symbol } = tradeDetails.length > 0 ? getBacktestTimeRange() : { startTime: '', endTime: '', symbol: '' };
 
+  // 处理行点击事件
+  const handleTradeRowClick = (trade: BacktestTradeDetail, index: number) => {
+    // 设置选中的交易行索引
+    setSelectedTradeIndex(index);
+    
+    // 如果图表组件提供了引用，可以调用其方法高亮时间范围
+    if (chartRef.current && trade.entryTime && trade.exitTime) {
+      chartRef.current.highlightTimeRange(trade.entryTime, trade.exitTime);
+    }
+  };
+
   return (
     <div className="backtest-detail-page">
       <div className="backtest-detail-header">
@@ -486,6 +501,8 @@ const BacktestDetailPage: React.FC = () => {
               startTime={startTime}
               endTime={endTime}
               tradeDetails={tradeDetails}
+              selectedTrade={selectedTradeIndex !== null ? getCurrentPageTrades()[selectedTradeIndex] : null}
+              ref={chartRef}
             />
           )}
 
@@ -553,9 +570,15 @@ const BacktestDetailPage: React.FC = () => {
                   }
                   
                   const actualIndex = (currentPage - 1) * TRADES_PER_PAGE + index + 1;
+                  const isSelected = selectedTradeIndex === index;
                   
                   return (
-                    <tr key={index}>
+                    <tr 
+                      key={index}
+                      onClick={() => handleTradeRowClick(trade, index)}
+                      className={isSelected ? 'selected-trade-row' : ''}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <td>{actualIndex}</td>
                       <td className={trade.type === 'BUY' ? 'buy' : 'sell'}>{trade.type === 'BUY' ? '买入' : '卖出'}</td>
                       <td>{trade.entryTime || '-'}</td>

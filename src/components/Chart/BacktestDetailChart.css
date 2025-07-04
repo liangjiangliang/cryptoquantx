@@ -132,3 +132,14 @@
   color: #32a852 !important; /* 绿色，表示亏损 */
   font-weight: bold;
 }
+
+/* 添加选中交易行的样式 */
+.selected-trade-row {
+  background-color: rgba(255, 255, 0, 0.1) !important; /* 黄色半透明背景 */
+  border-left: 3px solid #ffeb3b !important; /* 左边框高亮 */
+  font-weight: 600 !important; /* 文字加粗 */
+}
+
+.selected-trade-row td {
+  color: #fff !important; /* 文字颜色更亮 */
+}

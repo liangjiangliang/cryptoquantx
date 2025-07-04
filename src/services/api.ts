@@ -163,17 +163,17 @@ const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
     };
 
     if (index === 0) {
-      console.log('转换第一个数据项:', { original: item, converted: convertedItem });
+      // console.log('转换第一个数据项:', { original: item, converted: convertedItem });
     }
 
     return convertedItem;
   });
 
-  console.log('数据转换完成:', {
-    inputLength: apiData.length,
-    outputLength: result.length,
-    firstConverted: result.length > 0 ? result[0] : null
-  });
+  // console.log('数据转换完成:', {
+  //   inputLength: apiData.length,
+  //   outputLength: result.length,
+  //   firstConverted: result.length > 0 ? result[0] : null
+  // });
 
   return result;
 };

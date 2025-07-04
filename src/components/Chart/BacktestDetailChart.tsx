@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { createChart, CrosshairMode, Time, ISeriesApi, IChartApi, SeriesMarkerPosition, HistogramData } from 'lightweight-charts';
 import { BacktestTradeDetail, CandlestickData } from '../../store/types';
 import { formatPrice } from '../../utils/helpers';
@@ -42,14 +42,21 @@ interface BacktestDetailChartProps {
   startTime: string;
   endTime: string;
   tradeDetails: BacktestTradeDetail[];
+  selectedTrade?: BacktestTradeDetail | null;
 }
 
-const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
-  symbol,
-  startTime,
-  endTime,
-  tradeDetails
-}) => {
+// 使用forwardRef包装组件，以支持ref传递
+const BacktestDetailChart = forwardRef<{
+  highlightTimeRange: (startTime: string, endTime: string) => void
+}, BacktestDetailChartProps>((props, ref) => {
+  const {
+    symbol,
+    startTime,
+    endTime,
+    tradeDetails,
+    selectedTrade
+  } = props;
+  
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chart = useRef<IChartApi | null>(null);
   const candleSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -58,6 +65,7 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
   const isInitialLoad = useRef<boolean>(true);
   const dataLoadedRef = useRef<boolean>(false);
   const apiCallInProgressRef = useRef<boolean>(false);
+  const highlightedAreaRef = useRef<any>(null); // 用于存储高亮区域
   
   const [hoveredData, setHoveredData] = useState<{
     time: string;
@@ -200,35 +208,35 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       candleSeries.current = chart.current.addCandlestickSeries({
         upColor: '#ff5555',
         downColor: '#32a852',
-        borderVisible: false,
+        borderUpColor: '#ff5555',
+        borderDownColor: '#32a852',
         wickUpColor: '#ff5555',
         wickDownColor: '#32a852',
       });
-
-      // 创建成交量系列 - 红涨绿跌风格
+      
+      // 添加成交量系列
       volumeSeries.current = chart.current.addHistogramSeries({
+        color: '#26a69a',
         priceFormat: {
           type: 'volume',
         },
-        priceScaleId: '',
+        priceScaleId: 'volume', // 使用单独的价格轴
         scaleMargins: {
-          top: 0.8,
+          top: 0.8, // 将成交量图表放在主图表下方
           bottom: 0,
         },
       });
-
-      // 设置十字线移动事件
+      
+      // 设置十字线移动事件处理
       setupCrosshairMoveHandler();
       
-      // 响应窗口大小变化
+      // 设置图表大小
       const handleResize = () => {
-        if (!chartContainerRef.current || !chart.current) return;
-        
-        const width = chartContainerRef.current.clientWidth;
-        
-        chart.current.applyOptions({
-          width: width
-        });
+        if (chartContainerRef.current && chart.current) {
+          const width = chartContainerRef.current.clientWidth;
+          chart.current.resize(width, 450);
+          chart.current.timeScale().fitContent();
+        }
       };
 
       window.addEventListener('resize', handleResize);
@@ -621,92 +629,73 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
     }, 300)
   , [loadKlineData]);
 
+  // 添加一个通用的时间格式化函数
+  const formatChartTime = (timeStr: string): any => {
+    if (!timeStr) return null;
+    
+    // 检查原始数据的时间格式
+    let timeFormat = 'string';
+    if (originalData && originalData.length > 0) {
+      const firstItem = originalData[0];
+      if (typeof firstItem.time === 'number') {
+        timeFormat = 'number';
+      }
+    }
+    
+    if (timeFormat === 'number') {
+      // 转换为时间戳
+      const timestamp = Math.floor(new Date(timeStr).getTime() / 1000);
+      return timestamp;
+    } else {
+      // 根据K线周期决定时间格式
+      if (intervalVal === '1D' || intervalVal === '3D' || intervalVal === '1W' || intervalVal === '1M') {
+        // 日线及以上周期只需要日期部分
+        return timeStr.split(' ')[0];
+      }
+      // 分钟线需要完整时间
+      return timeStr;
+    }
+  };
+
   // 绘制交易标记
   const drawTradeMarkers = () => {
-    if (!candleSeries.current || !chart.current || !tradeDetails || tradeDetails.length === 0) return;
-
+    if (!candleSeries.current || !tradeDetails || tradeDetails.length === 0) return;
+    
     try {
-      console.log('开始绘制交易标记，交易数量:', tradeDetails.length, '当前周期:', intervalVal);
-      
-      // 检查K线数据的时间格式
-      let timeFormat = 'string';
-      if (originalData && originalData.length > 0) {
-        const firstItem = originalData[0];
-        if (typeof firstItem.time === 'number') {
-          timeFormat = 'number';
-        }
-        console.log('K线数据时间格式:', timeFormat, '样本:', firstItem.time);
-      }
-      
-      // 将日期字符串转换为时间戳或适当的格式
-      const convertTimeToChartFormat = (timeStr: string): any => {
-        if (!timeStr) return null;
+      // 准备买入和卖出标记
+      const markers = tradeDetails.map(trade => {
+        // 判断是买入还是卖出
+        const isBuy = trade.type === 'BUY' || trade.type === 'LONG' || trade.type === 'buy' || trade.type === 'long';
         
-        // 如果K线数据使用数字时间戳
-        if (timeFormat === 'number') {
-          // 转换为Unix时间戳（秒）
-          const timestamp = Math.floor(new Date(timeStr).getTime() / 1000);
-          return timestamp;
-        } 
-        // 如果K线数据使用日期字符串
-        else {
-          // 如果是日线周期，只保留日期部分
-          if (intervalVal === '1D' || intervalVal === '3D' || intervalVal === '1W' || intervalVal === '1M') {
-            return timeStr.split(' ')[0];
-          }
-          // 否则使用完整日期时间
-          return timeStr;
-        }
-      };
-      
-      // 准备交易标记
-      const markers: any[] = tradeDetails
-        .filter(trade => trade && trade.entryTime && trade.exitTime && trade.entryPrice != null && trade.exitPrice != null && trade.type && trade.profit != null)
-        .flatMap(trade => {
-          const markers = [];
-          
-          // 转换时间为图表所需格式
-          const entryTime = convertTimeToChartFormat(trade.entryTime);
-          const exitTime = convertTimeToChartFormat(trade.exitTime);
-          
-          console.log('处理交易记录:', {
-            交易类型: trade.type,
-            原始入场时间: trade.entryTime,
-            转换后入场时间: entryTime,
-            原始出场时间: trade.exitTime,
-            转换后出场时间: exitTime,
-            周期: intervalVal
-          });
-          
-          // 添加入场标记
-          markers.push({
-            time: entryTime,  // 使用转换后的时间
-            position: trade.type === 'BUY' ? 'belowBar' : 'aboveBar',
-            color: trade.type === 'BUY' ? '#00FFFF' : '#FF00FF', // 买入青色，卖出品红色
-            shape: trade.type === 'BUY' ? 'arrowUp' : 'arrowDown',
-            text: `${trade.type === 'BUY' ? '买入' : '卖出'} ${formatPrice(trade.entryPrice)}`,
-            size: 2,
-            id: `entry-${Math.random().toString(36).substring(2, 9)}`,
-          });
-          
-          // 添加出场标记
-          markers.push({
-            time: exitTime,  // 使用转换后的时间
-            position: trade.type === 'BUY' ? 'aboveBar' : 'belowBar',
-            color: trade.type === 'BUY' ? '#FFFF00' : '#00FF00', // 买入平仓黄色，卖出平仓绿色
-            shape: trade.type === 'BUY' ? 'arrowDown' : 'arrowUp',
-            text: `平仓 ${formatPrice(trade.exitPrice)} (${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})`,
-            size: 2,
-            id: `exit-${Math.random().toString(36).substring(2, 9)}`,
-          });
-          
-          return markers;
-        });
-      
-      console.log('生成的标记:', markers);
+        // 买入或卖出标记
+        const entryMarker = {
+          time: formatChartTime(trade.entryTime),
+          position: isBuy ? 'belowBar' : 'aboveBar' as SeriesMarkerPosition,
+          color: isBuy ? '#00FFFF' : '#FF00FF', // 买入青色，卖出品红色
+          shape: isBuy ? 'arrowUp' : 'arrowDown',
+          text: `${isBuy ? '买入' : '卖出'} ${formatPrice(trade.entryPrice)}`,
+          size: 1,
+          id: `entry-${trade.id || ''}`,
+        };
+        
+        // 平仓标记
+        const exitMarker = trade.exitTime ? {
+          time: formatChartTime(trade.exitTime),
+          position: isBuy ? 'aboveBar' : 'belowBar' as SeriesMarkerPosition,
+          color: isBuy ? '#FFFF00' : '#00FF00', // 买入平仓黄色，卖出平仓绿色
+          shape: isBuy ? 'arrowDown' : 'arrowUp',
+          text: `平仓 ${formatPrice(trade.exitPrice)} ${trade.profit !== undefined ? `(${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})` : ''}`,
+          size: 1,
+          id: `exit-${trade.id || ''}`,
+        } : null;
+        
+        return exitMarker ? [entryMarker, exitMarker] : [entryMarker];
+      }).flat().filter(Boolean);
       
       // 设置标记
-      candleSeries.current.setMarkers(markers);
+      candleSeries.current.setMarkers(markers as any[]);
+      
+      console.log('绘制了交易标记:', markers.length, '个，第一个标记时间:', markers[0]?.time);
     } catch (error) {
       console.error('绘制交易标记错误:', error);
     }
@@ -743,6 +732,181 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       debouncedLoadKlineData();
     }
   }, [symbol, startTime, endTime, cacheKey, debouncedLoadKlineData]);
+
+  // 添加一个辅助函数来安全地移除高亮元素
+  const safelyRemoveHighlight = useCallback(() => {
+    if (!highlightedAreaRef.current) return;
+    
+    try {
+      if (Array.isArray(highlightedAreaRef.current)) {
+        // 处理数组类型的高亮元素
+        highlightedAreaRef.current.forEach(item => {
+          try {
+            if (!item) return;
+            
+            // 不再处理价格线，只处理高亮区域系列
+            if (chart.current && typeof item === 'object' && 'setData' in item) {
+              try {
+                // 首先检查 item 是否有效
+                if (item && typeof item.setData === 'function') {
+                  // 清空数据而不是移除系列，这样可以避免潜在的错误
+                  item.setData([]);
+                  // 如果确实需要移除系列，确保 chart.current 和 item 都有效
+                  if (chart.current && chart.current.removeSeries) {
+                    chart.current.removeSeries(item);
+                  }
+                }
+              } catch (innerError) {
+                console.error('移除图表系列失败:', innerError);
+                // 如果移除失败，至少尝试清空数据
+                try {
+                  if (item && typeof item.setData === 'function') {
+                    item.setData([]);
+                  }
+                } catch (e) {
+                  console.error('清空系列数据失败:', e);
+                }
+              }
+            }
+          } catch (err) {
+            console.error('移除高亮元素失败:', err);
+          }
+        });
+      }
+      
+      // 重置高亮引用
+      highlightedAreaRef.current = null;
+    } catch (error) {
+      console.error('清除高亮区域错误:', error);
+    }
+  }, []);
+  
+  // 在组件卸载时清理资源
+  useEffect(() => {
+    return () => {
+      safelyRemoveHighlight();
+      
+      // 清理图表资源
+      if (chart.current) {
+        chart.current.remove();
+        chart.current = null;
+      }
+    };
+  }, [safelyRemoveHighlight]);
+
+  // 暴露给父组件的方法
+  useImperativeHandle(ref, () => ({
+    // 高亮显示指定时间范围
+    highlightTimeRange: (startTime: string, endTime: string) => {
+      if (!chart.current || !candleSeries.current || !originalData || originalData.length === 0) return;
+      
+      try {
+        // 清除之前的高亮区域
+        safelyRemoveHighlight();
+        
+        // 转换入场和出场时间，使用通用的时间格式化函数
+        const entryTimeFormatted = formatChartTime(startTime);
+        const exitTimeFormatted = formatChartTime(endTime);
+        
+        console.log('高亮时间范围:', entryTimeFormatted, exitTimeFormatted);
+        
+        // 滚动到对应的时间位置
+        chart.current?.timeScale().scrollToPosition(0, false);
+        
+        // 设置可见范围，使入场和出场时间都在视图内
+        chart.current?.timeScale().setVisibleRange({
+          from: entryTimeFormatted,
+          to: exitTimeFormatted
+        });
+        
+        // 创建高亮区域系列 - 使用半透明色块标记交易区间
+        const highlightSeries = chart.current?.addAreaSeries({
+          topColor: 'rgba(255, 192, 0, 0.2)',
+          bottomColor: 'rgba(255, 192, 0, 0.1)',
+          lineColor: 'rgba(255, 192, 0, 0.5)',
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+          crosshairMarkerVisible: false,
+        });
+        
+        if (highlightSeries) {
+          // 在两个时间点之间创建高亮区域数据
+          const highlightData = [
+            { time: entryTimeFormatted, value: 0 },
+            { time: exitTimeFormatted, value: 0 }
+          ];
+          
+          // 设置高亮区域数据
+          highlightSeries.setData(highlightData);
+          
+          // 保存高亮元素引用，以便后续清理
+          highlightedAreaRef.current = [highlightSeries];
+        }
+      } catch (error) {
+        console.error('高亮时间范围错误:', error);
+      }
+    }
+  }));
+
+  // 在选中交易变化时的处理
+  useEffect(() => {
+    if (!dataLoaded || !originalData || originalData.length === 0) return;
+    
+    // 清除之前的高亮区域
+    safelyRemoveHighlight();
+    
+    if (selectedTrade) {
+      // 延迟执行，确保图表已经完全加载
+      setTimeout(() => {
+        try {
+          // 转换入场和出场时间，使用通用的时间格式化函数
+          const entryTimeFormatted = formatChartTime(selectedTrade.entryTime);
+          const exitTimeFormatted = formatChartTime(selectedTrade.exitTime);
+          
+          console.log('选中交易时间范围:', entryTimeFormatted, exitTimeFormatted);
+          
+          // 设置可见范围，使入场和出场时间都在视图内
+          if (chart.current) {
+            chart.current.timeScale().setVisibleRange({
+              from: entryTimeFormatted,
+              to: exitTimeFormatted
+            });
+            
+            // 创建高亮区域系列 - 使用半透明色块标记交易区间
+            const highlightSeries = chart.current.addAreaSeries({
+              topColor: 'rgba(255, 192, 0, 0.2)',
+              bottomColor: 'rgba(255, 192, 0, 0.1)',
+              lineColor: 'rgba(255, 192, 0, 0.5)',
+              lineWidth: 1,
+              priceLineVisible: false,
+              lastValueVisible: false,
+              crosshairMarkerVisible: false,
+            });
+            
+            if (highlightSeries) {
+              // 在两个时间点之间创建高亮区域数据
+              const highlightData = [
+                { time: entryTimeFormatted, value: 0 },
+                { time: exitTimeFormatted, value: 0 }
+              ];
+              
+              // 设置高亮区域数据
+              highlightSeries.setData(highlightData);
+              
+              // 保存高亮元素引用，以便后续清理
+              highlightedAreaRef.current = [highlightSeries];
+            }
+          }
+        } catch (error) {
+          console.error('高亮选中交易时间范围错误:', error);
+        }
+      }, 200);
+    } else {
+      // 如果没有选中交易，清除高亮
+      safelyRemoveHighlight();
+    }
+  }, [selectedTrade, dataLoaded, originalData, intervalVal, safelyRemoveHighlight]);
 
   return (
     <div className="backtest-detail-chart-container">
@@ -825,6 +989,6 @@ const BacktestDetailChart: React.FC<BacktestDetailChartProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default BacktestDetailChart;

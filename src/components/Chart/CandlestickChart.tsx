@@ -2603,7 +2603,7 @@ const CandlestickChart: React.FC = () => {
             };
           });
 
-        console.log(`数据转换完成: 原始${data.data.length}条，有效${candlestickData.length}条`);
+        // console.log(`数据转换完成: 原始${data.data.length}条，有效${candlestickData.length}条`);
 
         if (candlestickData.length > 0) {
           console.log('准备更新Redux数据:', {
