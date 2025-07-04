@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
-import { createChart, CrosshairMode, Time, ISeriesApi, IChartApi, SeriesMarkerPosition, HistogramData } from 'lightweight-charts';
+import { createChart, CrosshairMode, Time, ISeriesApi, IChartApi, SeriesMarkerPosition, HistogramData, LineData } from 'lightweight-charts';
 import { BacktestTradeDetail, CandlestickData } from '../../store/types';
 import { formatPrice } from '../../utils/helpers';
 import { fetchHistoryWithIntegrityCheck, fetchBacktestSummary } from '../../services/api';
@@ -43,6 +43,7 @@ interface BacktestDetailChartProps {
   endTime: string;
   tradeDetails: BacktestTradeDetail[];
   selectedTrade?: BacktestTradeDetail | null;
+  backtestId?: string;
 }
 
 // 使用forwardRef包装组件，以支持ref传递
@@ -54,13 +55,15 @@ const BacktestDetailChart = forwardRef<{
     startTime,
     endTime,
     tradeDetails,
-    selectedTrade
+    selectedTrade,
+    backtestId
   } = props;
   
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chart = useRef<IChartApi | null>(null);
   const candleSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeries = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const equityCurveSeries = useRef<ISeriesApi<'Line'> | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef<boolean>(true);
   const dataLoadedRef = useRef<boolean>(false);
@@ -76,13 +79,16 @@ const BacktestDetailChart = forwardRef<{
     volume: string;
     change: string;
     changePercent: string;
+    equity?: string;
   } | null>(null);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [originalData, setOriginalData] = useState<any[]>([]);
+  const [equityCurveData, setEquityCurveData] = useState<any[]>([]);
   const [intervalVal, setIntervalVal] = useState<string>('1D');
   const [dataLoaded, setDataLoaded] = useState<boolean>(false);
+  const [equityCurveLoaded, setEquityCurveLoaded] = useState<boolean>(false);
   const [highlightStyle, setHighlightStyle] = useState<React.CSSProperties | null>(null);
   const highlightOverlayRef = useRef<HTMLDivElement>(null);
   const [selectedKlineIndices, setSelectedKlineIndices] = useState<{start: number, end: number} | null>(null);
@@ -162,6 +168,44 @@ const BacktestDetailChart = forwardRef<{
     return volume.toFixed(2);
   };
 
+  // 获取资金曲线数据
+  const loadEquityCurveData = useCallback(async () => {
+    if (!backtestId) return;
+    
+    try {
+      // 从URL中获取backtestId，如果props中没有提供
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentBacktestId = backtestId || urlParams.get('backtestId');
+      
+      if (!currentBacktestId) {
+        console.warn('缺少backtestId，无法获取资金曲线数据');
+        return;
+      }
+      
+      console.log('获取资金曲线数据，backtestId:', currentBacktestId);
+      
+      const response = await fetch(`/api/backtest/ta4j/equity-curve/${currentBacktestId}`);
+      if (!response.ok) {
+        throw new Error(`获取资金曲线数据失败: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result && result.code === 200 && Array.isArray(result.data)) {
+        console.log('获取到资金曲线数据:', result.data.length, '条');
+        setEquityCurveData(result.data);
+        setEquityCurveLoaded(true);
+        return result.data;
+      } else {
+        console.error('资金曲线数据格式错误:', result);
+        return [];
+      }
+    } catch (error) {
+      console.error('加载资金曲线数据失败:', error);
+      return [];
+    }
+  }, [backtestId]);
+
   // 创建图表
   const createCharts = useCallback(() => {
     if (!chartContainerRef.current) return;
@@ -230,6 +274,31 @@ const BacktestDetailChart = forwardRef<{
         },
       });
       
+      // 添加资金曲线系列，使用左侧价格轴
+      equityCurveSeries.current = chart.current.addLineSeries({
+        color: '#f48fb1',
+        lineWidth: 2,
+        priceLineVisible: false,
+        lastValueVisible: true,
+        priceFormat: {
+          type: 'price',
+          precision: 2,
+          minMove: 0.01,
+        },
+        priceScaleId: 'left', // 使用左侧价格轴
+      });
+      
+      // 为左侧价格轴设置显示属性
+      chart.current.priceScale('left').applyOptions({
+        borderColor: '#2e3241',
+        scaleMargins: {
+          top: 0.1,
+          bottom: 0.2,
+        },
+        visible: true,
+        autoScale: true,
+      });
+      
       // 设置十字线移动事件处理
       setupCrosshairMoveHandler();
       
@@ -257,10 +326,11 @@ const BacktestDetailChart = forwardRef<{
       }
       candleSeries.current = null;
       volumeSeries.current = null;
+      equityCurveSeries.current = null;
     }
   }, []);
 
-  // 设置十字线移动事件监听
+  // 更新后的setupCrosshairMoveHandler函数，支持显示资金曲线数据
   const setupCrosshairMoveHandler = () => {
     if (!chart.current || !candleSeries.current) return;
 
@@ -284,6 +354,7 @@ const BacktestDetailChart = forwardRef<{
       
       const candleData = param.seriesPrices.get(candleSeries.current);
       const volumeData = param.seriesPrices.get(volumeSeries.current);
+      const equityData = equityCurveSeries.current ? param.seriesPrices.get(equityCurveSeries.current) : null;
       
       if (candleData && volumeData && candleData.open != null && candleData.high != null && candleData.low != null && candleData.close != null && volumeData != null) {
         // 调试信息，查看param.time的实际类型和值
@@ -351,7 +422,8 @@ const BacktestDetailChart = forwardRef<{
         const change = (candleData.close - candleData.open).toFixed(2);
         const changePercent = ((candleData.close - candleData.open) / candleData.open * 100).toFixed(2);
         
-        const hoveredInfo = {
+        // 添加资金曲线数据到悬浮信息
+        let hoveredInfo: any = {
           time,
           open,
           high,
@@ -361,6 +433,11 @@ const BacktestDetailChart = forwardRef<{
           change,
           changePercent
         };
+        
+        // 如果有资金曲线数据，添加到悬浮信息中
+        if (equityData) {
+          hoveredInfo.equity = formatPrice(equityData);
+        }
         
         // 更新悬浮数据
         setHoveredData(hoveredInfo);
@@ -704,6 +781,56 @@ const BacktestDetailChart = forwardRef<{
     }
   };
 
+  // 加载K线数据后绘制资金曲线
+  const drawEquityCurve = useCallback(async () => {
+    if (!equityCurveSeries.current || !chart.current) return;
+    
+    // 如果没有资金曲线数据，先加载
+    let curveData = equityCurveData;
+    if (curveData.length === 0) {
+      curveData = await loadEquityCurveData();
+      if (curveData.length === 0) return;
+    }
+    
+    try {
+      // 将资金曲线数据格式化为图表需要的格式
+      const formattedData = curveData.map(item => {
+        // 将时间戳转换为与K线图相同的格式
+        const timestamp = new Date(item.timestamp).getTime();
+        
+        // 根据K线周期返回不同的时间格式
+        let time;
+        if (intervalVal === '1D' || intervalVal === '3D' || intervalVal === '1W' || intervalVal === '1M') {
+          // 如果是日线及以上周期，只需要日期部分
+          const date = new Date(timestamp);
+          // 返回格式: 'YYYY-MM-DD'
+          time = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        } else {
+          // 对于分钟线，需要精确到秒，将时间戳转换为秒级
+          time = Math.floor(timestamp / 1000);
+        }
+        
+        return {
+          time,
+          value: item.value
+        };
+      });
+      
+      console.log('绘制资金曲线，数据点数:', formattedData.length);
+      
+      // 设置资金曲线数据
+      equityCurveSeries.current.setData(formattedData as LineData[]);
+      
+      // 显示资金曲线价格坐标轴
+      chart.current.priceScale('left').applyOptions({
+        visible: true,
+        autoScale: true
+      });
+    } catch (error) {
+      console.error('绘制资金曲线错误:', error);
+    }
+  }, [equityCurveData, intervalVal, loadEquityCurveData]);
+
   // 初始化图表 - 仅在组件挂载时执行一次
   useEffect(() => {
     createCharts();
@@ -716,6 +843,7 @@ const BacktestDetailChart = forwardRef<{
       }
       candleSeries.current = null;
       volumeSeries.current = null;
+      equityCurveSeries.current = null;
       // 重置数据加载状态
       dataLoadedRef.current = false;
     };
@@ -735,6 +863,20 @@ const BacktestDetailChart = forwardRef<{
       debouncedLoadKlineData();
     }
   }, [symbol, startTime, endTime, cacheKey, debouncedLoadKlineData]);
+
+  // 当K线数据加载完成后，加载资金曲线数据
+  useEffect(() => {
+    if (dataLoaded && !equityCurveLoaded && backtestId) {
+      loadEquityCurveData();
+    }
+  }, [dataLoaded, equityCurveLoaded, backtestId, loadEquityCurveData]);
+  
+  // 当资金曲线数据加载完成后，绘制资金曲线
+  useEffect(() => {
+    if (equityCurveData.length > 0 && equityCurveSeries.current) {
+      drawEquityCurve();
+    }
+  }, [equityCurveData, drawEquityCurve]);
 
   // 修改safelyRemoveHighlight函数
   const safelyRemoveHighlight = useCallback(() => {
@@ -1182,6 +1324,18 @@ const BacktestDetailChart = forwardRef<{
               {hoveredData.change} ({hoveredData.changePercent}%)
             </span>
           </div>
+          {/* 添加资金曲线数据显示 */}
+          {hoveredData.equity && (
+            <div className="tooltip-row">
+              <span className="tooltip-label">资金:</span>
+              <span style={{
+                color: '#f48fb1',
+                fontWeight: '500'
+              }}>
+                {hoveredData.equity}
+              </span>
+            </div>
+          )}
         </div>
       )}
       

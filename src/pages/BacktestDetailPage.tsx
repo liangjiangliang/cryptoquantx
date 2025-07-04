@@ -495,13 +495,14 @@ const BacktestDetailPage: React.FC = () => {
            )}
 
           {/* 添加K线图 */}
-          {symbol && startTime && endTime && (
+          {symbol && startTime && endTime && backtestId && (
             <BacktestDetailChart
               symbol={symbol}
               startTime={startTime}
               endTime={endTime}
               tradeDetails={tradeDetails}
               selectedTrade={selectedTradeIndex !== null ? getCurrentPageTrades()[selectedTradeIndex] : null}
+              backtestId={backtestId}
               ref={chartRef}
             />
           )}
