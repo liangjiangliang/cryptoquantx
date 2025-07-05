@@ -176,23 +176,23 @@ const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
       close,
       volume
     };
-    
+
     // 添加closeTime字段 - 直接使用原始字符串值
     if (item.closeTime) {
       convertedItem.closeTime = item.closeTime;
     }
-    
+
     // 添加openTime字段 - 直接使用原始字符串值
     if (item.openTime) {
       convertedItem.openTime = item.openTime;
     }
-    
+
     // 如果没有openTime字段，但有closeTime和intervalVal，尝试计算openTime
     if (!item.openTime && item.closeTime && item.intervalVal) {
       try {
         const closeTimeObj = new Date(item.closeTime);
         const interval = item.intervalVal;
-        
+
         // 根据时间周期，计算开盘时间
         switch(interval) {
           case '1m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 1); break;
@@ -208,18 +208,18 @@ const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
           case '1W': closeTimeObj.setDate(closeTimeObj.getDate() - 7); break;
           case '1M': closeTimeObj.setMonth(closeTimeObj.getMonth() - 1); break;
         }
-        
+
         // 设置为开盘时间
         convertedItem.openTime = closeTimeObj.toISOString().replace('T', ' ').substring(0, 19);
       } catch (error) {
         console.error('计算开盘时间失败:', error);
       }
     }
-    
+
     if (index === 0) {
       console.log('转换后的第一条数据:', convertedItem);
     }
-    
+
     return convertedItem;
   });
 
@@ -1198,8 +1198,8 @@ export const fetchAccountBalance = async (): Promise<{ success: boolean; data?: 
 // 获取所有币种的最新行情
 export const fetchAllTickers = async (filter: string = 'all', limit: number = 2000): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
-    const url = `/market/all_tickers?filter=${filter}&limit=${limit}`;
-    
+    const url = `/api/market/all_tickers?filter=${filter}&limit=${limit}`;
+
     const response = await fetch(url);
 
     if (!response.ok) {

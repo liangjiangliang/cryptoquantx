@@ -170,7 +170,7 @@ const BacktestDetailChart = forwardRef<{
 
   // 获取资金曲线数据
   const loadEquityCurveData = useCallback(async () => {
-    if (!backtestId) return;
+    if (!backtestId) return [];
     
     try {
       // 从URL中获取backtestId，如果props中没有提供
@@ -179,7 +179,7 @@ const BacktestDetailChart = forwardRef<{
       
       if (!currentBacktestId) {
         console.warn('缺少backtestId，无法获取资金曲线数据');
-        return;
+        return [];
       }
       
       console.log('获取资金曲线数据，backtestId:', currentBacktestId);
@@ -191,8 +191,8 @@ const BacktestDetailChart = forwardRef<{
       
       const result = await response.json();
       
-      if (result && result.code === 200 && Array.isArray(result.data)) {
-        console.log('获取到资金曲线数据:', result.data.length, '条');
+      if (result && result.code === 200 && Array.isArray(result.data) && result.data.length > 0) {
+        console.log('获取到资金曲线数据:', result.data.length, '条', result.data[0]);
         setEquityCurveData(result.data);
         setEquityCurveLoaded(true);
         return result.data;
@@ -278,7 +278,7 @@ const BacktestDetailChart = forwardRef<{
       equityCurveSeries.current = chart.current.addLineSeries({
         color: '#f48fb1',
         lineWidth: 2,
-        priceLineVisible: false,
+        priceLineVisible: true,
         lastValueVisible: true,
         priceFormat: {
           type: 'price',
@@ -286,6 +286,7 @@ const BacktestDetailChart = forwardRef<{
           minMove: 0.01,
         },
         priceScaleId: 'left', // 使用左侧价格轴
+        title: '资金曲线', // 添加标题
       });
       
       // 为左侧价格轴设置显示属性
@@ -354,9 +355,56 @@ const BacktestDetailChart = forwardRef<{
       
       const candleData = param.seriesPrices.get(candleSeries.current);
       const volumeData = param.seriesPrices.get(volumeSeries.current);
-      const equityData = equityCurveSeries.current ? param.seriesPrices.get(equityCurveSeries.current) : null;
+      
+      // 获取资金曲线数据
+      let equityData = null;
+      if (equityCurveSeries.current) {
+        try {
+          equityData = param.seriesPrices.get(equityCurveSeries.current);
+          // 如果equityData为undefined，尝试从equityCurveData中获取对应时间点的数据
+          if (equityData === undefined && equityCurveData && equityCurveData.length > 0) {
+            // 获取当前时间点
+            let currentTime;
+            if (typeof param.time === 'object' && param.time !== null) {
+              const { year, month, day } = param.time;
+              const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              // 查找匹配的数据点
+              const matchingPoint = equityCurveData.find(item => 
+                item && item.timestamp && typeof item.timestamp === 'string' && item.timestamp.includes(dateStr)
+              );
+              if (matchingPoint && typeof matchingPoint.value === 'number') {
+                equityData = matchingPoint.value;
+                console.log('从equityCurveData找到匹配的资金数据:', matchingPoint);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('获取资金曲线数据错误:', err);
+        }
+      }
+      
+      // 调试资金曲线数据
+      // console.log('十字线移动时的数据:', { 
+      //   time: param.time,
+      //   equityCurveSeriesExists: !!equityCurveSeries.current,
+      //   equityData,
+      //   allSeries: Array.from(param.seriesPrices.keys()).map((s: any) => s && s.seriesType ? s.seriesType() : 'unknown')
+      // });
       
       if (candleData && volumeData && candleData.open != null && candleData.high != null && candleData.low != null && candleData.close != null && volumeData != null) {
+        // 调试日志，查看K线数据的具体内容
+        // console.log('K线数据:', {
+        //   open: candleData.open,
+        //   high: candleData.high,
+        //   low: candleData.low,
+        //   close: candleData.close,
+        //   volume: volumeData,
+        //   openType: typeof candleData.open,
+        //   highType: typeof candleData.high,
+        //   lowType: typeof candleData.low,
+        //   closeType: typeof candleData.close,
+        //   volumeType: typeof volumeData
+        // });
         // 调试信息，查看param.time的实际类型和值
         // console.log('param.time类型:', typeof param.time, 'param.time值:', param.time);
         
@@ -412,15 +460,21 @@ const BacktestDetailChart = forwardRef<{
           }
         }
         
-        const open = formatPrice(candleData.open);
-        const high = formatPrice(candleData.high);
-        const low = formatPrice(candleData.low);
-        const close = formatPrice(candleData.close);
-        const volume = formatVolume(volumeData);
+        // 确保价格数据是数字类型
+        const open = typeof candleData.open === 'number' ? formatPrice(candleData.open) : candleData.open;
+        const high = typeof candleData.high === 'number' ? formatPrice(candleData.high) : candleData.high;
+        const low = typeof candleData.low === 'number' ? formatPrice(candleData.low) : candleData.low;
+        const close = typeof candleData.close === 'number' ? formatPrice(candleData.close) : candleData.close;
+        const volume = typeof volumeData === 'number' ? formatVolume(volumeData) : volumeData;
         
-        // 计算涨跌幅
-        const change = (candleData.close - candleData.open).toFixed(2);
-        const changePercent = ((candleData.close - candleData.open) / candleData.open * 100).toFixed(2);
+        // 计算涨跌幅（只在价格是数字时计算）
+        let change = '0.00';
+        let changePercent = '0.00';
+        
+        if (typeof candleData.close === 'number' && typeof candleData.open === 'number') {
+          change = (candleData.close - candleData.open).toFixed(2);
+          changePercent = ((candleData.close - candleData.open) / candleData.open * 100).toFixed(2);
+        }
         
         // 添加资金曲线数据到悬浮信息
         let hoveredInfo: any = {
@@ -435,8 +489,64 @@ const BacktestDetailChart = forwardRef<{
         };
         
         // 如果有资金曲线数据，添加到悬浮信息中
-        if (equityData) {
-          hoveredInfo.equity = formatPrice(equityData);
+        if (equityData !== null && equityData !== undefined) {
+          // 检查equityData的类型，可能是数字或对象
+          if (typeof equityData === 'number') {
+            hoveredInfo.equity = equityData; // 保存原始数值，在显示时再格式化
+            console.log('悬浮窗添加资金数据(数字):', equityData);
+          } else if (typeof equityData === 'object' && equityData !== null) {
+            // 如果是对象，尝试获取value属性
+            if ('value' in equityData) {
+              hoveredInfo.equity = equityData.value; // 保存原始数值
+              console.log('悬浮窗添加资金数据(对象):', equityData);
+            } else {
+              // 尝试其他可能的属性名
+              const possibleValueProps = ['close', 'price', 'amount', 'equity'];
+              for (const prop of possibleValueProps) {
+                if (prop in equityData && equityData[prop] !== null && equityData[prop] !== undefined) {
+                  hoveredInfo.equity = equityData[prop]; // 保存原始数值
+                  console.log(`悬浮窗添加资金数据(${prop}):`, equityData);
+                  break;
+                }
+              }
+            }
+          }
+        } else {
+          // 尝试从equityCurveData中查找当前时间点的资金数据
+          try {
+            if (originalData && originalData.length > 0 && equityCurveData && equityCurveData.length > 0) {
+              // 获取当前K线的时间
+              const currentCandle = candleData;
+              if (currentCandle && param.time) {
+                // 获取当前时间
+                let dateStr: string = '';
+                if (typeof param.time === 'object' && param.time.year && param.time.month && param.time.day) {
+                  dateStr = `${param.time.year}-${String(param.time.month).padStart(2, '0')}-${String(param.time.day).padStart(2, '0')}`;
+                } else if (typeof param.time === 'number') {
+                  const date = new Date(param.time < 10000000000 ? param.time * 1000 : param.time);
+                  dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                }
+                
+                if (dateStr) {
+                  // 查找匹配的资金数据点
+                  const matchingPoint = equityCurveData.find(item => 
+                    item && item.timestamp && typeof item.timestamp === 'string' && item.timestamp.includes(dateStr)
+                  );
+                  
+                  if (matchingPoint && typeof matchingPoint.value === 'number') {
+                    hoveredInfo.equity = matchingPoint.value; // 保存原始数值
+                    console.log('从equityCurveData找到匹配的资金数据:', matchingPoint);
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.error('查找匹配资金数据错误:', err);
+          }
+        }
+        
+        if (hoveredInfo.equity === undefined || hoveredInfo.equity === null) {
+          console.log('没有找到资金曲线数据');
         }
         
         // 更新悬浮数据
@@ -710,8 +820,8 @@ const BacktestDetailChart = forwardRef<{
   , [loadKlineData]);
 
   // 添加一个通用的时间格式化函数
-  const formatChartTime = (timeStr: string): any => {
-    if (!timeStr) return null;
+  const formatChartTime = (timeStr: string): number | string => {
+    if (!timeStr) return '';
     
     // 检查原始数据的时间格式
     let timeFormat = 'string';
@@ -748,8 +858,9 @@ const BacktestDetailChart = forwardRef<{
         const isBuy = trade.type === 'BUY' || trade.type === 'LONG' || trade.type === 'buy' || trade.type === 'long';
         
         // 买入或卖出标记
+        const entryTime = formatChartTime(trade.entryTime);
         const entryMarker = {
-          time: formatChartTime(trade.entryTime),
+          time: typeof entryTime === 'string' ? entryTime : entryTime, // 如果是字符串就保持不变，如果是数字也保持不变
           position: isBuy ? 'belowBar' : 'aboveBar' as SeriesMarkerPosition,
           color: isBuy ? '#00FFFF' : '#FF00FF', // 买入青色，卖出品红色
           shape: isBuy ? 'arrowUp' : 'arrowDown',
@@ -759,15 +870,19 @@ const BacktestDetailChart = forwardRef<{
         };
         
         // 平仓标记
-        const exitMarker = trade.exitTime ? {
-          time: formatChartTime(trade.exitTime),
-          position: isBuy ? 'aboveBar' : 'belowBar' as SeriesMarkerPosition,
-          color: isBuy ? '#FFFF00' : '#00FF00', // 买入平仓黄色，卖出平仓绿色
-          shape: isBuy ? 'arrowDown' : 'arrowUp',
-          text: `平仓 ${formatPrice(trade.exitPrice)} ${trade.profit !== undefined ? `(${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})` : ''}`,
-          size: 1,
-          id: `exit-${trade.id || ''}`,
-        } : null;
+        let exitMarker = null;
+        if (trade.exitTime) {
+          const exitTime = formatChartTime(trade.exitTime);
+          exitMarker = {
+            time: typeof exitTime === 'string' ? exitTime : exitTime, // 如果是字符串就保持不变，如果是数字也保持不变
+            position: isBuy ? 'aboveBar' : 'belowBar' as SeriesMarkerPosition,
+            color: isBuy ? '#FFFF00' : '#00FF00', // 买入平仓黄色，卖出平仓绿色
+            shape: isBuy ? 'arrowDown' : 'arrowUp',
+            text: `平仓 ${formatPrice(trade.exitPrice)} ${trade.profit !== undefined ? `(${trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)})` : ''}`,
+            size: 1,
+            id: `exit-${trade.id || ''}`,
+          };
+        }
         
         return exitMarker ? [entryMarker, exitMarker] : [entryMarker];
       }).flat().filter(Boolean);
@@ -789,42 +904,79 @@ const BacktestDetailChart = forwardRef<{
     let curveData = equityCurveData;
     if (curveData.length === 0) {
       curveData = await loadEquityCurveData();
-      if (curveData.length === 0) return;
+      if (!curveData || curveData.length === 0) {
+        console.warn('无法获取资金曲线数据');
+        return;
+      }
     }
     
     try {
-      // 将资金曲线数据格式化为图表需要的格式
-      const formattedData = curveData.map(item => {
-        // 将时间戳转换为与K线图相同的格式
-        const timestamp = new Date(item.timestamp).getTime();
-        
-        // 根据K线周期返回不同的时间格式
-        let time;
-        if (intervalVal === '1D' || intervalVal === '3D' || intervalVal === '1W' || intervalVal === '1M') {
-          // 如果是日线及以上周期，只需要日期部分
-          const date = new Date(timestamp);
-          // 返回格式: 'YYYY-MM-DD'
-          time = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        } else {
-          // 对于分钟线，需要精确到秒，将时间戳转换为秒级
-          time = Math.floor(timestamp / 1000);
-        }
-        
-        return {
-          time,
-          value: item.value
-        };
+      console.log('原始资金曲线数据:', curveData.slice(0, 5));
+      
+            // 将资金曲线数据格式化为图表需要的格式
+      const formattedData = curveData
+        .filter(item => item && item.timestamp && item.value !== undefined)
+        .map(item => {
+          if (!item || !item.timestamp || item.value === undefined) {
+            console.warn('资金曲线数据格式不正确:', item);
+            return null;
+          }
+          
+          // 将时间戳转换为与K线图相同的格式
+          let timestamp;
+          try {
+            // 处理不同格式的时间戳
+            if (typeof item.timestamp === 'number') {
+              timestamp = item.timestamp;
+            } else {
+              timestamp = new Date(item.timestamp).getTime();
+            }
+          } catch (err) {
+            console.error('处理时间戳错误:', err, item);
+            return null;
+          }
+          
+          // 根据K线周期返回不同的时间格式
+          let time;
+          if (intervalVal === '1D' || intervalVal === '3D' || intervalVal === '1W' || intervalVal === '1M') {
+            // 如果是日线及以上周期，只需要日期部分
+            // 尝试从timestamp字符串中直接提取日期部分
+            if (typeof item.timestamp === 'string' && item.timestamp.includes(' ')) {
+              // 格式可能是 "YYYY-MM-DD HH:MM:SS"，提取日期部分
+              time = item.timestamp.split(' ')[0];
+            } else {
+              const date = new Date(timestamp);
+              // 返回格式: 'YYYY-MM-DD'
+              time = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            }
+          } else {
+            // 对于分钟线，需要精确到秒，将时间戳转换为秒级
+            time = Math.floor(timestamp / 1000);
+          }
+          
+          return {
+            time,
+            value: item.value
+          };
       });
       
-      console.log('绘制资金曲线，数据点数:', formattedData.length);
+      console.log('绘制资金曲线，数据点数:', formattedData.length, '首条数据:', formattedData[0], '末条数据:', formattedData[formattedData.length - 1]);
+      
+      // 过滤掉无效的数据点
+      const validData = formattedData.filter(item => item !== null) as LineData[];
+      console.log('有效的资金曲线数据点数:', validData.length);
       
       // 设置资金曲线数据
-      equityCurveSeries.current.setData(formattedData as LineData[]);
+      equityCurveSeries.current.setData(validData);
       
       // 显示资金曲线价格坐标轴
       chart.current.priceScale('left').applyOptions({
         visible: true,
-        autoScale: true
+        autoScale: true,
+        scaleMargins: {
+          top: 0.1,
+          bottom: 0.2,
+        },
       });
     } catch (error) {
       console.error('绘制资金曲线错误:', error);
@@ -1169,11 +1321,11 @@ const BacktestDetailChart = forwardRef<{
       // 转换为图表时间格式
       const startTimeFormatted = typeof startKline.time === 'number' 
         ? startKline.time 
-        : formatChartTime(startKline.time.toString());
+        : (typeof startKline.time === 'string' ? formatChartTime(startKline.time) : 0);
       
       const endTimeFormatted = typeof endKline.time === 'number' 
         ? endKline.time 
-        : formatChartTime(endKline.time.toString());
+        : (typeof endKline.time === 'string' ? formatChartTime(endKline.time) : 0);
       
       // 获取K线在图表上的坐标
       const startCoord = chart.current.timeScale().timeToCoordinate(startTimeFormatted);
@@ -1318,24 +1470,24 @@ const BacktestDetailChart = forwardRef<{
           <div className="tooltip-row">
             <span className="tooltip-label">涨跌:</span>
             <span style={{
-              color: parseFloat(hoveredData.change) >= 0 ? '#ff5555' : '#32a852',
+              color: parseFloat(String(hoveredData.change).replace(/[^\d.-]/g, '') || '0') >= 0 ? '#ff5555' : '#32a852',
               fontWeight: '500'
             }}>
               {hoveredData.change} ({hoveredData.changePercent}%)
             </span>
           </div>
-          {/* 添加资金曲线数据显示 */}
-          {hoveredData.equity && (
-            <div className="tooltip-row">
-              <span className="tooltip-label">资金:</span>
-              <span style={{
-                color: '#f48fb1',
-                fontWeight: '500'
-              }}>
-                {hoveredData.equity}
-              </span>
-            </div>
-          )}
+          {/* 添加资金曲线数据显示 - 始终显示，如果没有数据则显示"--" */}
+          <div className="tooltip-row">
+            <span className="tooltip-label">资金:</span>
+            <span style={{
+              color: '#f48fb1',
+              fontWeight: '500'
+            }}>
+              {hoveredData.equity !== undefined && hoveredData.equity !== null ? 
+                (typeof hoveredData.equity === 'number' ? formatPrice(hoveredData.equity) : String(hoveredData.equity)) : 
+                '--'}
+            </span>
+          </div>
         </div>
       )}
       
