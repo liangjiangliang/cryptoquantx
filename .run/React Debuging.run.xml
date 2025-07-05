@@ -1,6 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="React Debuging" type="JavascriptDebugType" uri="http://localhost:3000">
-    <mapping url="http://localhost:3000" local-file="$PROJECT_DIR$/src" />
-    <method v="2" />
-  </configuration>
-</component>

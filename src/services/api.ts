@@ -119,31 +119,45 @@ const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
     firstItem: apiData.length > 0 ? apiData[0] : null
   });
 
+  // 打印第一条数据的详细信息，用于调试
+  if (apiData.length > 0) {
+    const firstItem = apiData[0];
+    console.log('第一条数据详情:', {
+      openTime: firstItem.openTime,
+      closeTime: firstItem.closeTime,
+      time: firstItem.time,
+      timestamp: firstItem.timestamp,
+      hasOpenTime: !!firstItem.openTime,
+      hasCloseTime: !!firstItem.closeTime
+    });
+  }
+
   const result = apiData.map((item, index) => {
     // 将日期字符串转换为时间戳（秒）
-    let openTime: number;
+    let timeValue: number;
 
     // 处理不同格式的日期字段
-    if (item.openTime) {
-      openTime = new Date(item.openTime).getTime() / 1000;
-    } else if (item.time) {
+    if (item.time) {
       // 如果数据中有time字段
       if (typeof item.time === 'number') {
-        openTime = item.time;
+        timeValue = Math.floor(item.time / 1000); // 确保单位是秒
       } else {
-        openTime = new Date(item.time).getTime() / 1000;
+        timeValue = Math.floor(new Date(item.time).getTime() / 1000);
       }
     } else if (item.timestamp) {
       // 如果数据中有timestamp字段
       if (typeof item.timestamp === 'number') {
-        openTime = item.timestamp;
+        timeValue = Math.floor(item.timestamp / 1000); // 确保单位是秒
       } else {
-        openTime = new Date(item.timestamp).getTime() / 1000;
+        timeValue = Math.floor(new Date(item.timestamp).getTime() / 1000);
       }
+    } else if (item.closeTime) {
+      // 如果有closeTime，使用closeTime
+      timeValue = Math.floor(new Date(item.closeTime).getTime() / 1000);
     } else {
       // 如果没有时间字段，使用当前时间
       console.warn('数据中没有时间字段，使用当前时间');
-      openTime = Math.floor(Date.now() / 1000);
+      timeValue = Math.floor(Date.now() / 1000);
     }
 
     // 确保所有必要的字段都有值
@@ -153,19 +167,59 @@ const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
     const close = item.close !== undefined ? item.close : (item.c !== undefined ? item.c : open);
     const volume = item.volume !== undefined ? item.volume : (item.v !== undefined ? item.v : 0);
 
-    const convertedItem = {
-      time: openTime,
+    // 创建转换后的数据项
+    const convertedItem: CandlestickData = {
+      time: timeValue,
       open,
       high,
       low,
       close,
       volume
     };
-
-    if (index === 0) {
-      // console.log('转换第一个数据项:', { original: item, converted: convertedItem });
+    
+    // 添加closeTime字段 - 直接使用原始字符串值
+    if (item.closeTime) {
+      convertedItem.closeTime = item.closeTime;
     }
-
+    
+    // 添加openTime字段 - 直接使用原始字符串值
+    if (item.openTime) {
+      convertedItem.openTime = item.openTime;
+    }
+    
+    // 如果没有openTime字段，但有closeTime和intervalVal，尝试计算openTime
+    if (!item.openTime && item.closeTime && item.intervalVal) {
+      try {
+        const closeTimeObj = new Date(item.closeTime);
+        const interval = item.intervalVal;
+        
+        // 根据时间周期，计算开盘时间
+        switch(interval) {
+          case '1m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 1); break;
+          case '5m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 5); break;
+          case '15m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 15); break;
+          case '30m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 30); break;
+          case '1H': closeTimeObj.setHours(closeTimeObj.getHours() - 1); break;
+          case '2H': closeTimeObj.setHours(closeTimeObj.getHours() - 2); break;
+          case '4H': closeTimeObj.setHours(closeTimeObj.getHours() - 4); break;
+          case '6H': closeTimeObj.setHours(closeTimeObj.getHours() - 6); break;
+          case '12H': closeTimeObj.setHours(closeTimeObj.getHours() - 12); break;
+          case '1D': closeTimeObj.setDate(closeTimeObj.getDate() - 1); break;
+          case '1W': closeTimeObj.setDate(closeTimeObj.getDate() - 7); break;
+          case '1M': closeTimeObj.setMonth(closeTimeObj.getMonth() - 1); break;
+        }
+        
+        // 设置为开盘时间
+        convertedItem.openTime = closeTimeObj.toISOString().replace('T', ' ').substring(0, 19);
+      } catch (error) {
+        console.error('计算开盘时间失败:', error);
+      }
+    }
+    
+    if (index === 0) {
+      console.log('转换后的第一条数据:', convertedItem);
+    }
+    
     return convertedItem;
   });
 
@@ -222,8 +276,8 @@ export const fetchCandlestickData = async (
   const normalizedEndDate = endDate ? normalizeTimeString(endDate) : defaultRange.endDate;
 
   try {
-    // 构建API URL，包含日期范围参数
-    let url = `/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}`;
+    // 构建API URL，包含日期范围参数 - 添加/api前缀以保持一致性
+    let url = `/api/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}`;
     url += `&startTimeStr=${encodeURIComponent(normalizedStartDate)}`;
     url += `&endTimeStr=${encodeURIComponent(normalizedEndDate)}`;
 
@@ -276,8 +330,8 @@ export const fetchHistoryWithIntegrityCheck = async (
   const normalizedEndDate = endDate ? normalizeToFullTimeFormat(endDate) : getCurrentTimeString();
 
   try {
-    // 构建API URL
-    const url = `/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}&startTimeStr=${encodeURIComponent(normalizedStartDate)}&endTimeStr=${encodeURIComponent(normalizedEndDate)}`;
+    // 构建API URL - 添加/api前缀以保持一致性
+    const url = `/api/market/fetch_history_with_integrity_check?symbol=${symbol}&interval=${interval}&startTimeStr=${encodeURIComponent(normalizedStartDate)}&endTimeStr=${encodeURIComponent(normalizedEndDate)}`;
 
     console.log('从API获取历史数据:', { symbol, interval, startDate: normalizedStartDate, endDate: normalizedEndDate });
     console.log('请求URL:', url); // 调试日志

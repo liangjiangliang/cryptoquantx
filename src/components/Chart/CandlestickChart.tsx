@@ -115,14 +115,15 @@ const formatDate = (timestamp: number): string => {
   });
 };
 
-// 格式化价格（增强版，处理undefined）
-const formatPrice = (price: number | undefined): string => {
-  if (price === undefined) return '0.00';
+// 格式化价格（增强版，处理undefined和null）
+const formatPrice = (price: number | undefined | null): string => {
+  if (price === undefined || price === null) return '0.00';
   return price.toFixed(price < 10 ? 6 : price < 100 ? 4 : 2);
 };
 
 // 格式化成交量
-const formatVolume = (volume: number): string => {
+const formatVolume = (volume: number | undefined | null): string => {
+  if (volume === undefined || volume === null) return '0.00';
   if (volume >= 1000000) {
     return (volume / 1000000).toFixed(2) + 'M';
   } else if (volume >= 1000) {
@@ -166,7 +167,8 @@ const CandlestickChart: React.FC = () => {
 
   // 当前鼠标悬浮的K线数据
   const [hoveredData, setHoveredData] = useState<{
-    time: string;
+    time: string; // 收盘时间
+    openTime?: string; // 开盘时间
     open: string;
     high: string;
     low: string;
@@ -341,44 +343,16 @@ const CandlestickChart: React.FC = () => {
         return;
       }
 
-      const candleData = param.seriesPrices.get(candleSeries.current);
-      const volumeData = param.seriesPrices.get(volumeSeries.current);
+      // 安全地获取K线数据和成交量数据
+      const candleData = candleSeries.current ? param.seriesPrices.get(candleSeries.current) : null;
+      const volumeData = volumeSeries.current ? param.seriesPrices.get(volumeSeries.current) : null;
 
-      if (candleData && volumeData) {
-        const time = formatDate(param.time);
-        const open = formatPrice(candleData.open);
-        const high = formatPrice(candleData.high);
-        const low = formatPrice(candleData.low);
-        const close = formatPrice(candleData.close);
-        const volume = formatVolume(volumeData);
-
-        // 计算涨跌幅
-        const change = (candleData.close - candleData.open).toFixed(2);
-        const changePercent = ((candleData.close - candleData.open) / candleData.open * 100).toFixed(2);
-
-        // 设置悬浮数据，并包含鼠标位置信息
-        setHoveredData({
-          time,
-          open,
-          high,
-          low,
-          close,
-          volume,
-          change,
-          changePercent,
-          // 添加鼠标位置信息
-          mouseX: param.point.x,
-          mouseY: param.point.y
-        });
-
-        // 打印一些调试信息，查看candlestickData的格式
-        // console.log('param.time:', param.time, 'type:', typeof param.time);
-        // console.log('candlestickData示例:', candlestickData.length > 0 ? {
-        //   time: candlestickData[0].time,
-        //   timeType: typeof candlestickData[0].time
-        // } : '无数据');
-        // console.log('candlestickData长度:', candlestickData.length);
-
+      // 确保数据存在且所有必要的属性都存在
+      if (candleData && volumeData && 
+          candleData.open !== undefined && 
+          candleData.high !== undefined && 
+          candleData.low !== undefined && 
+          candleData.close !== undefined) {
         // 获取当前显示的K线索引
         let dataIndex = -1;
 
@@ -415,6 +389,98 @@ const CandlestickChart: React.FC = () => {
         } catch (error) {
           console.error('获取数据索引错误:', error);
         }
+
+        // 同时获取开盘时间和收盘时间
+        let closeTime = formatDate(param.time); // 默认收盘时间，使用param.time作为备选
+        let openTime = ""; // 开盘时间
+        
+        // 如果找到了有效的数据索引，获取K线数据中的时间信息
+        if (dataIndex !== -1 && dataIndex < candlestickData.length) {
+          const currentCandle = candlestickData[dataIndex];
+          
+          // 调试日志，查看K线数据中的时间字段
+          console.log('当前K线数据:', {
+            index: dataIndex,
+            time: currentCandle.time,
+            closeTime: currentCandle.closeTime,
+            openTime: currentCandle.openTime,
+            hasOpenTime: !!currentCandle.openTime,
+            hasCloseTime: !!currentCandle.closeTime,
+            candleData: currentCandle
+          });
+          
+          // 获取收盘时间 - 优先使用closeTime字段
+          if (currentCandle.closeTime) {
+            // 直接使用closeTime字段，无需类型转换
+            closeTime = String(currentCandle.closeTime);
+          } else if (typeof currentCandle.time === 'number') {
+            closeTime = formatDate(currentCandle.time);
+          }
+          
+          // 获取开盘时间 - 优先使用openTime字段
+          if (currentCandle.openTime) {
+            // 直接使用openTime字段，无需类型转换
+            openTime = String(currentCandle.openTime);
+          } else {
+            // 如果没有openTime字段，尝试根据K线周期和收盘时间计算开盘时间
+            try {
+              // 创建一个新的日期对象，基于收盘时间
+              const closeTimeObj = new Date(closeTime);
+              
+              // 根据时间周期，计算开盘时间
+              switch(timeframe) {
+                case '1m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 1); break;
+                case '5m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 5); break;
+                case '15m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 15); break;
+                case '30m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 30); break;
+                case '1H': closeTimeObj.setHours(closeTimeObj.getHours() - 1); break;
+                case '2H': closeTimeObj.setHours(closeTimeObj.getHours() - 2); break;
+                case '4H': closeTimeObj.setHours(closeTimeObj.getHours() - 4); break;
+                case '6H': closeTimeObj.setHours(closeTimeObj.getHours() - 6); break;
+                case '12H': closeTimeObj.setHours(closeTimeObj.getHours() - 12); break;
+                case '1D': closeTimeObj.setDate(closeTimeObj.getDate() - 1); break;
+                case '1W': closeTimeObj.setDate(closeTimeObj.getDate() - 7); break;
+                case '1M': closeTimeObj.setMonth(closeTimeObj.getMonth() - 1); break;
+              }
+              
+              // 格式化开盘时间为与后端一致的格式
+              openTime = closeTimeObj.toISOString().replace('T', ' ').substring(0, 19);
+            } catch (error) {
+              console.error('计算开盘时间失败:', error);
+            }
+          }
+        }
+
+        const open = formatPrice(candleData.open);
+        const high = formatPrice(candleData.high);
+        const low = formatPrice(candleData.low);
+        const close = formatPrice(candleData.close);
+        const volume = formatVolume(volumeData);
+
+        // 计算涨跌幅 - 增加安全检查
+        let change = '0.00';
+        let changePercent = '0.00';
+        
+        if (typeof candleData.close === 'number' && typeof candleData.open === 'number' && candleData.open !== 0) {
+          change = (candleData.close - candleData.open).toFixed(2);
+          changePercent = ((candleData.close - candleData.open) / candleData.open * 100).toFixed(2);
+        }
+
+        // 设置悬浮数据，并包含鼠标位置信息
+        setHoveredData({
+          time: closeTime, // 使用收盘时间作为主要时间
+          openTime: openTime, // 添加开盘时间
+          open,
+          high,
+          low,
+          close,
+          volume,
+          change,
+          changePercent,
+          // 添加鼠标位置信息
+          mouseX: param.point.x,
+          mouseY: param.point.y
+        });
 
         // console.log('最终找到的数据索引:', dataIndex);
 
@@ -2742,10 +2808,10 @@ const CandlestickChart: React.FC = () => {
       backtestResults.trades.forEach((trade: BacktestTrade) => {
         if (!trade || !trade.entryTime) return;
 
-        // 添加买入标记
+        // 添加买入标记 - 使用closeTime作为标记时间，确保与K线收盘时间对应
         if (trade.side === 'buy') {
           markers.push({
-            time: trade.entryTime as Time,
+            time: trade.entryTime as Time, // 这里使用entryTime，实际上是K线的收盘时间
             position: 'belowBar' as SeriesMarkerPosition,
             color: '#00FFFF', // 青色，更容易区分
             shape: 'arrowUp',
@@ -2756,7 +2822,7 @@ const CandlestickChart: React.FC = () => {
         } else {
           // 卖出标记
           markers.push({
-            time: trade.entryTime as Time,
+            time: trade.entryTime as Time, // 这里使用entryTime，实际上是K线的收盘时间
             position: 'aboveBar' as SeriesMarkerPosition,
             color: '#FF00FF', // 品红色，更容易区分
             shape: 'arrowDown',
@@ -2769,7 +2835,7 @@ const CandlestickChart: React.FC = () => {
         // 添加平仓标记，如果存在exitTime
         if (trade.exitTime) {
           markers.push({
-            time: trade.exitTime as Time,
+            time: trade.exitTime as Time, // 这里使用exitTime，实际上是K线的收盘时间
             position: (trade.side === 'buy' ? 'aboveBar' : 'belowBar') as SeriesMarkerPosition,
             color: trade.side === 'buy' ? '#FFFF00' : '#00FF00', // 买入平仓用黄色，卖出平仓用绿色
             shape: trade.side === 'buy' ? 'arrowDown' : 'arrowUp',
@@ -3468,8 +3534,12 @@ const CandlestickChart: React.FC = () => {
             }}
           >
             <div className="tooltip-row">
-              <span className="tooltip-label">时间:</span>
+              <span className="tooltip-label">收盘时间:</span>
               <span className="tooltip-value">{hoveredData.time}</span>
+            </div>
+            <div className="tooltip-row">
+              <span className="tooltip-label">开盘时间:</span>
+              <span className="tooltip-value">{hoveredData.openTime || '未知'}</span>
             </div>
             <div className="tooltip-row">
               <span className="tooltip-label">开盘:</span>

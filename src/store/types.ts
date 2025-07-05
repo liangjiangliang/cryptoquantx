@@ -6,6 +6,8 @@ export interface CandlestickData {
   low: number;
   close: number;
   volume: number;
+  closeTime?: string | number; // 收盘时间，可选字段
+  openTime?: string | number; // 开盘时间，可选字段
 }
 
 // 回测汇总数据类型
