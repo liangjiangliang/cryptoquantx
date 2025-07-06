@@ -297,8 +297,11 @@ const BacktestDetailPage: React.FC = () => {
     setSelectedTradeIndex(index);
     
     // 如果图表组件提供了引用，可以调用其方法高亮时间范围
-    if (chartRef.current && trade.entryTime && trade.exitTime) {
-      chartRef.current.highlightTimeRange(trade.entryTime, trade.exitTime);
+    if (chartRef.current && trade.entryTime) {
+      // 使用entryTime字段来高亮单个K线，而不是时间范围
+      console.log('使用entryTime高亮K线:', trade.entryTime);
+      // 只传入entryTime作为开始和结束时间，这样就只会高亮一根K线
+      chartRef.current.highlightTimeRange(trade.entryTime, trade.entryTime);
     }
   };
 

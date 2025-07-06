@@ -148,13 +148,14 @@ const BacktestDetailChart = forwardRef<{
       return '无效日期';
     }
     
-    // 格式化为 YYYY-MM-DD HH:MM 格式
+    // 格式化为 YYYY-MM-DD HH:MM:SS 格式
     return date.toLocaleString('zh-CN', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     }).replace(/\//g, '-'); // 将斜杠替换为短横线
   };
 
@@ -286,7 +287,7 @@ const BacktestDetailChart = forwardRef<{
           minMove: 0.01,
         },
         priceScaleId: 'left', // 使用左侧价格轴
-        title: '资金曲线', // 添加标题
+        title: '', // 添加标题
         // 确保资金曲线不与K线混合
         lineStyle: 0, // 设置线条样式为实线
       });
@@ -368,8 +369,8 @@ const BacktestDetailChart = forwardRef<{
             // 获取当前时间点
             let currentTime;
             if (typeof param.time === 'object' && param.time !== null) {
-              const { year, month, day } = param.time;
-              const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const { year, month, day, hour,minute,second } = param.time;
+              const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
               // 查找匹配的数据点
               const matchingPoint = equityCurveData.find(item => 
                 item && item.timestamp && typeof item.timestamp === 'string' && item.timestamp.includes(dateStr)
@@ -412,53 +413,92 @@ const BacktestDetailChart = forwardRef<{
         
         let time;
         
-        // 处理不同格式的时间
-        if (typeof param.time === 'object' && param.time !== null) {
-          // 从对象中提取年月日并格式化
-          const { year, month, day } = param.time;
-          // 确保月份和日期是两位数
-          const formattedMonth = String(month).padStart(2, '0');
-          const formattedDay = String(day).padStart(2, '0');
-          
-          // 创建一个日期对象用于格式化
-          const dateObj = new Date(year, month - 1, day);
-          time = formatDate(dateObj.getTime()); // 转换为时间戳再格式化
-        } else if (typeof param.time === 'number') {
-          // 如果是时间戳，使用formatDate格式化
-          time = formatDate(param.time);
-        } else {
-          // 如果是字符串，直接使用
-          time = String(param.time);
-        }
-        
         // 尝试从原始数据中找到对应的K线，以获取准确的时间
         if (originalData && originalData.length > 0) {
           let matchedCandle = null;
           
           // 根据param.time的类型采用不同的匹配策略
           if (typeof param.time === 'object' && param.time.year && param.time.month && param.time.day) {
-            const paramDateStr = `${param.time.year}-${String(param.time.month).padStart(2, '0')}-${String(param.time.day).padStart(2, '0')}`;
-            matchedCandle = originalData.find(item => {
-              if (!item || !item.openTime) return false;
-              return item.openTime.includes(paramDateStr);
-            });
+            const { year, month, day, hour = 0, minute = 0, second = 0 } = param.time;
+            const paramDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            // 先尝试精确匹配，包括时分秒
+            const fullTimeStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour || 0).padStart(2, '0')}:${String(minute || 0).padStart(2, '0')}:${String(second || 0).padStart(2, '0')}`;
+            
+            // 先尝试精确匹配完整时间
+            matchedCandle = originalData.find(item => 
+              item && item.openTime && item.openTime === fullTimeStr
+            );
+            
+            // 如果没找到，退化为日期匹配
+            if (!matchedCandle) {
+              matchedCandle = originalData.find(item => {
+                if (!item || !item.openTime) return false;
+                return item.openTime.includes(paramDateStr);
+              });
+            }
           } else if (typeof param.time === 'number') {
             // 将时间戳转换为日期字符串进行匹配
             const dateFromTimestamp = new Date(param.time < 10000000000 ? param.time * 1000 : param.time);
             const year = dateFromTimestamp.getFullYear();
             const month = String(dateFromTimestamp.getMonth() + 1).padStart(2, '0');
             const day = String(dateFromTimestamp.getDate()).padStart(2, '0');
+            const hour = String(dateFromTimestamp.getHours()).padStart(2, '0');
+            const minute = String(dateFromTimestamp.getMinutes()).padStart(2, '0');
+            const second = String(dateFromTimestamp.getSeconds()).padStart(2, '0');
+            
+            // 构建完整时间字符串
+            const fullTimeStr = `${year}-${month}-${day} ${hour}:${minute}:${second}`;
             const paramDateStr = `${year}-${month}-${day}`;
             
-            matchedCandle = originalData.find(item => {
-              if (!item || !item.openTime) return false;
-              return item.openTime.includes(paramDateStr);
-            });
+            // 先尝试精确匹配完整时间
+            matchedCandle = originalData.find(item => 
+              item && item.openTime && item.openTime === fullTimeStr
+            );
+            
+            // 如果没找到，退化为日期匹配
+            if (!matchedCandle) {
+              matchedCandle = originalData.find(item => {
+                if (!item || !item.openTime) return false;
+                return item.openTime.includes(paramDateStr);
+              });
+            }
           }
           
           if (matchedCandle) {
-            // 使用原始K线数据的完整时间
-            time = matchedCandle.openTime;
+            // 使用原始K线数据的完整时间，包括秒
+            time = matchedCandle.closeTime;
+            console.log('使用原始K线的完整时间:', time);
+          } else {
+            // 如果没有找到匹配的K线，则使用格式化的时间
+            if (typeof param.time === 'object' && param.time !== null) {
+              // 从对象中提取年月日并格式化
+              const { year, month, day, hour , minute , second  } = param.time;
+              // 创建一个日期对象用于格式化
+              const dateObj = new Date(year, month , day, hour , minute, second );
+              time = formatDate(dateObj.getTime()); // 转换为时间戳再格式化
+            } else if (typeof param.time === 'number') {
+              // 如果是时间戳，使用formatDate格式化
+              time = formatDate(param.time);
+            } else {
+              // 如果是字符串，直接使用
+              time = String(param.time);
+            }
+          }
+        } else {
+          // 如果没有原始数据，则使用格式化的时间
+          if (typeof param.time === 'object' && param.time !== null) {
+            // 从对象中提取年月日并格式化
+            const { year, month, day, hour = 0, minute = 0, second = 0 } = param.time;
+            // 创建一个日期对象用于格式化
+            const dateObj = new Date(year, month - 1, day, hour || 0, minute || 0, second || 0);
+            time = formatDate(dateObj.getTime()); // 转换为时间戳再格式化
+          } else if (typeof param.time === 'number') {
+            // 如果是时间戳，使用formatDate格式化
+            time = formatDate(param.time);
+          } else {
+            // 如果是字符串，直接使用
+            time = String(param.time);
           }
         }
         
@@ -523,10 +563,10 @@ const BacktestDetailChart = forwardRef<{
                 // 获取当前时间
                 let dateStr: string = '';
                 if (typeof param.time === 'object' && param.time.year && param.time.month && param.time.day) {
-                  dateStr = `${param.time.year}-${String(param.time.month).padStart(2, '0')}-${String(param.time.day).padStart(2, '0')}`;
+                  dateStr = `${param.time.year}-${String(param.time.month).padStart(2, '0')}-${String(param.time.day).padStart(2, '0')}-${String(param.time.hour).padStart(2, '0')}-${String(param.time.minute).padStart(2, '0')}-${String(param.time.second).padStart(2, '0')}`;
                 } else if (typeof param.time === 'number') {
                   const date = new Date(param.time < 10000000000 ? param.time * 1000 : param.time);
-                  dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                  dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
                 }
                 
                 if (dateStr) {
@@ -924,74 +964,151 @@ const BacktestDetailChart = forwardRef<{
       // 创建K线时间点的映射，用于快速查找
       const klineTimeMap = new Map();
       
+      // 保存所有K线的日期部分，用于日期匹配
+      const klineDateMap = new Map();
+      
       originalData.forEach((kline, index) => {
         let dateStr = '';
+        let fullTime = '';
         
         if (typeof kline.time === 'object' && kline.time !== null) {
-          // 处理对象格式时间
-          const { year, month, day } = kline.time;
+          // 从对象中提取年月日时分秒
+          const { year, month, day, hour = 0, minute = 0, second = 0 } = kline.time;
           dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        } else if (typeof kline.time === 'string') {
-          // 如果是字符串格式，可能需要提取日期部分
-          dateStr = kline.time.includes(' ') ? kline.time.split(' ')[0] : kline.time;
+          fullTime = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
         } else if (typeof kline.time === 'number') {
-          // 如果是时间戳格式
+          // 从时间戳中提取年月日时分秒
           const date = new Date(kline.time < 10000000000 ? kline.time * 1000 : kline.time);
           dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+          fullTime = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+        } else if (typeof kline.time === 'string') {
+          // 如果是字符串格式，直接使用
+          dateStr = kline.time.includes(' ') ? kline.time.split(' ')[0] : kline.time;
+          fullTime = kline.time;
+        }
+        
+        // 如果K线有openTime或closeTime属性，优先使用它作为完整时间
+        if (kline.closeTime) {
+          fullTime = kline.closeTime;
+          dateStr = kline.closeTime.includes(' ') ? kline.closeTime.split(' ')[0] : kline.closeTime;
+        } else if (kline.openTime) {
+          fullTime = kline.openTime;
+          dateStr = kline.openTime.includes(' ') ? kline.openTime.split(' ')[0] : kline.openTime;
         }
         
         if (dateStr) {
-          // 存储K线索引和时间格式
-          klineTimeMap.set(dateStr, {
+          // 存储K线索引、时间格式和完整时间
+          klineTimeMap.set(fullTime, {
             index,
-            time: kline.time
+            time: kline.time,
+            fullTime: fullTime,
+            dateStr: dateStr
+          });
+          
+          // 同时保存日期部分到日期映射
+          if (!klineDateMap.has(dateStr)) {
+            klineDateMap.set(dateStr, []);
+          }
+          klineDateMap.get(dateStr).push({
+            index,
+            time: kline.time,
+            fullTime: fullTime
           });
         }
       });
       
       console.log('K线时间映射创建完成，共', klineTimeMap.size, '个时间点');
       
-      // 将资金曲线数据格式化为图表需要的格式，并与K线严格对齐
-      const formattedData = curveData
-        .filter(item => item && item.timestamp && item.value !== undefined)
-        .map(item => {
-          if (!item || !item.timestamp || item.value === undefined) {
-            console.warn('资金曲线数据格式不正确:', item);
-            return null;
+      // 预处理资金曲线数据，将其按日期分组
+      const equityByDate = new Map<string, Map<string, number>>();
+      let lastKnownEquity: number | null = null;
+      
+      curveData.forEach(item => {
+        if (!item || !item.timestamp || item.value === undefined) return;
+        
+        // 处理资金曲线时间戳
+        let timeStr = '';
+        let dateStr = '';
+        
+        if (typeof item.timestamp === 'string') {
+          timeStr = item.timestamp;
+          dateStr = item.timestamp.includes(' ') ? item.timestamp.split(' ')[0] : item.timestamp;
+        } else if (typeof item.timestamp === 'number') {
+          const date = new Date(item.timestamp < 10000000000 ? item.timestamp * 1000 : item.timestamp);
+          timeStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+          dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+        
+        if (timeStr && dateStr) {
+          // 存储资金曲线值到日期映射
+          if (!equityByDate.has(dateStr)) {
+            equityByDate.set(dateStr, new Map<string, number>());
+          }
+          const dateMap = equityByDate.get(dateStr);
+          if (dateMap) {
+            dateMap.set(timeStr, item.value);
           }
           
-          // 提取资金曲线的日期部分
-          let dateStr = '';
-          if (typeof item.timestamp === 'string') {
-            // 从字符串中提取日期部分
-            dateStr = item.timestamp.includes(' ') ? item.timestamp.split(' ')[0] : item.timestamp;
-          } else if (typeof item.timestamp === 'number') {
-            // 从时间戳中提取日期部分
-            const date = new Date(item.timestamp < 10000000000 ? item.timestamp * 1000 : item.timestamp);
-            dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-          }
-          
-          // 在K线时间映射中查找匹配的K线时间
-          const matchingKline = klineTimeMap.get(dateStr);
-          
-          if (!matchingKline) {
-            // 如果没有找到匹配的K线时间点，跳过这个数据点
-            return null;
-          }
-          
-          // 使用K线的时间格式，确保完全对齐
-          return {
-            time: matchingKline.time,
-            value: item.value
-          };
+          // 更新最后已知资金值
+          lastKnownEquity = item.value;
+        }
       });
       
-      // 过滤掉无效的数据点
-      const validData = formattedData.filter(item => item !== null) as LineData[];
-      console.log('有效的资金曲线数据点数:', validData.length, '首条数据:', validData[0], '末条数据:', validData[validData.length - 1]);
+      // 为每个K线分配资金值，优先使用精确匹配，然后是当天最后的资金值
+      const formattedData: LineData[] = [];
+      let firstEquityFound = false;
+      let lastEquityValue: number | null = null;
+      
+      // 按时间顺序处理K线数据
+      const sortedKlineTimes = Array.from(klineTimeMap.keys()).sort();
+      
+      sortedKlineTimes.forEach(fullTime => {
+        const klineInfo = klineTimeMap.get(fullTime);
+        let equityValue = null;
+        
+        // 1. 优先尝试精确匹配完整时间
+        const exactTimeMatchFound = equityByDate.has(klineInfo.dateStr) && 
+                                  equityByDate.get(klineInfo.dateStr)?.has(fullTime);
+        if (exactTimeMatchFound && equityByDate.get(klineInfo.dateStr)) {
+          const timeMap = equityByDate.get(klineInfo.dateStr);
+          if (timeMap && timeMap.has(fullTime)) {
+            equityValue = timeMap.get(fullTime) as number;
+            firstEquityFound = true;
+          }
+        }
+        // 2. 然后尝试匹配同一天的任意时间点
+        else if (equityByDate.has(klineInfo.dateStr)) {
+          const dateEquities = Array.from(equityByDate.get(klineInfo.dateStr)?.entries() || []);
+          
+          if (dateEquities.length > 0) {
+            // 选择当天最后一个资金值
+            const lastEquityForDay = dateEquities[dateEquities.length - 1][1];
+            equityValue = lastEquityForDay;
+            firstEquityFound = true;
+          }
+        }
+        // 3. 如果前两种方法都失败，使用之前找到的最后一个资金值
+        else if (firstEquityFound && lastEquityValue !== null) {
+          equityValue = lastEquityValue;
+        }
+        
+        // 只有在我们已经找到了第一个资金值之后，才添加数据点
+        if (equityValue !== null) {
+          formattedData.push({
+            time: klineInfo.time,
+            value: equityValue
+          });
+          lastEquityValue = equityValue;
+        }
+      });
+      
+      console.log('生成的资金曲线数据点数:', formattedData.length, 
+                '首条数据:', formattedData[0], 
+                '末条数据:', formattedData[formattedData.length - 1],
+                '覆盖率:', (formattedData.length / sortedKlineTimes.length * 100).toFixed(2) + '%');
       
       // 设置资金曲线数据
-      equityCurveSeries.current.setData(validData);
+      equityCurveSeries.current.setData(formattedData);
       
       // 显示资金曲线价格坐标轴
       chart.current.priceScale('left').applyOptions({
@@ -1116,6 +1233,13 @@ const BacktestDetailChart = forwardRef<{
   const findKlineIndexByTime = (time: string, data: any[]): number => {
     if (!data || data.length === 0) return -1;
     
+    console.log('findKlineIndexByTime - 输入时间:', time);
+    console.log('findKlineIndexByTime - 数据样本:', data.slice(0, 3).map(k => ({
+      time: k.time,
+      timeType: typeof k.time,
+      timeStr: k.time ? k.time.toString() : 'null'
+    })));
+    
     // 从时间字符串中提取日期部分，格式化为 YYYY-MM-DD
     let targetDateStr = '';
     if (time.includes(' ')) {
@@ -1139,17 +1263,14 @@ const BacktestDetailChart = forwardRef<{
         // 处理字符串格式时间
         klineDateStr = kline.time.includes(' ') ? kline.time.split(' ')[0] : kline.time;
       } else if (typeof kline.time === 'number') {
-        // 处理数字格式时间
+        // 处理数字格式时间 - 使用收盘时间
         const date = new Date(kline.time < 10000000000 ? kline.time * 1000 : kline.time);
         klineDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      } else if (kline.openTime) {
-        // 如果有openTime字段，尝试使用它
-        klineDateStr = kline.openTime.includes(' ') ? kline.openTime.split(' ')[0] : kline.openTime;
       }
       
       // 精确匹配日期字符串
       if (klineDateStr === targetDateStr) {
-        console.log('找到精确匹配:', targetDateStr, '在索引', i);
+        console.log('找到精确匹配:', targetDateStr, '在索引', i, '时间值:', kline.time);
         return i;
       }
     }
@@ -1179,10 +1300,6 @@ const BacktestDetailChart = forwardRef<{
         // 处理对象格式时间
         const { year, month, day } = kline.time;
         klineTime = new Date(year, month - 1, day).getTime();
-      } else if (kline.openTime) {
-        // 如果有openTime字段，尝试使用它
-        const dateStr = kline.openTime.includes(' ') ? kline.openTime.split(' ')[0] : kline.openTime;
-        klineTime = new Date(dateStr).getTime();
       } else {
         return; // 跳过无法处理的格式
       }
@@ -1573,8 +1690,9 @@ const BacktestDetailChart = forwardRef<{
           <div className="tooltip-row">
             <span className="tooltip-label">资金:</span>
             <span style={{
-              color: '#f48fb1',
-              fontWeight: '500'
+              color: '#FF1493', // 鲜艳的粉红色
+              fontWeight: '700',
+              fontSize: '14px'
             }}>
               {hoveredData.equity !== undefined && hoveredData.equity !== null ? 
                 (typeof hoveredData.equity === 'number' ? formatPrice(hoveredData.equity) : String(hoveredData.equity)) : 
