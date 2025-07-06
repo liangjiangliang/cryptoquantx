@@ -278,8 +278,8 @@ const BacktestDetailChart = forwardRef<{
       equityCurveSeries.current = chart.current.addLineSeries({
         color: '#f48fb1',
         lineWidth: 2,
-        priceLineVisible: true,
-        lastValueVisible: true,
+        priceLineVisible: false,
+        lastValueVisible: false,
         priceFormat: {
           type: 'price',
           precision: 2,
@@ -287,6 +287,8 @@ const BacktestDetailChart = forwardRef<{
         },
         priceScaleId: 'left', // 使用左侧价格轴
         title: '资金曲线', // 添加标题
+        // 确保资金曲线不与K线混合
+        lineStyle: 0, // 设置线条样式为实线
       });
       
       // 为左侧价格轴设置显示属性
@@ -545,9 +547,9 @@ const BacktestDetailChart = forwardRef<{
           }
         }
         
-        if (hoveredInfo.equity === undefined || hoveredInfo.equity === null) {
-          console.log('没有找到资金曲线数据');
-        }
+        // if (hoveredInfo.equity === undefined || hoveredInfo.equity === null) {
+        //   console.log('没有找到资金曲线数据');
+        // }
         
         // 更新悬浮数据
         setHoveredData(hoveredInfo);
@@ -913,7 +915,43 @@ const BacktestDetailChart = forwardRef<{
     try {
       console.log('原始资金曲线数据:', curveData.slice(0, 5));
       
-            // 将资金曲线数据格式化为图表需要的格式
+      // 如果没有K线数据，无法进行对齐
+      if (!originalData || originalData.length === 0) {
+        console.warn('没有K线数据，无法对齐资金曲线');
+        return;
+      }
+      
+      // 创建K线时间点的映射，用于快速查找
+      const klineTimeMap = new Map();
+      
+      originalData.forEach((kline, index) => {
+        let dateStr = '';
+        
+        if (typeof kline.time === 'object' && kline.time !== null) {
+          // 处理对象格式时间
+          const { year, month, day } = kline.time;
+          dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        } else if (typeof kline.time === 'string') {
+          // 如果是字符串格式，可能需要提取日期部分
+          dateStr = kline.time.includes(' ') ? kline.time.split(' ')[0] : kline.time;
+        } else if (typeof kline.time === 'number') {
+          // 如果是时间戳格式
+          const date = new Date(kline.time < 10000000000 ? kline.time * 1000 : kline.time);
+          dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+        
+        if (dateStr) {
+          // 存储K线索引和时间格式
+          klineTimeMap.set(dateStr, {
+            index,
+            time: kline.time
+          });
+        }
+      });
+      
+      console.log('K线时间映射创建完成，共', klineTimeMap.size, '个时间点');
+      
+      // 将资金曲线数据格式化为图表需要的格式，并与K线严格对齐
       const formattedData = curveData
         .filter(item => item && item.timestamp && item.value !== undefined)
         .map(item => {
@@ -922,49 +960,35 @@ const BacktestDetailChart = forwardRef<{
             return null;
           }
           
-          // 将时间戳转换为与K线图相同的格式
-          let timestamp;
-          try {
-            // 处理不同格式的时间戳
-            if (typeof item.timestamp === 'number') {
-              timestamp = item.timestamp;
-            } else {
-              timestamp = new Date(item.timestamp).getTime();
-            }
-          } catch (err) {
-            console.error('处理时间戳错误:', err, item);
+          // 提取资金曲线的日期部分
+          let dateStr = '';
+          if (typeof item.timestamp === 'string') {
+            // 从字符串中提取日期部分
+            dateStr = item.timestamp.includes(' ') ? item.timestamp.split(' ')[0] : item.timestamp;
+          } else if (typeof item.timestamp === 'number') {
+            // 从时间戳中提取日期部分
+            const date = new Date(item.timestamp < 10000000000 ? item.timestamp * 1000 : item.timestamp);
+            dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+          }
+          
+          // 在K线时间映射中查找匹配的K线时间
+          const matchingKline = klineTimeMap.get(dateStr);
+          
+          if (!matchingKline) {
+            // 如果没有找到匹配的K线时间点，跳过这个数据点
             return null;
           }
           
-          // 根据K线周期返回不同的时间格式
-          let time;
-          if (intervalVal === '1D' || intervalVal === '3D' || intervalVal === '1W' || intervalVal === '1M') {
-            // 如果是日线及以上周期，只需要日期部分
-            // 尝试从timestamp字符串中直接提取日期部分
-            if (typeof item.timestamp === 'string' && item.timestamp.includes(' ')) {
-              // 格式可能是 "YYYY-MM-DD HH:MM:SS"，提取日期部分
-              time = item.timestamp.split(' ')[0];
-            } else {
-              const date = new Date(timestamp);
-              // 返回格式: 'YYYY-MM-DD'
-              time = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            }
-          } else {
-            // 对于分钟线，需要精确到秒，将时间戳转换为秒级
-            time = Math.floor(timestamp / 1000);
-          }
-          
+          // 使用K线的时间格式，确保完全对齐
           return {
-            time,
+            time: matchingKline.time,
             value: item.value
           };
       });
       
-      console.log('绘制资金曲线，数据点数:', formattedData.length, '首条数据:', formattedData[0], '末条数据:', formattedData[formattedData.length - 1]);
-      
       // 过滤掉无效的数据点
       const validData = formattedData.filter(item => item !== null) as LineData[];
-      console.log('有效的资金曲线数据点数:', validData.length);
+      console.log('有效的资金曲线数据点数:', validData.length, '首条数据:', validData[0], '末条数据:', validData[validData.length - 1]);
       
       // 设置资金曲线数据
       equityCurveSeries.current.setData(validData);
@@ -981,7 +1005,7 @@ const BacktestDetailChart = forwardRef<{
     } catch (error) {
       console.error('绘制资金曲线错误:', error);
     }
-  }, [equityCurveData, intervalVal, loadEquityCurveData]);
+  }, [equityCurveData, loadEquityCurveData, originalData]);
 
   // 初始化图表 - 仅在组件挂载时执行一次
   useEffect(() => {
@@ -1092,16 +1116,80 @@ const BacktestDetailChart = forwardRef<{
   const findKlineIndexByTime = (time: string, data: any[]): number => {
     if (!data || data.length === 0) return -1;
     
-    const targetTime = new Date(time).getTime();
+    // 从时间字符串中提取日期部分，格式化为 YYYY-MM-DD
+    let targetDateStr = '';
+    if (time.includes(' ')) {
+      targetDateStr = time.split(' ')[0]; // 提取日期部分
+    } else {
+      targetDateStr = time;
+    }
+    
+    console.log('目标日期字符串:', targetDateStr);
+    
+    // 尝试精确匹配日期字符串
+    for (let i = 0; i < data.length; i++) {
+      const kline = data[i];
+      let klineDateStr = '';
+      
+      if (typeof kline.time === 'object' && kline.time !== null) {
+        // 处理对象格式时间
+        const { year, month, day } = kline.time;
+        klineDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      } else if (typeof kline.time === 'string') {
+        // 处理字符串格式时间
+        klineDateStr = kline.time.includes(' ') ? kline.time.split(' ')[0] : kline.time;
+      } else if (typeof kline.time === 'number') {
+        // 处理数字格式时间
+        const date = new Date(kline.time < 10000000000 ? kline.time * 1000 : kline.time);
+        klineDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      } else if (kline.openTime) {
+        // 如果有openTime字段，尝试使用它
+        klineDateStr = kline.openTime.includes(' ') ? kline.openTime.split(' ')[0] : kline.openTime;
+      }
+      
+      // 精确匹配日期字符串
+      if (klineDateStr === targetDateStr) {
+        console.log('找到精确匹配:', targetDateStr, '在索引', i);
+        return i;
+      }
+    }
+    
+    console.log('未找到精确匹配，将使用最接近的时间');
+    
+    // 如果没有精确匹配，使用最接近的时间
+    const targetTime = new Date(targetDateStr).getTime();
+    if (isNaN(targetTime)) {
+      console.error('无效的日期格式:', targetDateStr);
+      return -1;
+    }
     
     // 找到最接近的K线
     let closestIndex = -1;
     let minTimeDiff = Number.MAX_VALUE;
     
     data.forEach((kline, index) => {
-      const klineTime = typeof kline.time === 'number' 
-        ? kline.time * 1000 // 秒转毫秒
-        : new Date(kline.time.toString()).getTime();
+      let klineTime;
+      
+      if (typeof kline.time === 'number') {
+        klineTime = kline.time < 10000000000 ? kline.time * 1000 : kline.time; // 秒转毫秒
+      } else if (typeof kline.time === 'string') {
+        const dateStr = kline.time.includes(' ') ? kline.time.split(' ')[0] : kline.time;
+        klineTime = new Date(dateStr).getTime();
+      } else if (typeof kline.time === 'object' && kline.time !== null) {
+        // 处理对象格式时间
+        const { year, month, day } = kline.time;
+        klineTime = new Date(year, month - 1, day).getTime();
+      } else if (kline.openTime) {
+        // 如果有openTime字段，尝试使用它
+        const dateStr = kline.openTime.includes(' ') ? kline.openTime.split(' ')[0] : kline.openTime;
+        klineTime = new Date(dateStr).getTime();
+      } else {
+        return; // 跳过无法处理的格式
+      }
+      
+      if (isNaN(klineTime)) {
+        return; // 跳过无效的时间
+      }
       
       const timeDiff = Math.abs(klineTime - targetTime);
       if (timeDiff < minTimeDiff) {
@@ -1110,6 +1198,7 @@ const BacktestDetailChart = forwardRef<{
       }
     });
     
+    console.log('最接近的K线索引:', closestIndex, '时间差(ms):', minTimeDiff);
     return closestIndex;
   };
 
@@ -1461,7 +1550,11 @@ const BacktestDetailChart = forwardRef<{
           </div>
           <div className="tooltip-row">
             <span className="tooltip-label">收盘:</span>
-            <span className="tooltip-value">{hoveredData.close}</span>
+             <span style={{
+              color: '#00FFFF', // 鲜艳的青色
+              fontWeight: '700',
+              fontSize: '14px'
+            }}>{hoveredData.close}</span>
           </div>
           <div className="tooltip-row">
             <span className="tooltip-label">成交量:</span>
