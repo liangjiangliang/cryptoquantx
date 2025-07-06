@@ -47,6 +47,10 @@ const BacktestPanel: React.FC = () => {
   const [strategies, setStrategies] = useState<{[key: string]: Strategy}>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [strategyDropdownOpen, setStrategyDropdownOpen] = useState<boolean>(false);
+  const [searchStrategy, setSearchStrategy] = useState<string>('');
+  const [filteredStrategies, setFilteredStrategies] = useState<[string, Strategy][]>([]);
+  const strategyDropdownRef = React.useRef<HTMLDivElement>(null);
 
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
@@ -151,10 +155,13 @@ const BacktestPanel: React.FC = () => {
               // 清除可能存在的回测结果
               dispatch(clearBacktestResults());
             }
-            // 否则使用第一个策略作为默认值
+            // 否则使用排序后的第一个策略作为默认值
             else if (Object.keys(data.data).length > 0) {
-              const firstStrategy = Object.keys(data.data)[0];
-              // console.log('使用第一个策略作为默认值:', firstStrategy);
+              // 按名称排序策略并选择第一个
+              const sortedStrategies = Object.entries(data.data)
+                .sort((a, b) => a[1].name.localeCompare(b[1].name, 'zh-CN'));
+              const firstStrategy = sortedStrategies[0][0];
+              // console.log('使用排序后的第一个策略作为默认值:', firstStrategy);
               setStrategy(firstStrategy);
             }
           }
@@ -202,7 +209,11 @@ const BacktestPanel: React.FC = () => {
             setStrategy(strategyFromUrl);
             dispatch(clearBacktestResults());
           } else {
-            setStrategy(Object.keys(mockStrategies)[0]);
+            // 按名称排序策略并选择第一个
+            const sortedStrategies = Object.entries(mockStrategies)
+              .sort((a, b) => a[1].name.localeCompare(b[1].name, 'zh-CN'));
+            const firstStrategy = sortedStrategies[0][0];
+            setStrategy(firstStrategy);
           }
         }
       } finally {
@@ -252,6 +263,43 @@ const BacktestPanel: React.FC = () => {
       window.removeEventListener('setStrategy', handleSetStrategy as EventListener);
     };
   }, [dispatch]); // 移除strategies依赖，防止事件处理器频繁重建
+
+  // 策略搜索过滤逻辑
+  useEffect(() => {
+    if (Object.keys(strategies).length === 0) return;
+    
+    // 如果搜索内容为空，则显示所有策略
+    if (!searchStrategy.trim()) {
+      const allStrategies = Object.entries(strategies)
+        .sort((a, b) => a[1].name.localeCompare(b[1].name, 'zh-CN'));
+      setFilteredStrategies(allStrategies);
+      return;
+    }
+    
+    // 根据搜索内容过滤策略
+    const filtered = Object.entries(strategies)
+      .filter(([key, strategyData]) => 
+        strategyData.name.toLowerCase().includes(searchStrategy.toLowerCase()) || 
+        key.toLowerCase().includes(searchStrategy.toLowerCase())
+      )
+      .sort((a, b) => a[1].name.localeCompare(b[1].name, 'zh-CN'));
+    
+    setFilteredStrategies(filtered);
+  }, [strategies, searchStrategy]);
+
+  // 点击外部关闭策略下拉框
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (strategyDropdownRef.current && !strategyDropdownRef.current.contains(event.target as Node)) {
+        setStrategyDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [strategyDropdownRef]);
 
   // 运行回测
   const runBacktest = async () => {
@@ -789,16 +837,47 @@ const BacktestPanel: React.FC = () => {
               ) : error ? (
                 <div className="error-message">策略加载失败，请刷新重试</div>
               ) : (
-                <select
-                  value={strategy}
-                  onChange={(e) => setStrategy(e.target.value)}
-                >
-                  {Object.entries(strategies).map(([key, strategyData]) => (
-                    <option key={key} value={key}>
-                      {strategyData.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="strategy-selector-wrapper" ref={strategyDropdownRef}>
+                  <div className="selected-strategy-display" onClick={() => setStrategyDropdownOpen(!strategyDropdownOpen)}>
+                    <span>{strategies[strategy]?.name || '选择策略'}</span>
+                    <span className="dropdown-arrow">{strategyDropdownOpen ? '▲' : '▼'}</span>
+                  </div>
+
+                  {strategyDropdownOpen && (
+                    <div className="strategy-dropdown">
+                      <input
+                        type="text"
+                        placeholder="搜索策略..."
+                        value={searchStrategy}
+                        onChange={(e) => setSearchStrategy(e.target.value)}
+                        className="strategy-search-input"
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                      />
+                      
+                      <div className="strategy-list-container">
+                        {filteredStrategies.length > 0 ? (
+                          <div className="strategy-list">
+                            {filteredStrategies.map(([key, strategyData]) => (
+                              <div
+                                key={key}
+                                className={`strategy-item ${key === strategy ? 'selected' : ''}`}
+                                onClick={() => {
+                                  setStrategy(key);
+                                  setStrategyDropdownOpen(false);
+                                }}
+                              >
+                                <span className="strategy-item-name">{strategyData.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="no-results">无匹配结果</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 

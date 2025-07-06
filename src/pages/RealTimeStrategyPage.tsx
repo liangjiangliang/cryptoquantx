@@ -23,6 +23,7 @@ const RealTimeStrategyPage: React.FC = () => {
   const [strategies, setStrategies] = useState<RealTimeStrategy[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+  const [errorModalOpen, setErrorModalOpen] = useState<boolean>(false);
   const [operationInProgress, setOperationInProgress] = useState<{[key: string]: boolean}>({});
   const navigate = useNavigate();
 
@@ -56,10 +57,12 @@ const RealTimeStrategyPage: React.FC = () => {
         setStrategies(data.data || []);
       } else {
         setError(data.message || '获取实盘策略失败');
+        setErrorModalOpen(true);
       }
     } catch (error) {
       console.error('获取实盘策略失败:', error);
       setError(error instanceof Error ? error.message : '获取实盘策略失败');
+      setErrorModalOpen(true);
     } finally {
       setLoading(false);
     }
@@ -123,10 +126,12 @@ const RealTimeStrategyPage: React.FC = () => {
         fetchRealTimeStrategies();
       } else {
         setError(result.message || '启动策略失败');
+        setErrorModalOpen(true);
       }
     } catch (error) {
       console.error('启动策略失败:', error);
       setError(error instanceof Error ? error.message : '启动策略失败');
+      setErrorModalOpen(true);
     } finally {
       setOperationInProgress({...operationInProgress, [strategyId]: false});
     }
@@ -142,10 +147,12 @@ const RealTimeStrategyPage: React.FC = () => {
         fetchRealTimeStrategies();
       } else {
         setError(result.message || '停止策略失败');
+        setErrorModalOpen(true);
       }
     } catch (error) {
       console.error('停止策略失败:', error);
       setError(error instanceof Error ? error.message : '停止策略失败');
+      setErrorModalOpen(true);
     } finally {
       setOperationInProgress({...operationInProgress, [strategyId]: false});
     }
@@ -161,10 +168,12 @@ const RealTimeStrategyPage: React.FC = () => {
         fetchRealTimeStrategies();
       } else {
         setError(result.message || '删除策略失败');
+        setErrorModalOpen(true);
       }
     } catch (error) {
       console.error('删除策略失败:', error);
       setError(error instanceof Error ? error.message : '删除策略失败');
+      setErrorModalOpen(true);
     } finally {
       setOperationInProgress({...operationInProgress, [strategyId]: false});
     }
@@ -180,10 +189,12 @@ const RealTimeStrategyPage: React.FC = () => {
         fetchRealTimeStrategies();
       } else {
         setError(result.message || '复制策略失败');
+        setErrorModalOpen(true);
       }
     } catch (error) {
       console.error('复制策略失败:', error);
       setError(error instanceof Error ? error.message : '复制策略失败');
+      setErrorModalOpen(true);
     } finally {
       setOperationInProgress({...operationInProgress, [strategyId]: false});
     }
@@ -232,11 +243,7 @@ const RealTimeStrategyPage: React.FC = () => {
 
   return (
     <div className="real-time-strategy-page">
-      {error && (
-        <div className="error-message">
-          <p>错误: {error}</p>
-        </div>
-      )}
+      {/* 错误信息现在通过弹窗展示，不再使用内嵌的错误提示 */}
       {loading ? (
         <div className="loading-container">
           <div className="loading-spinner"></div>
@@ -403,6 +410,17 @@ const RealTimeStrategyPage: React.FC = () => {
         cancelText="取消"
         onConfirm={confirmDelete}
         onCancel={closeConfirmModal}
+        type="danger"
+      />
+      
+      {/* 添加错误信息对话框 */}
+      <ConfirmModal
+        isOpen={errorModalOpen}
+        title="操作失败"
+        message={`错误: ${error}`}
+        confirmText="确定"
+        onConfirm={() => setErrorModalOpen(false)}
+        onCancel={() => setErrorModalOpen(false)}
         type="danger"
       />
     </div>

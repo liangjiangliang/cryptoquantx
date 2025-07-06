@@ -744,3 +744,98 @@
   color: #8d8d8d;
   font-size: 14px;
 }
+
+/* 策略选择器样式，参考交易对选择器 */
+.strategy-selector-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.selected-strategy-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #2e3241;
+  border-radius: 4px;
+  color: #d9d9d9;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.strategy-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #262a38;
+  border-radius: 4px;
+  margin-top: 5px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.strategy-search-input {
+  padding: 10px;
+  background-color: #2e3241;
+  border: none;
+  color: #d9d9d9;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+  border-bottom: 1px solid #3a3f52;
+}
+
+.strategy-list-container {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.strategy-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.strategy-list-container::-webkit-scrollbar-track {
+  background: #262a38;
+}
+
+.strategy-list-container::-webkit-scrollbar-thumb {
+  background: #3a3f52;
+  border-radius: 3px;
+}
+
+.strategy-list {
+  padding: 5px 0;
+}
+
+.strategy-item {
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.strategy-item:hover {
+  background-color: #3a3f52;
+}
+
+.strategy-item.selected {
+  background-color: #2962ff40;
+}
+
+.strategy-item-name {
+  flex: 1;
+  color: #d9d9d9;
+  font-size: 14px;
+}
+
+.no-results {
+  padding: 15px;
+  text-align: center;
+  color: #6c7284;
+  font-size: 14px;
+}
