@@ -28,7 +28,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
   
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);  // 修改默认显示条数，确保显示全部数据
+  const [pageSize, setPageSize] = useState(26);  // 修改默认显示条数，确保显示全部数据
 
   useEffect(() => {
     if (!id) return;
