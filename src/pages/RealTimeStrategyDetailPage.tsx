@@ -25,6 +25,10 @@ const RealTimeStrategyDetailPage: React.FC = () => {
   const [orders, setOrders] = useState<RealTimeOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // 添加分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     if (!id) return;
@@ -74,6 +78,23 @@ const RealTimeStrategyDetailPage: React.FC = () => {
     return amount.toLocaleString('zh-CN', { minimumFractionDigits: 8, maximumFractionDigits: 8 });
   };
 
+  // 分页相关计算
+  const totalPages = Math.ceil(orders.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const currentPageData = orders.slice(startIndex, endIndex);
+
+  // 处理页码变化
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // 处理每页显示数量变化
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // 重置到第一页
+  };
+
   return (
     <div className="real-time-strategy-detail-page">
       <div className="detail-header">
@@ -109,7 +130,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
             <tbody>
               {orders.length === 0 ? (
                 <tr><td colSpan={14} style={{ textAlign: 'center', color: '#888' }}>暂无订单数据</td></tr>
-              ) : orders.map(order => (
+              ) : currentPageData.map(order => (
                 <tr key={order.id}>
                   <td>{order.id}</td>
                   <td>{order.symbol}</td>
@@ -128,6 +149,58 @@ const RealTimeStrategyDetailPage: React.FC = () => {
               ))}
             </tbody>
           </table>
+          
+          {/* 分页控制 */}
+          {orders.length > 0 && (
+            <div className="pagination-container">
+              <div className="pagination-buttons">
+                <button
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                  className="pagination-button"
+                >
+                  首页
+                </button>
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="pagination-button"
+                >
+                  上一页
+                </button>
+                <div className="pagination-info">
+                  {currentPage} / {totalPages} 页 (共 {orders.length} 条记录)
+                </div>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="pagination-button"
+                >
+                  下一页
+                </button>
+                <button
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="pagination-button"
+                >
+                  末页
+                </button>
+              </div>
+              <div className="page-size-selector">
+                每页
+                <select
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+                条
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

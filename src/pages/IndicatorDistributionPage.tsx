@@ -292,7 +292,7 @@ const IndicatorDistributionPage: React.FC = () => {
     return (
       <div className="filters" style={{ display: 'flex', flexWrap: 'nowrap', alignItems: 'center', overflowX: 'auto' }}>
         {/* 添加账户余额显示 */}
-        <div className="account-balance" style={{ display: 'flex', alignItems: 'center', marginRight: 'auto', padding: '0 10px' }}>
+        {/* <div className="account-balance" style={{ display: 'flex', alignItems: 'center', marginRight: 'auto', padding: '0 10px' }}>
           <span style={{ fontWeight: 'bold', marginRight: '8px', color: '#8d8d8d', fontSize: '14px' }}>可用余额:</span>
           {loadingBalance ? (
             <span style={{ color: '#d9d9d9', fontSize: '14px' }}>加载中...</span>
@@ -315,16 +315,16 @@ const IndicatorDistributionPage: React.FC = () => {
           >
             ↻
           </button>
-        </div>
+        </div> */}
         <div className="action-buttons" style={{ display: 'flex', gap: '5px', marginLeft: 'auto', flexShrink: 0 }}>
-          <button
+          {/* <button
             className="refresh-btn"
             onClick={loadIndicatorDistributions}
             disabled={loading}
             style={{ padding: '0 10px', fontSize: '14px', whiteSpace: 'nowrap', height: buttonHeight }}
           >
             {loading ? '加载中...' : '刷新数据'}
-          </button>
+          </button> */}
           <button
             className="update-btn"
             onClick={handleUpdateDistributions}
