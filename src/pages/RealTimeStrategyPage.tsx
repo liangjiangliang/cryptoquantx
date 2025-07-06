@@ -276,7 +276,7 @@ const RealTimeStrategyPage: React.FC = () => {
                       <td>
                         <button
                           className="strategy-detail-btn"
-                          onClick={() => navigate(`/real-time-strategy-detail/${strategy.strategyCode}`)}
+                          onClick={() => navigate(`/real-time-strategy-detail/${strategy.id}`)}
                         >
                           详情
                         </button>

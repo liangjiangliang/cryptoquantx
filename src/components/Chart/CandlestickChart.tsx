@@ -399,15 +399,15 @@ const CandlestickChart: React.FC = () => {
           const currentCandle = candlestickData[dataIndex];
 
           // 调试日志，查看K线数据中的时间字段
-          console.log('当前K线数据:', {
-            index: dataIndex,
-            time: currentCandle.time,
-            closeTime: currentCandle.closeTime,
-            openTime: currentCandle.openTime,
-            hasOpenTime: !!currentCandle.openTime,
-            hasCloseTime: !!currentCandle.closeTime,
-            candleData: currentCandle
-          });
+          // console.log('当前K线数据:', {
+          //   index: dataIndex,
+          //   time: currentCandle.time,
+          //   closeTime: currentCandle.closeTime,
+          //   openTime: currentCandle.openTime,
+          //   hasOpenTime: !!currentCandle.openTime,
+          //   hasCloseTime: !!currentCandle.closeTime,
+          //   candleData: currentCandle
+          // });
 
           // 获取收盘时间 - 优先使用closeTime字段
           if (currentCandle.closeTime) {

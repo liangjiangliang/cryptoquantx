@@ -170,7 +170,7 @@ function App() {
                         <Route path="/batch-backtest" element={<BatchBacktestPage/>}/>
                         <Route path="/batch-backtest-detail/:batchId" element={<BatchBacktestDetailPage/>}/>
                         <Route path="/real-time-strategy" element={<RealTimeStrategyPage/>}/>
-                        <Route path="/real-time-strategy-detail/:strategyCode" element={<RealTimeStrategyDetailPage/>}/>
+                        <Route path="/real-time-strategy-detail/:id" element={<RealTimeStrategyDetailPage/>}/>
                         <Route path="/indicator-distribution" element={<IndicatorDistributionPage/>}/>
                         <Route path="/" element={<HomePage/>}/>
                     </Routes>

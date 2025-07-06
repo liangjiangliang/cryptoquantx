@@ -535,7 +535,7 @@ const BacktestDetailChart = forwardRef<{
           // 检查equityData的类型，可能是数字或对象
           if (typeof equityData === 'number') {
             hoveredInfo.equity = equityData; // 保存原始数值，在显示时再格式化
-            console.log('悬浮窗添加资金数据(数字):', equityData);
+            // console.log('悬浮窗添加资金数据(数字):', equityData);
           } else if (typeof equityData === 'object' && equityData !== null) {
             // 如果是对象，尝试获取value属性
             if ('value' in equityData) {

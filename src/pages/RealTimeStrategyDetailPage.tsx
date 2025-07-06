@@ -21,16 +21,25 @@ interface RealTimeOrder {
 }
 
 const RealTimeStrategyDetailPage: React.FC = () => {
-  const { strategyCode } = useParams<{ strategyCode: string }>();
+  const { id } = useParams<{ id: string }>();
   const [orders, setOrders] = useState<RealTimeOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!strategyCode) return;
+    if (!id) return;
     setLoading(true);
     setError('');
-    fetch(`/api/real-time-strategy/real-time/orders?strategyCode=${encodeURIComponent(strategyCode)}`)
+    
+    // 确保id是数字，如果不是数字则可能是策略代码
+    const strategyId = parseInt(id, 10);
+    if (isNaN(strategyId)) {
+      setError('无效的策略ID');
+      setLoading(false);
+      return;
+    }
+    
+    fetch(`/api/real-time-strategy/real-time/orders?id=${strategyId}`)
       .then(res => res.json())
       .then(data => {
         if (data.code === 200) {
@@ -41,7 +50,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
       })
       .catch(err => setError(err.message || '获取订单失败'))
       .finally(() => setLoading(false));
-  }, [strategyCode]);
+  }, [id]);
 
   const formatDateTime = (dateTimeStr: string): string => {
     if (!dateTimeStr) return '-';
