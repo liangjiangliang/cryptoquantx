@@ -163,6 +163,8 @@
 .status-error {
   background-color: #f44336;
   color: white;
+  cursor: help;
+  position: relative;
 }
 
 .status-unknown {

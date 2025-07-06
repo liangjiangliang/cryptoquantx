@@ -17,6 +17,7 @@ interface RealTimeStrategy {
   totalProfit?: number;
   totalFees?: number;
   totalTrades?: number;
+  message?: string;  // 错误信息字段，用于显示具体错误详情
 }
 
 const RealTimeStrategyPage: React.FC = () => {
@@ -297,7 +298,10 @@ const RealTimeStrategyPage: React.FC = () => {
                       <td>{formatDateTime(strategy.createTime)}</td>
                       <td>{formatDateTime(strategy.updateTime)}</td>
                       <td>
-                        <span className={`status-badge ${getStatusClass(strategy.status)}`}>
+                      <span 
+                          className={`status-badge ${getStatusClass(strategy.status)}`}
+                          title={strategy.status === 'ERROR' ? strategy.message || '未知错误' : ''}
+                        >
                           {strategy.status || 'UNKNOWN'}
                         </span>
                       </td>

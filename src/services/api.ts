@@ -1146,6 +1146,16 @@ export const copyRealTimeStrategy = async (strategyId: number): Promise<{ succes
         message: data.message || '策略复制成功'
       };
     } else {
+      // 检查是否为FastJSON序列化错误
+      const errorMsg = data.message || '';
+      if (errorMsg.includes('IllegalAccessException') || 
+          errorMsg.includes('FastJSON') || 
+          errorMsg.includes('cannot access')) {
+        return {
+          success: false,
+          message: '复制策略失败: 该策略包含无法序列化的组件，请联系管理员'
+        };
+      }
       return {
         success: false,
         message: data.message || '复制策略失败'
@@ -1153,9 +1163,19 @@ export const copyRealTimeStrategy = async (strategyId: number): Promise<{ succes
     }
   } catch (error) {
     console.error('复制策略失败:', error);
+    // 捕获特定的序列化错误
+    const errorMsg = error instanceof Error ? error.message : '复制策略请求发生错误';
+    if (errorMsg.includes('IllegalAccessException') || 
+        errorMsg.includes('FastJSON') || 
+        errorMsg.includes('cannot access')) {
+      return {
+        success: false,
+        message: '复制策略失败: 该策略包含无法序列化的组件，请联系管理员'
+      };
+    }
     return {
       success: false,
-      message: error instanceof Error ? error.message : '复制策略请求发生错误'
+      message: errorMsg
     };
   }
 };

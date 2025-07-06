@@ -120,7 +120,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
                 <th>成交金额</th>
                 <th>信号价格</th>
                 <th>手续费</th>
-                <th>手续费币种</th>
+                {/* <th>手续费币种</th> */}
                 <th>状态</th>
                 <th>收益</th>
                 <th>成交时间</th>
@@ -140,7 +140,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
                   <td>{formatAmount(order.executedAmount)}</td>
                   <td>{formatAmount(order.signalPrice)}</td>
                   <td>{formatAmount(order.fee)}</td>
-                  <td>{order.feeCurrency || '-'}</td>
+                  {/* <td>{order.feeCurrency || '-'}</td> */}
                   <td>{order.status}</td>
                   <td className={order.profit && order.profit >= 0 ? 'positive' : 'negative'}>{order.profit !== undefined ? formatAmount(order.profit) : '-'}</td>
                   <td>{formatDateTime(order.createTime)}</td>
