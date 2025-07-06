@@ -28,7 +28,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
   
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(50);  // 修改默认显示条数，确保显示全部数据
 
   useEffect(() => {
     if (!id) return;
@@ -43,7 +43,8 @@ const RealTimeStrategyDetailPage: React.FC = () => {
       return;
     }
     
-    fetch(`/api/real-time-strategy/real-time/orders?id=${strategyId}`)
+    // 添加时间戳参数，防止浏览器缓存
+    fetch(`/api/real-time-strategy/real-time/orders?id=${strategyId}&_t=${new Date().getTime()}`)
       .then(res => res.json())
       .then(data => {
         if (data.code === 200) {
@@ -195,7 +196,8 @@ const RealTimeStrategyDetailPage: React.FC = () => {
                   <option value={5}>5</option>
                   <option value={10}>10</option>
                   <option value={20}>20</option>
-                  <option value={50}>50</option>
+                  <option value={50} selected>50</option>
+                  <option value={100}>100</option>
                 </select>
                 条
               </div>

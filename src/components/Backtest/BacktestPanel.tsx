@@ -869,7 +869,7 @@ const BacktestPanel: React.FC = () => {
                               >
                                 <span className="strategy-item-name">{strategyData.name}</span>
                               </div>
-                            ))}
+                  ))}
                           </div>
                         ) : (
                           <div className="no-results">无匹配结果</div>
