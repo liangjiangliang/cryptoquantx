@@ -296,7 +296,7 @@ const RealTimeStrategyPage: React.FC = () => {
                       <td className={strategy.totalProfitRate && strategy.totalProfitRate >= 0 ? 'positive' : 'negative'}>
                         {strategy.totalProfitRate ? `${(strategy.totalProfitRate * 100).toFixed(2)}%` : '0.00%'}
                       </td>
-                      <td className={strategy.totalFees && strategy.totalFees >= 0 ? 'positive' : 'negative'}>
+                      <td>
                         {formatAmount(strategy.totalFees)}
                       </td>
                       <td>{strategy.totalTrades || 0}</td>

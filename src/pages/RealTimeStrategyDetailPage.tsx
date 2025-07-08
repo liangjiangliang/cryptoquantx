@@ -120,12 +120,15 @@ const RealTimeStrategyDetailPage: React.FC = () => {
                 <th>成交价格</th>
                 <th>成交数量</th>
                 <th>成交金额</th>
-                <th>利润率</th>
-                <th>信号价格</th>
                 <th>手续费</th>
+                <th>利润</th>
+                <th>利润率</th>
+        
+                <th>信号价格</th>
+           
                 {/* <th>手续费币种</th> */}
                 <th>状态</th>
-                <th>收益</th>
+           
                 <th>成交时间</th>
                 {/* <th>更新时间</th> */}
               </tr>
@@ -141,14 +144,17 @@ const RealTimeStrategyDetailPage: React.FC = () => {
                   <td>{formatAmount(order.price)}</td>
                   <td>{formatAmount(order.executedQty)}</td>
                   <td>{formatAmount(order.executedAmount)}</td>
-                  <td className={order.profitRate && order.profitRate >= 0 ? 'profit-positive' : 'profit-negative'}>
-                    {order.profitRate !== undefined ? `${(order.profitRate * 100).toFixed(2)}%` : '-'}
-                  </td>
-                  <td>{formatAmount(order.signalPrice)}</td>
                   <td>{formatAmount(order.fee)}</td>
+                  <td className={order.profit && order.profit >= 0 ? 'profit-positive' : 'profit-negative'}>{order.profit !== undefined ? formatAmount(order.profit) : '-'}</td>
+                  <td className={order.profitRate && order.profitRate >= 0 ? 'profit-positive' : 'profit-negative'}>
+                    {order.side?.toLowerCase() === 'buy' ? '-' : (order.profitRate !== undefined ? `${(order.profitRate * 100).toFixed(2)}%` : '-')}
+                  </td>
+               
+                  <td>{formatAmount(order.signalPrice)}</td>
+               
                   {/* <td>{order.feeCurrency || '-'}</td> */}
                   <td>{order.status}</td>
-                  <td className={order.profit && order.profit >= 0 ? 'profit-positive' : 'profit-negative'}>{order.profit !== undefined ? formatAmount(order.profit) : '-'}</td>
+          
                   <td>{formatDateTime(order.createTime)}</td>
                   {/* <td>{formatDateTime(order.updateTime)}</td> */}
                 </tr>

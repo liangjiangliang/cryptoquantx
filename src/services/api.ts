@@ -1168,8 +1168,8 @@ export const copyRealTimeStrategy = async (strategyId: number): Promise<{ succes
     if (errorMsg.includes('IllegalAccessException') || 
         errorMsg.includes('FastJSON') || 
         errorMsg.includes('cannot access')) {
-      return {
-        success: false,
+    return {
+      success: false,
         message: '复制策略失败: 该策略包含无法序列化的组件，请联系管理员'
       };
     }
