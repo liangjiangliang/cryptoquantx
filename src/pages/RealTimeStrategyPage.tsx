@@ -17,6 +17,7 @@ interface RealTimeStrategy {
   totalProfit?: number;
   totalFees?: number;
   totalTrades?: number;
+  totalProfitRate?: number;
   message?: string;  // 错误信息字段，用于显示具体错误详情
 }
 
@@ -30,7 +31,7 @@ const RealTimeStrategyPage: React.FC = () => {
 
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(26);
 
   // 添加确认对话框状态
   const [confirmModal, setConfirmModal] = useState({
@@ -270,6 +271,7 @@ const RealTimeStrategyPage: React.FC = () => {
                     <th>投资金额</th>
 
                     <th>总收益</th>
+                    <th>利润率</th>
                     <th>总佣金</th>
                     <th>交易次数</th>
                     <th>创建时间</th>
@@ -290,6 +292,9 @@ const RealTimeStrategyPage: React.FC = () => {
 
                       <td className={strategy.totalProfit && strategy.totalProfit >= 0 ? 'positive' : 'negative'}>
                         {formatAmount(strategy.totalProfit)}
+                      </td>
+                      <td className={strategy.totalProfitRate && strategy.totalProfitRate >= 0 ? 'positive' : 'negative'}>
+                        {strategy.totalProfitRate ? `${(strategy.totalProfitRate * 100).toFixed(2)}%` : '0.00%'}
                       </td>
                       <td className={strategy.totalFees && strategy.totalFees >= 0 ? 'positive' : 'negative'}>
                         {formatAmount(strategy.totalFees)}

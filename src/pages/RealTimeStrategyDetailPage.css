@@ -168,4 +168,13 @@
   border: 1px solid #3a4157;
   border-radius: 4px;
   font-size: 14px;
+}
+
+/* 红涨绿跌样式 */
+.profit-positive {
+  color: #ff4d4f; /* 红色 - 正值(涨) */
+}
+
+.profit-negative {
+  color: #52c41a; /* 绿色 - 负值(跌) */
 } 
