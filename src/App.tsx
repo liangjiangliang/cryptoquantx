@@ -33,7 +33,7 @@ const StagewiseToolbar = lazy(async () => {
     return React.createElement(toolbarModule.StagewiseToolbar, {
       ...props,
       config: {
-        plugins: [pluginModule.ReactPlugin]
+        plugins: [pluginModule.default || pluginModule]
       }
     });
   };
