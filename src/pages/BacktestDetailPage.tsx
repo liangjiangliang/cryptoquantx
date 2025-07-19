@@ -593,7 +593,7 @@ const BacktestDetailPage: React.FC = () => {
                       <td>{formatAmount(trade.exitAmount || 0)}</td>
                       <td>{formatAmount(trade.fee || 0)}</td>
                       <td className={trade.profit >= 0 ? 'positive' : 'negative'}>{formatAmount(trade.profit)}</td>
-                      <td className={trade.profitPercentage >= 0 ? 'positive' : 'negative'}>{formatPercentage(trade.profitPercentage)}</td>
+                      <td className={trade.profitPercentage >= 0 ? 'positive' : 'negative'}>{formatPercentage(trade.profitPercentage*100)}</td>
                       <td>{trade.periods || '-'}</td>
                       <td>{formatPercentage((trade.profitPercentagePerPeriod || 0))}</td>
                       <td>{formatAmount(trade.totalAssets || 0)}</td>
