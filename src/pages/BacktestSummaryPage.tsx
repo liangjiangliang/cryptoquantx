@@ -17,7 +17,10 @@ const INDICATOR_DESCRIPTIONS = {
   calmarRatio: `卡玛比率：年化收益率与最大回撤的比值\n• **判断标准**：数值越高越好，>1为良好，>2为优秀\n• **主要作用**：评估策略在控制回撤风险下的盈利效率`,
   sortinoRatio: `索提诺比率：类似夏普比率，但只考虑下行风险\n• **判断标准**：数值越高越好，>1为良好，>2为优秀\n• **适用场景**：更适合评估不对称收益分布的策略\n• **主要作用**：关注负收益的波动性评估`,
   averageProfit: `平均收益：每笔交易的平均盈利金额\n• **判断标准**：数值越高越好，正值表示平均盈利，负值表示平均亏损\n• **主要作用**：评估策略的交易质量和资金使用效率`,
+  winRate: `胜率：盈利交易占总交易次数的比例\n• **判断标准**：数值越高越好，通常60%以上为良好\n• **主要作用**：评估策略的稳定性和准确性`,
   maximumLoss: `最大损失：单笔交易的最大亏损金额\n• **判断标准**：绝对值越小越好\n• **风险意义**：反映策略的风险控制和止损能力\n• **主要作用**：评估策略的极端风险暴露`,
+  maxDrawdownPeriod: `价格最大回撤：每笔交易期间收盘价从峰值到谷值的最大跌幅\n• **判断标准**：数值越小越好\n• **风险意义**：反映单笔交易的价格风险暴露\n• **主要作用**：评估交易期间的价格波动风险`,
+  maximumLossPeriod: `价格最大损失：每笔交易期间收盘价与入场价的最大损失比例\n• **判断标准**：数值越小越好\n• **风险意义**：反映相对入场价的最大潜在亏损\n• **主要作用**：评估交易止损点设置的有效性`,
   alpha: `Alpha系数：衡量投资组合相对于基准的超额收益能力\n• **判断标准**：数值越高越好\n• **数值含义**：正值表示跑赢基准，负值表示跑输基准\n• **主要作用**：评估策略相对市场的增值能力`,
   beta: `Beta系数：衡量投资组合相对于市场的系统性风险\n• **数值含义**：1表示与市场同步，>1表示波动更大，<1表示波动较小，0表示无相关性\n• **主要作用**：评估策略的市场敏感度和系统性风险暴露`,
   omega: `Omega比率：收益概率加权平均与损失概率加权平均的比值\n• **判断标准**：数值越高越好，>1表示盈利概率大于亏损概率\n• **优势特点**：综合考虑收益分布的所有信息\n• **主要作用**：全面评估策略的风险收益特征`,
@@ -73,6 +76,8 @@ type SortField =
   | 'profitableTrades'
   | 'unprofitableTrades'
   | 'maximumLoss'
+  | 'maxDrawdownPeriod'
+  | 'maximumLossPeriod'
   | 'alpha'
   | 'beta'
   | 'omega'
@@ -464,6 +469,14 @@ const BacktestSummaryPage: React.FC = () => {
           valueA = a.maximumLoss || 0;
           valueB = b.maximumLoss || 0;
           break;
+        case 'maxDrawdownPeriod':
+          valueA = a.maxDrawdownPeriod || 0;
+          valueB = b.maxDrawdownPeriod || 0;
+          break;
+        case 'maximumLossPeriod':
+          valueA = a.maximumLossPeriod || 0;
+          valueB = b.maximumLossPeriod || 0;
+          break;
         case 'alpha':
           valueA = a.alpha || 0;
           valueB = b.alpha || 0;
@@ -656,6 +669,8 @@ const BacktestSummaryPage: React.FC = () => {
         profitableTrades: Math.round(items.reduce((sum, item) => sum + item.profitableTrades, 0) / count),
         unprofitableTrades: Math.round(items.reduce((sum, item) => sum + item.unprofitableTrades, 0) / count),
         maximumLoss: items.reduce((sum, item) => sum + (item.maximumLoss || 0), 0) / count,
+        maxDrawdownPeriod: items.reduce((sum, item) => sum + (item.maxDrawdownPeriod || 0), 0) / count,
+        maximumLossPeriod: items.reduce((sum, item) => sum + (item.maximumLossPeriod || 0), 0) / count,
       };
 
       // 根据聚合维度设置显示名称
@@ -863,9 +878,36 @@ const BacktestSummaryPage: React.FC = () => {
                 </th>
                 <th onClick={() => handleSort('winRate')} className="sortable-header">
                   胜率 {renderSortIcon('winRate')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('winRate', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('maxDrawdownPeriod')} className="sortable-header">
+                  价格最大回撤 {renderSortIcon('maxDrawdownPeriod')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('maxDrawdown', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
+                </th>
+                <th onClick={() => handleSort('maximumLossPeriod')} className="sortable-header">
+                  价格最大损失 {renderSortIcon('maximumLossPeriod')}
+                  <span
+                    className="info-icon"
+                    onClick={(e) => { e.stopPropagation(); showTooltip('maximumLoss', e); }}
+                    onMouseLeave={hideTooltip}
+                  >
+                    ⓘ
+                  </span>
                 </th>
                 <th onClick={() => handleSort('maxDrawdown')} className="sortable-header">
-                  最大回撤 {renderSortIcon('maxDrawdown')}
+                  资金最大回撤 {renderSortIcon('maxDrawdown')}
                   <span
                     className="info-icon"
                     onClick={(e) => { e.stopPropagation(); showTooltip('maxDrawdown', e); }}
@@ -875,7 +917,7 @@ const BacktestSummaryPage: React.FC = () => {
                   </span>
                 </th>
                 <th onClick={() => handleSort('maximumLoss')} className="sortable-header">
-                  最大损失 {renderSortIcon('maximumLoss')}
+                  资金最大损失 {renderSortIcon('maximumLoss')}
                   <span
                     className="info-icon"
                     onClick={(e) => { e.stopPropagation(); showTooltip('maximumLoss', e); }}
@@ -884,6 +926,7 @@ const BacktestSummaryPage: React.FC = () => {
                     ⓘ
                   </span>
                 </th>
+
                 <th onClick={() => handleSort('sharpeRatio')} className="sortable-header">
                   夏普比率 {renderSortIcon('sharpeRatio')}
                   <span
@@ -1178,8 +1221,10 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{((summary.totalFee / summary.initialAmount) * 100).toFixed(2)}%</td>
                   <td>{summary.numberOfTrades}</td>
                   <td>{(summary.averageProfit * 100).toFixed(2)}%</td>
-                  <td>{(summary.winRate * 100).toFixed(2)}%</td>
-                  <td>{(summary.maxDrawdown * 100).toFixed(2)}%</td>
+                  <td>{summary.winRate ? formatPercentage(summary.winRate * 100) : '-'} </td>
+                  <td>{summary.maxDrawdownPeriod ? formatPercentage(Number(summary.maxDrawdownPeriod) * 100) : '-'}</td>
+                  <td>{summary.maximumLossPeriod ? formatPercentage(Number(summary.maximumLossPeriod) * 100) : '-'}</td>
+                  <td>{summary.maxDrawdown ? formatPercentage(summary.maxDrawdown * 100) : '-'}</td>
                   <td>{summary.maximumLoss ? (summary.maximumLoss * 100).toFixed(2) + '%' : '-'}</td>
                   <td>{summary.sharpeRatio.toFixed(2)}</td>
                   <td>{summary.calmarRatio ? summary.calmarRatio.toFixed(2) : '-'}</td>

@@ -25,7 +25,7 @@ const strategyNameMap: Record<string, string> = {
 const TRADES_PER_PAGE = 14;
 
 // 排序类型
-type SortField = 'type' | 'entryTime' | 'entryPrice' | 'entryAmount' | 'exitTime' | 'exitPrice' | 'exitAmount' | 'fee' | 'profit' | 'profitPercentage' | 'periods' | 'profitPercentagePerPeriod' | 'totalAssets' | 'maxDrawdown' | 'maxLoss' | null;
+type SortField = 'type' | 'entryTime' | 'entryPrice' | 'entryAmount' | 'exitTime' | 'exitPrice' | 'exitAmount' | 'fee' | 'profit' | 'profitPercentage' | 'periods' | 'profitPercentagePerPeriod' | 'totalAssets' | 'maxDrawdown' | 'maxLoss' | 'maxDrawdownPeriod' | 'maxLossPeriod' | null;
 type SortOrder = 'asc' | 'desc';
 
 const BacktestDetailPage: React.FC = () => {
@@ -262,6 +262,16 @@ const BacktestDetailPage: React.FC = () => {
           case 'maxLoss':
             aValue = a.maxLoss || 0;
             bValue = b.maxLoss || 0;
+            break;
+
+          case 'maxDrawdownPeriod':
+            aValue = a.maxDrawdownPeriod || 0;
+            bValue = b.maxDrawdownPeriod || 0;
+            break;
+
+          case 'maxLossPeriod':
+            aValue = a.maxLossPeriod || 0;
+            bValue = b.maxLossPeriod || 0;
             break;
 
           default:
@@ -554,12 +564,19 @@ const BacktestDetailPage: React.FC = () => {
                   <th onClick={() => handleSort('totalAssets')} style={{ cursor: 'pointer' }}>
                     总资产 {getSortIcon('totalAssets')}
                   </th>
+                  <th onClick={() => handleSort('maxDrawdownPeriod')} style={{ cursor: 'pointer' }}>
+                    价格最大回撤 {getSortIcon('maxDrawdownPeriod')}
+                  </th>
+                  <th onClick={() => handleSort('maxLossPeriod')} style={{ cursor: 'pointer' }}>
+                    价格最大损失 {getSortIcon('maxLossPeriod')}
+                  </th>
                   <th onClick={() => handleSort('maxDrawdown')} style={{ cursor: 'pointer' }}>
                     资金最大回撤 {getSortIcon('maxDrawdown')}
                   </th>
                   <th onClick={() => handleSort('maxLoss')} style={{ cursor: 'pointer' }}>
                     资金最大损失 {getSortIcon('maxLoss')}
                   </th>
+
                 </tr>
               </thead>
               <tbody>
@@ -597,6 +614,8 @@ const BacktestDetailPage: React.FC = () => {
                       <td>{trade.periods || '-'}</td>
                       <td>{formatPercentage((trade.profitPercentagePerPeriod || 0))}</td>
                       <td>{formatAmount(trade.totalAssets || 0)}</td>
+                      <td>{formatPercentage((trade.maxDrawdownPeriod || 0) * 100)}</td>
+                      <td>{formatPercentage((trade.maxLossPeriod || 0) * 100)}</td>
                       <td>{formatPercentage((trade.maxDrawdown || 0) * 100)}</td>
                       <td>{trade.maxLoss ? formatPercentage(trade.maxLoss * 100) : '-'}</td>
                     </tr>

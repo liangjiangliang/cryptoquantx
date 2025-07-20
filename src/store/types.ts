@@ -22,6 +22,8 @@ export interface BacktestSummary {
   initialAmount: number;
   intervalVal: string;
   maxDrawdown: number;
+  maxDrawdownPeriod?: number; // 价格最大回撤
+  maximumLossPeriod?: number; // 价格最大损失
   numberOfTrades: number;
   profitableTrades: number;
   sharpeRatio: number;
@@ -185,6 +187,8 @@ export interface BacktestTradeDetail {
   index: number;
   maxDrawdown: number;
   maxLoss?: number; // 最大损失
+  maxDrawdownPeriod?: number; // 价格最大回撤
+  maxLossPeriod?: number; // 价格最大损失
   profit: number;
   profitPercentage: number;
   remark: string | null;
