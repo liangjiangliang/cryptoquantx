@@ -118,7 +118,7 @@ const BacktestDetailPage: React.FC = () => {
 
       // 解析参数字符串为对象
       const params = JSON.parse(paramsStr);
-      
+
       // 返回参数值，用逗号拼接
       return Object.values(params).join(', ');
     } catch (err) {
@@ -139,8 +139,8 @@ const BacktestDetailPage: React.FC = () => {
     // 将日期时间格式化为更紧凑的形式：YYYY-MM-DD
     if (!dateTimeStr) return '';
     const date = new Date(dateTimeStr);
-    return date.getFullYear() + '-' + 
-           String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+    return date.getFullYear() + '-' +
+           String(date.getMonth() + 1).padStart(2, '0') + '-' +
            String(date.getDate()).padStart(2, '0');
   };
 
@@ -188,82 +188,82 @@ const BacktestDetailPage: React.FC = () => {
             aValue = a.type || '';
             bValue = b.type || '';
             // 字符串比较需要特殊处理
-            return sortOrder === 'asc' 
-              ? aValue.localeCompare(bValue) 
+            return sortOrder === 'asc'
+              ? aValue.localeCompare(bValue)
               : bValue.localeCompare(aValue);
-          
+
           case 'entryTime':
             aValue = a.entryTime ? new Date(a.entryTime).getTime() : 0;
             bValue = b.entryTime ? new Date(b.entryTime).getTime() : 0;
             break;
-          
+
           case 'entryPrice':
             aValue = a.entryPrice || 0;
             bValue = b.entryPrice || 0;
             break;
-          
+
           case 'entryAmount':
             aValue = a.entryAmount || 0;
             bValue = b.entryAmount || 0;
             break;
-          
+
           case 'exitTime':
             aValue = a.exitTime ? new Date(a.exitTime).getTime() : 0;
             bValue = b.exitTime ? new Date(b.exitTime).getTime() : 0;
             break;
-          
+
           case 'exitPrice':
             aValue = a.exitPrice || 0;
             bValue = b.exitPrice || 0;
             break;
-          
+
           case 'exitAmount':
             aValue = a.exitAmount || 0;
             bValue = b.exitAmount || 0;
             break;
-          
+
           case 'fee':
             aValue = a.fee || 0;
             bValue = b.fee || 0;
             break;
-          
+
           case 'profit':
             aValue = ((a.exitAmount || 0) - (a.entryAmount || 0) - (a.fee || 0));
             bValue = ((b.exitAmount || 0) - (b.entryAmount || 0) - (b.fee || 0));
             break;
-          
+
           case 'profitPercentage':
             const aProfit = ((a.exitAmount || 0) - (a.entryAmount || 0) - (a.fee || 0));
             const bProfit = ((b.exitAmount || 0) - (b.entryAmount || 0) - (b.fee || 0));
             aValue = a.entryAmount ? (aProfit / a.entryAmount) * 100 : 0;
             bValue = b.entryAmount ? (bProfit / b.entryAmount) * 100 : 0;
             break;
-          
+
           case 'periods':
             aValue = a.periods || 0;
             bValue = b.periods || 0;
             break;
-          
+
           case 'profitPercentagePerPeriod':
             aValue = a.profitPercentagePerPeriod || 0;
             bValue = b.profitPercentagePerPeriod || 0;
             break;
-          
+
           case 'totalAssets':
             aValue = a.totalAssets || 0;
             bValue = b.totalAssets || 0;
             break;
-          
+
           case 'maxDrawdown':
             aValue = a.maxDrawdown || 0;
             bValue = b.maxDrawdown || 0;
             break;
-          
+
           case 'maxLoss':
             aValue = a.maxLoss || 0;
             bValue = b.maxLoss || 0;
             break;
-          
+
           default:
             return 0; // 默认不排序
         }
@@ -295,7 +295,7 @@ const BacktestDetailPage: React.FC = () => {
   const handleTradeRowClick = (trade: BacktestTradeDetail, index: number) => {
     // 设置选中的交易行索引
     setSelectedTradeIndex(index);
-    
+
     // 如果图表组件提供了引用，可以调用其方法高亮时间范围
     if (chartRef.current && trade.entryTime) {
       // 使用entryTime字段来高亮单个K线，而不是时间范围
@@ -348,15 +348,15 @@ const BacktestDetailPage: React.FC = () => {
               </div>
               {/* 回测指标按钮 */}
               {backtestSummary && (
-                <button 
-                  style={{ 
-                    backgroundColor: isMetricsCollapsed ? '#2a2e39' : '#4caf50', 
-                    color: '#b0b0b0', 
-                    border: 'none', 
-                    borderRadius: '6px', 
-                    padding: '6px 12px', 
-                    fontSize: '13px', 
-                    fontWeight: 500, 
+                <button
+                  style={{
+                    backgroundColor: isMetricsCollapsed ? '#2a2e39' : '#4caf50',
+                    color: '#b0b0b0',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    fontWeight: 500,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -383,7 +383,7 @@ const BacktestDetailPage: React.FC = () => {
           {/* 回测指标展示区域 */}
           {backtestSummary && !isMetricsCollapsed && (
             <div className="backtest-metrics" style={{ backgroundColor: '#1e222d', borderRadius: '8px', padding: '15px', marginBottom: '15px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' }}>
-              
+
               {/* 指标内容区域 */}
               <div className="metrics-content">
                   {/* 基础收益指标 */}
@@ -555,10 +555,10 @@ const BacktestDetailPage: React.FC = () => {
                     总资产 {getSortIcon('totalAssets')}
                   </th>
                   <th onClick={() => handleSort('maxDrawdown')} style={{ cursor: 'pointer' }}>
-                    最大回撤 {getSortIcon('maxDrawdown')}
+                    资金最大回撤 {getSortIcon('maxDrawdown')}
                   </th>
                   <th onClick={() => handleSort('maxLoss')} style={{ cursor: 'pointer' }}>
-                    最大损失 {getSortIcon('maxLoss')}
+                    资金最大损失 {getSortIcon('maxLoss')}
                   </th>
                 </tr>
               </thead>
@@ -572,12 +572,12 @@ const BacktestDetailPage: React.FC = () => {
                       </tr>
                     );
                   }
-                  
+
                   const actualIndex = (currentPage - 1) * TRADES_PER_PAGE + index + 1;
                   const isSelected = selectedTradeIndex === index;
-                  
+
                   return (
-                    <tr 
+                    <tr
                       key={index}
                       onClick={() => handleTradeRowClick(trade, index)}
                       className={isSelected ? 'selected-trade-row' : ''}
@@ -609,30 +609,30 @@ const BacktestDetailPage: React.FC = () => {
           {/* 分页控件 */}
           {getTotalPages() > 1 && (
             <div className="pagination">
-              <button 
-                onClick={() => handlePageChange(1)} 
+              <button
+                onClick={() => handlePageChange(1)}
                 disabled={currentPage === 1}
                 className="pagination-button"
               >
                 首页
               </button>
-              <button 
-                onClick={() => handlePageChange(currentPage - 1)} 
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className="pagination-button"
               >
                 上一页
               </button>
               <span className="page-info">{currentPage} / {getTotalPages()}</span>
-              <button 
-                onClick={() => handlePageChange(currentPage + 1)} 
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === getTotalPages()}
                 className="pagination-button"
               >
                 下一页
               </button>
-              <button 
-                onClick={() => handlePageChange(getTotalPages())} 
+              <button
+                onClick={() => handlePageChange(getTotalPages())}
                 disabled={currentPage === getTotalPages()}
                 className="pagination-button"
               >
