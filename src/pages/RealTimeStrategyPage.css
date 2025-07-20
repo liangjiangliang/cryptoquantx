@@ -431,3 +431,119 @@
   border-radius: 4px;
   font-size: 14px;
 } 
+
+/* 刷新按钮 */
+.refresh-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+/* 标题和刷新按钮在同一行 */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #2a2e39;
+}
+
+/* 刷新容器 */
+.refresh-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+/* 刷新成功提示 */
+.refresh-success-message {
+  position: absolute;
+  right: 110%; /* 放在按钮左侧 */
+  background-color: #4caf50;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  white-space: nowrap;
+}
+
+.refresh-button {
+  background-color: #1976d2; /* 蓝色背景 */
+  color: #ffffff; /* 白色文字 */
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.refresh-button:hover {
+  background-color: #1565c0; /* 深蓝色 */
+}
+
+.refresh-button:disabled {
+  background-color: #64b5f6; /* 浅蓝色 */
+  color: #e1f5fe;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 区块标题 */
+.section-title {
+  color: #b0b0b0;
+  font-size: 18px;
+  margin: 0;
+}
+
+/* 持仓策略行样式 */
+.holding-strategy-row {
+  background-color: rgba(76, 175, 80, 0.1) !important; /* 轻微的绿色背景 */
+  border-left: 3px solid #4caf50 !important; /* 左侧绿色边框 */
+}
+
+.holding-strategy-row:hover {
+  background-color: rgba(76, 175, 80, 0.15) !important; /* 悬停时稍微加深 */
+}
+
+/* 持仓状态标签 */
+.holding-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.no-position-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background-color: #2a2e39;
+  color: #8d8d8d;
+  font-size: 12px;
+}
+
+/* 正负值颜色 */
+.positive {
+  color: #4caf50 !important;
+}
+
+.negative {
+  color: #f44336 !important;
+}
+
+/* 策略列表容器 */
+.strategies-container {
+  background-color: #1e222d;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+} 

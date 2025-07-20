@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { startRealTimeStrategy, stopRealTimeStrategy, deleteRealTimeStrategy, copyRealTimeStrategy } from '../services/api';
+import { startRealTimeStrategy, stopRealTimeStrategy, deleteRealTimeStrategy, copyRealTimeStrategy, fetchHoldingPositionsProfits } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import './RealTimeStrategyPage.css';
 
@@ -19,15 +19,30 @@ interface RealTimeStrategy {
   totalTrades?: number;
   totalProfitRate?: number;
   message?: string;  // 错误信息字段，用于显示具体错误详情
+  // 持仓预估收益相关字段
+  currentPrice?: number | string;
+  quantity?: number | string;
+  currentValue?: number | string;
+  estimatedProfit?: number | string;
+  profitPercentage?: string;
+  holdingDuration?: string;
+  entryPrice?: number;
+  entryTime?: string;
+  isHolding?: boolean; // 标记是否持有仓位
 }
 
 const RealTimeStrategyPage: React.FC = () => {
   const [strategies, setStrategies] = useState<RealTimeStrategy[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // 分离初始加载状态和数据刷新状态
+  const [initialLoading, setInitialLoading] = useState<boolean>(true); // 初始加载状态
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false); // 刷新状态
   const [error, setError] = useState<string>('');
   const [errorModalOpen, setErrorModalOpen] = useState<boolean>(false);
   const [operationInProgress, setOperationInProgress] = useState<{[key: string]: boolean}>({});
   const navigate = useNavigate();
+  
+  // 使用ref来存储最后一次成功获取的数据，用于在刷新失败时保持原有数据
+  const lastSuccessfulStrategiesRef = useRef<RealTimeStrategy[]>([]);
 
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,10 +56,7 @@ const RealTimeStrategyPage: React.FC = () => {
   });
 
   // 获取实盘策略列表
-  const fetchRealTimeStrategies = async () => {
-    setLoading(true);
-    setError('');
-
+  const fetchRealTimeStrategies = useCallback(async () => {
     try {
       const response = await fetch('/api/real-time-strategy/list');
 
@@ -56,24 +68,130 @@ const RealTimeStrategyPage: React.FC = () => {
       console.log('实盘策略API返回数据:', data);
 
       if (data.code === 200) {
-        setStrategies(data.data || []);
+        return data.data || [];
       } else {
         setError(data.message || '获取实盘策略失败');
         setErrorModalOpen(true);
+        return [];
       }
     } catch (error) {
       console.error('获取实盘策略失败:', error);
       setError(error instanceof Error ? error.message : '获取实盘策略失败');
       setErrorModalOpen(true);
-    } finally {
-      setLoading(false);
+      return [];
     }
+  }, []);
+
+  // 获取持仓策略预估收益信息
+  const fetchHoldingPositionsData = useCallback(async (currentStrategies: RealTimeStrategy[]) => {
+    try {
+      const result = await fetchHoldingPositionsProfits();
+      if (result.success && result.data) {
+        // 将持仓信息与策略列表整合
+        if (currentStrategies.length > 0 && result.data) {
+          const updatedStrategies = currentStrategies.map(strategy => {
+            // 查找对应的持仓信息
+            const holdingInfo = result.data?.find(holding => holding.strategyId === strategy.id);
+            
+            if (holdingInfo) {
+              // 如果找到持仓信息，将其整合到策略对象中
+              return {
+                ...strategy,
+                currentPrice: holdingInfo.currentPrice,
+                quantity: holdingInfo.quantity,
+                currentValue: holdingInfo.currentValue,
+                estimatedProfit: holdingInfo.estimatedProfit,
+                profitPercentage: holdingInfo.profitPercentage,
+                holdingDuration: holdingInfo.holdingDuration,
+                entryPrice: holdingInfo.entryPrice,
+                entryTime: holdingInfo.entryTime,
+                isHolding: true
+              };
+            }
+            
+            return { ...strategy, isHolding: false };
+          });
+          
+          return updatedStrategies;
+        }
+      } else {
+        console.error('获取持仓策略预估收益失败:', result.message);
+      }
+      return currentStrategies;
+    } catch (error) {
+      console.error('获取持仓策略预估收益异常:', error);
+      return currentStrategies;
+    }
+  }, []);
+
+  // 初始加载数据
+  const initialLoadData = useCallback(async () => {
+    setInitialLoading(true);
+    try {
+      // 先获取策略列表
+      const strategiesList = await fetchRealTimeStrategies();
+      
+      // 然后获取持仓信息并整合
+      const updatedStrategies = await fetchHoldingPositionsData(strategiesList);
+      
+      // 更新状态和引用
+      setStrategies(updatedStrategies);
+      lastSuccessfulStrategiesRef.current = updatedStrategies;
+    } catch (error) {
+      console.error('初始加载数据失败:', error);
+    } finally {
+      setInitialLoading(false);
+    }
+  }, [fetchRealTimeStrategies, fetchHoldingPositionsData]);
+
+  // 刷新数据 - 只更新数据，不影响页面状态
+  const refreshData = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      // 先获取策略列表
+      const strategiesList = await fetchRealTimeStrategies();
+      
+      // 然后获取持仓信息并整合
+      const updatedStrategies = await fetchHoldingPositionsData(strategiesList);
+      
+      // 更新状态和引用
+      setStrategies(updatedStrategies);
+      lastSuccessfulStrategiesRef.current = updatedStrategies;
+      
+      // 显示成功提示
+      const refreshSuccessMessage = document.getElementById('refresh-success-message');
+      if (refreshSuccessMessage) {
+        refreshSuccessMessage.style.opacity = '1';
+        setTimeout(() => {
+          refreshSuccessMessage.style.opacity = '0';
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('刷新数据失败:', error);
+      // 如果刷新失败，保持使用最后一次成功获取的数据
+      setStrategies(lastSuccessfulStrategiesRef.current);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [fetchRealTimeStrategies, fetchHoldingPositionsData]);
+
+  // 刷新按钮点击处理
+  const handleRefresh = () => {
+    refreshData();
   };
 
   // 页面加载时获取数据
   useEffect(() => {
-    fetchRealTimeStrategies();
-  }, []);
+    initialLoadData();
+    
+    // 设置定时刷新 - 每60秒刷新一次数据
+    const intervalId = setInterval(() => {
+      refreshData();
+    }, 60000);
+    
+    // 清理函数
+    return () => clearInterval(intervalId);
+  }, [initialLoadData, refreshData]); 
 
   // 格式化时间
   const formatDateTime = (dateTimeStr: string): string => {
@@ -113,11 +231,6 @@ const RealTimeStrategyPage: React.FC = () => {
     }
   };
 
-  // 刷新数据
-  const handleRefresh = () => {
-    fetchRealTimeStrategies();
-  };
-
   // 启动策略
   const handleStartStrategy = async (strategyId: number) => {
     setOperationInProgress({...operationInProgress, [strategyId]: true});
@@ -125,7 +238,7 @@ const RealTimeStrategyPage: React.FC = () => {
       const result = await startRealTimeStrategy(strategyId);
       if (result.success) {
         // 刷新策略列表
-        fetchRealTimeStrategies();
+        refreshData();
       } else {
         setError(result.message || '启动策略失败');
         setErrorModalOpen(true);
@@ -146,7 +259,7 @@ const RealTimeStrategyPage: React.FC = () => {
       const result = await stopRealTimeStrategy(strategyId);
       if (result.success) {
         // 刷新策略列表
-        fetchRealTimeStrategies();
+        refreshData();
       } else {
         setError(result.message || '停止策略失败');
         setErrorModalOpen(true);
@@ -167,7 +280,7 @@ const RealTimeStrategyPage: React.FC = () => {
       const result = await deleteRealTimeStrategy(strategyId);
       if (result.success) {
         // 刷新策略列表
-        fetchRealTimeStrategies();
+        refreshData();
       } else {
         setError(result.message || '删除策略失败');
         setErrorModalOpen(true);
@@ -188,7 +301,7 @@ const RealTimeStrategyPage: React.FC = () => {
       const result = await copyRealTimeStrategy(strategyId);
       if (result.success) {
         // 刷新策略列表
-        fetchRealTimeStrategies();
+        refreshData();
       } else {
         setError(result.message || '复制策略失败');
         setErrorModalOpen(true);
@@ -245,14 +358,32 @@ const RealTimeStrategyPage: React.FC = () => {
 
   return (
     <div className="real-time-strategy-page">
-      {/* 错误信息现在通过弹窗展示，不再使用内嵌的错误提示 */}
-      {loading ? (
+      {/* 原有的实盘策略列表 */}
+      {initialLoading ? (
         <div className="loading-container">
           <div className="loading-spinner"></div>
           <p>正在加载实盘策略数据...</p>
         </div>
       ) : (
         <div className="strategies-container">
+          {/* 标题和刷新按钮放在同一行 */}
+          <div className="header-row">
+            <h2 className="section-title">实盘策略列表</h2>
+            <div className="refresh-container">
+              {/* 刷新成功提示 */}
+              {/* <div id="refresh-success-message" className="refresh-success-message">
+                数据已更新
+              </div> */}
+              <button 
+                className="refresh-button" 
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? '刷新中...' : '刷新数据'}
+              </button>
+            </div>
+          </div>
+
           {strategies.length === 0 ? (
             <div className="empty-state">
               <p>暂无实盘策略数据</p>
@@ -265,15 +396,18 @@ const RealTimeStrategyPage: React.FC = () => {
                   <tr>
                     <th>ID</th>
                     <th>策略名称</th>
-
                     <th>交易对</th>
                     <th>时间周期</th>
                     <th>投资金额</th>
-
                     <th>总收益</th>
                     <th>利润率</th>
                     <th>总佣金</th>
                     <th>交易次数</th>
+                    {/* 持仓信息相关列 */}
+                    <th>持仓状态</th>
+                    <th>预估收益</th>
+                    <th>收益率</th>
+                    <th>持仓时长</th>
                     <th>创建时间</th>
                     <th>更新时间</th>
                     <th>状态</th>
@@ -282,14 +416,12 @@ const RealTimeStrategyPage: React.FC = () => {
                 </thead>
                 <tbody>
                   {currentPageData.map((strategy) => (
-                    <tr key={strategy.id}>
+                    <tr key={strategy.id} className={strategy.isHolding ? 'holding-strategy-row' : ''}>
                       <td>{strategy.id}</td>
                       <td>{strategy.strategyName || '-'}</td>
-
                       <td>{strategy.symbol}</td>
                       <td>{strategy.interval}</td>
                       <td>{formatAmount(strategy.tradeAmount)} </td>
-
                       <td className={strategy.totalProfit && strategy.totalProfit >= 0 ? 'positive' : 'negative'}>
                         {formatAmount(strategy.totalProfit)}
                       </td>
@@ -300,6 +432,21 @@ const RealTimeStrategyPage: React.FC = () => {
                         {formatAmount(strategy.totalFees)}
                       </td>
                       <td>{strategy.totalTrades || 0}</td>
+                      {/* 持仓信息相关列 */}
+                      <td>
+                        {strategy.isHolding ? (
+                          <span className="holding-badge">持仓中</span>
+                        ) : (
+                          <span className="no-position-badge">未持仓</span>
+                        )}
+                      </td>
+                      <td className={typeof strategy.estimatedProfit === 'number' && strategy.estimatedProfit >= 0 ? 'positive' : 'negative'}>
+                        {strategy.isHolding ? strategy.estimatedProfit : '-'}
+                      </td>
+                      <td className={strategy.profitPercentage?.includes('-') ? 'negative' : 'positive'}>
+                        {strategy.isHolding ? strategy.profitPercentage : '-'}
+                      </td>
+                      <td>{strategy.isHolding ? strategy.holdingDuration : '-'}</td>
                       <td>{formatDateTime(strategy.createTime)}</td>
                       <td>{formatDateTime(strategy.updateTime)}</td>
                       <td>

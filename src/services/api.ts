@@ -1361,3 +1361,56 @@ export const updateTrailingProfitPercent = async (percent: number): Promise<{
     };
   }
 };
+
+/**
+ * 获取持仓中的策略预估收益信息
+ * 调用后端新增的接口，获取最后交易状态为买入(BUY)的所有正在运行策略的预估收益信息
+ */
+export const fetchHoldingPositionsProfits = async (): Promise<{ 
+  success: boolean; 
+  data?: Array<{
+    strategyId: number;
+    strategyCode: string;
+    strategyName: string;
+    symbol: string;
+    interval: string;
+    entryPrice: number;
+    entryAmount: number;
+    entryTime: string;
+    currentPrice: number | string;
+    quantity: number | string;
+    currentValue: number | string;
+    estimatedProfit: number | string;
+    profitPercentage: string;
+    holdingDuration: string;
+  }>; 
+  message?: string 
+}> => {
+  try {
+    const response = await fetch('/api/real-time-strategy/holding-positions');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.code === 200) {
+      return {
+        success: true,
+        data: result.data
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || '获取持仓策略预估收益失败'
+      };
+    }
+  } catch (error) {
+    console.error('获取持仓策略预估收益失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '获取持仓策略预估收益失败'
+    };
+  }
+};
