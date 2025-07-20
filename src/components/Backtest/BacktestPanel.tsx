@@ -1115,11 +1115,12 @@ const BacktestPanel: React.FC = () => {
               {creatingRealTimeStrategy ? '创建中...' : '创建实时策略'}
             </button>
 
-            {batchStatusMessage && (
+            {/* 移除批量回测状态消息 */}
+            {/* {batchStatusMessage && (
               <div className={`batch-status-message ${runningBatchBacktest ? 'loading' : ''}`}>
                 {batchStatusMessage}
               </div>
-            )}
+            )} */}
           </div>
         ) : (
           <div className="backtest-results">
