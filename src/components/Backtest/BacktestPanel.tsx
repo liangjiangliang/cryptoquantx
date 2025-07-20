@@ -11,15 +11,24 @@ import FailedStrategiesModal, { FailedStrategy } from '../FailedStrategiesModal/
 
 // 导入与CandlestickChart相同的常量
 import { COMMON_PAIRS, TIMEFRAMES } from '../../constants/trading';
-import { runAllBacktests, fetchFailedStrategies, getYesterdayDateString, createRealTimeStrategy, fetchAccountBalance } from '../../services/api';
+import { 
+  runAllBacktests, 
+  fetchFailedStrategies, 
+  getYesterdayDateString, 
+  createRealTimeStrategy, 
+  fetchAccountBalance, 
+  fetchBacktestParameters, 
+  updateStopLossPercent, 
+  updateTrailingProfitPercent 
+} from '../../services/api';
 import QuickTimeSelector from '../Chart/QuickTimeSelector';
 
 // 策略接口定义
 interface Strategy {
   name: string;
-  description: string;
+  description: string;  // 保留description字段
   params: string;
-  available?: boolean;  // 添加available字段，表示策略是否可用
+  available?: boolean;  // 表示策略是否可用
 }
 
 interface StrategiesResponse {
@@ -102,6 +111,13 @@ const BacktestPanel: React.FC = () => {
   // 添加一个标记来跟踪是否通过事件设置了策略
   const [strategySetByEvent, setStrategySetByEvent] = useState(false);
 
+  // 添加止损和移动止盈状态
+  const [stopLossPercent, setStopLossPercent] = useState<string>('0.05');
+  const [trailingProfitPercent, setTrailingProfitPercent] = useState<string>('0.05');
+  const [loadingParameters, setLoadingParameters] = useState<boolean>(false);
+  const [updatingStopLoss, setUpdatingStopLoss] = useState<boolean>(false);
+  const [updatingTrailingProfit, setUpdatingTrailingProfit] = useState<boolean>(false);
+
   // 加载账户余额
   const loadAccountBalance = async () => {
     setLoadingBalance(true);
@@ -126,7 +142,7 @@ const BacktestPanel: React.FC = () => {
     }
   };
 
-  // 获取可用策略列表和账户余额
+  // 获取可用策略列表和账户余额，以及回测参数
   useEffect(() => {
     const fetchStrategies = async () => {
       setLoading(true);
@@ -221,8 +237,26 @@ const BacktestPanel: React.FC = () => {
       }
     };
 
+    const fetchParameters = async () => {
+      setLoadingParameters(true);
+      try {
+        const result = await fetchBacktestParameters();
+        if (result.success && result.data) {
+          setStopLossPercent(result.data.stopLossPercent.toString());
+          setTrailingProfitPercent(result.data.trailingProfitPercent.toString());
+        } else {
+          console.error('获取回测参数失败:', result.message);
+        }
+      } catch (error) {
+        console.error('获取回测参数时出错:', error);
+      } finally {
+        setLoadingParameters(false);
+      }
+    };
+
     fetchStrategies();
     loadAccountBalance(); // 加载账户余额
+    fetchParameters(); // 加载回测参数
   }, [dispatch, strategySetByEvent]); // 添加strategySetByEvent依赖
 
   // 监听setStrategy事件，接收从URL传递的策略代码、交易对和时间周期
@@ -740,6 +774,52 @@ const BacktestPanel: React.FC = () => {
     };
   }, [dropdownRef]);
 
+  // 更新止损百分比
+  const handleUpdateStopLoss = async () => {
+    setUpdatingStopLoss(true);
+    try {
+      const percent = parseFloat(stopLossPercent);
+      if (isNaN(percent) || percent < 0) {
+        showErrorDialog('更新失败', '止损百分比必须是大于等于0的数字');
+        return;
+      }
+      
+      const result = await updateStopLossPercent(percent);
+      if (result.success) {
+        showStatusDialog('更新成功', '止损百分比已更新', 'info');
+      } else {
+        showErrorDialog('更新失败', result.message || '更新止损百分比失败');
+      }
+    } catch (error) {
+      showErrorDialog('更新失败', error instanceof Error ? error.message : '更新止损百分比时出错');
+    } finally {
+      setUpdatingStopLoss(false);
+    }
+  };
+
+  // 更新移动止盈百分比
+  const handleUpdateTrailingProfit = async () => {
+    setUpdatingTrailingProfit(true);
+    try {
+      const percent = parseFloat(trailingProfitPercent);
+      if (isNaN(percent) || percent < 0) {
+        showErrorDialog('更新失败', '移动止盈百分比必须是大于等于0的数字');
+        return;
+      }
+      
+      const result = await updateTrailingProfitPercent(percent);
+      if (result.success) {
+        showStatusDialog('更新成功', '移动止盈百分比已更新', 'info');
+      } else {
+        showErrorDialog('更新失败', result.message || '更新移动止盈百分比失败');
+      }
+    } catch (error) {
+      showErrorDialog('更新失败', error instanceof Error ? error.message : '更新移动止盈百分比时出错');
+    } finally {
+      setUpdatingTrailingProfit(false);
+    }
+  };
+
   return (
     <div className="backtest-panel">
       <div className="backtest-panel-header">
@@ -881,13 +961,6 @@ const BacktestPanel: React.FC = () => {
               )}
             </div>
 
-            {strategy && strategies[strategy] && (
-              <div className="strategy-description">
-                <p>{strategies[strategy].description}</p>
-                <p className="params-hint">参数: {strategies[strategy].params}</p>
-              </div>
-            )}
-
             <div className="input-group">
               <label>交易对</label>
               <div className="pair-selector-wrapper" ref={dropdownRef}>
@@ -921,14 +994,18 @@ const BacktestPanel: React.FC = () => {
                       >
                         涨跌幅 {sortBy === 'change' && (sortDirection === 'desc' ? '↓' : '↑')}
                       </button>
+                      <button
+                        className={`sort-button ${sortBy === 'name' ? 'active' : ''}`}
+                        onClick={() => handleSortChange('name')}
+                      >
+                        名称 {sortBy === 'name' && (sortDirection === 'desc' ? '↓' : '↑')}
+                      </button>
                     </div>
 
-                    <div className="pair-list-container" onScroll={handlePairsScroll}>
-                      {isLoadingTickers ? (
-                        <div className="pairs-loading">加载中...</div>
-                      ) : displayedPairs.length > 0 ? (
+                    <div className="pair-list-container">
+                      {filteredPairs.length > 0 ? (
                         <div className="pair-list">
-                          {displayedPairs.map(ticker => (
+                          {filteredPairs.map(ticker => (
                             <div
                               key={ticker.symbol}
                               className={`pair-item ${ticker.symbol === selectedPair ? 'selected' : ''}`}
@@ -950,14 +1027,11 @@ const BacktestPanel: React.FC = () => {
                               </div>
                             </div>
                           ))}
-                          
-                          {displayedPairs.length < filteredPairs.length && (
-                            <div className="load-more-indicator">滚动加载更多...</div>
-                          )}
                         </div>
                       ) : (
                         <div className="no-results">无匹配结果</div>
                       )}
+                      {isLoadingTickers && <div className="load-more-indicator">加载更多...</div>}
                     </div>
                   </div>
                 )}
@@ -966,41 +1040,86 @@ const BacktestPanel: React.FC = () => {
 
             <div className="input-group">
               <label>时间周期</label>
-              <select
-                className="timeframe-selector"
-                value={timeframe}
-                onChange={handleTimeframeChange}
-              >
-                {TIMEFRAMES.map((tf: {value: string, label: string}) => (
+              <select value={timeframe} onChange={handleTimeframeChange}>
+                {TIMEFRAMES.map((tf) => (
                   <option key={tf.value} value={tf.value}>{tf.label}</option>
                 ))}
               </select>
+            </div>
+            
+            {/* 新增止损百分比设置 */}
+            <div className="input-group">
+              <label>止损百分比:</label>
+              <div className="input-with-button">
+                <input
+                  type="number"
+                  value={stopLossPercent}
+                  onChange={(e) => setStopLossPercent(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  disabled={loadingParameters}
+                />
+                <button 
+                  onClick={handleUpdateStopLoss} 
+                  disabled={updatingStopLoss || loadingParameters}
+                  className="update-button"
+                >
+                  {updatingStopLoss ? '更新中...' : '更新'}
+                </button>
+              </div>
+            </div>
+
+            {/* 新增移动止盈百分比设置 */}
+            <div className="input-group">
+              <label>移动止盈百分比:</label>
+              <div className="input-with-button">
+                <input
+                  type="number"
+                  value={trailingProfitPercent}
+                  onChange={(e) => setTrailingProfitPercent(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  disabled={loadingParameters}
+                />
+                <button 
+                  onClick={handleUpdateTrailingProfit}
+                  disabled={updatingTrailingProfit || loadingParameters}
+                  className="update-button"
+                >
+                  {updatingTrailingProfit ? '更新中...' : '更新'}
+                </button>
+              </div>
             </div>
 
             <button
               className="run-backtest-button"
               onClick={runBacktest}
-              disabled={isBacktesting || loading || !strategy || runningBatchBacktest}
+              disabled={isBacktesting || !strategy}
             >
-              {isBacktesting ? '运行中...' : '运行回测'}
+              {isBacktesting ? '回测中...' : '运行回测'}
             </button>
-
 
             <button
               className="run-batch-backtest-button"
               onClick={runBatchBacktest}
-              disabled={runningBatchBacktest || isBacktesting || loading || !strategy}
+              disabled={runningBatchBacktest || isBacktesting}
             >
-              {runningBatchBacktest ? '批量回测运行中...' : '运行批量回测'}
+              {runningBatchBacktest ? '批量回测中...' : '运行批量回测'}
             </button>
 
             <button
               className="create-realtime-strategy-button"
               onClick={createRealTimeStrategyHandler}
-              disabled={creatingRealTimeStrategy || isBacktesting || loading || !strategy || runningBatchBacktest}
+              disabled={creatingRealTimeStrategy || !strategy}
             >
               {creatingRealTimeStrategy ? '创建中...' : '创建实时策略'}
             </button>
+
+            {batchStatusMessage && (
+              <div className={`batch-status-message ${runningBatchBacktest ? 'loading' : ''}`}>
+                {batchStatusMessage}
+              </div>
+            )}
           </div>
         ) : (
           <div className="backtest-results">

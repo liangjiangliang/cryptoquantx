@@ -1249,3 +1249,115 @@ export const fetchAllTickers = async (filter: string = 'all', limit: number = 20
     };
   }
 };
+
+// 获取回测参数
+export const fetchBacktestParameters = async (): Promise<{ 
+  success: boolean; 
+  data?: {
+    stopLossPercent: number;
+    trailingProfitPercent: number;
+  }; 
+  message?: string 
+}> => {
+  try {
+    const response = await fetch('/api/backtest/parameters');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.code === 200) {
+      return {
+        success: true,
+        data: result.data
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || '获取回测参数失败'
+      };
+    }
+  } catch (error) {
+    console.error('获取回测参数时出错:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '获取回测参数时出错'
+    };
+  }
+};
+
+// 更新止损百分比
+export const updateStopLossPercent = async (percent: number): Promise<{
+  success: boolean;
+  data?: number;
+  message?: string
+}> => {
+  try {
+    const response = await fetch(`/api/backtest/parameters/stop-loss?percent=${percent}`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.code === 200) {
+      return {
+        success: true,
+        data: result.data
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || '更新止损百分比失败'
+      };
+    }
+  } catch (error) {
+    console.error('更新止损百分比时出错:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '更新止损百分比时出错'
+    };
+  }
+};
+
+// 更新移动止盈百分比
+export const updateTrailingProfitPercent = async (percent: number): Promise<{
+  success: boolean;
+  data?: number;
+  message?: string
+}> => {
+  try {
+    const response = await fetch(`/api/backtest/parameters/trailing-profit?percent=${percent}`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.code === 200) {
+      return {
+        success: true,
+        data: result.data
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || '更新移动止盈百分比失败'
+      };
+    }
+  } catch (error) {
+    console.error('更新移动止盈百分比时出错:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '更新移动止盈百分比时出错'
+    };
+  }
+};
