@@ -4,6 +4,12 @@ import { startRealTimeStrategy, stopRealTimeStrategy, deleteRealTimeStrategy, co
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import './RealTimeStrategyPage.css';
 
+// 定义排序字段和排序方向类型
+type SortField = 'id' | 'strategyName' | 'symbol' | 'interval' | 'tradeAmount' | 'totalProfit' |
+                'totalProfitRate' | 'totalFees' | 'totalTrades' | 'estimatedProfit' |
+                'profitPercentage' | 'holdingDuration' | 'createTime' | 'updateTime' | 'status' | 'entryTime';
+type SortDirection = 'asc' | 'desc';
+
 interface RealTimeStrategy {
   id: number;
   strategyCode: string;
@@ -40,13 +46,17 @@ const RealTimeStrategyPage: React.FC = () => {
   const [errorModalOpen, setErrorModalOpen] = useState<boolean>(false);
   const [operationInProgress, setOperationInProgress] = useState<{[key: string]: boolean}>({});
   const navigate = useNavigate();
-  
+
   // 使用ref来存储最后一次成功获取的数据，用于在刷新失败时保持原有数据
   const lastSuccessfulStrategiesRef = useRef<RealTimeStrategy[]>([]);
 
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(26);
+
+  // 添加排序状态
+  const [sortField, setSortField] = useState<SortField>('createTime'); // 默认按创建时间排序
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc'); // 默认正序排列
 
   // 添加确认对话框状态
   const [confirmModal, setConfirmModal] = useState({
@@ -92,7 +102,7 @@ const RealTimeStrategyPage: React.FC = () => {
           const updatedStrategies = currentStrategies.map(strategy => {
             // 查找对应的持仓信息
             const holdingInfo = result.data?.find(holding => holding.strategyId === strategy.id);
-            
+
             if (holdingInfo) {
               // 如果找到持仓信息，将其整合到策略对象中
               return {
@@ -108,10 +118,10 @@ const RealTimeStrategyPage: React.FC = () => {
                 isHolding: true
               };
             }
-            
+
             return { ...strategy, isHolding: false };
           });
-          
+
           return updatedStrategies;
         }
       } else {
@@ -130,10 +140,10 @@ const RealTimeStrategyPage: React.FC = () => {
     try {
       // 先获取策略列表
       const strategiesList = await fetchRealTimeStrategies();
-      
+
       // 然后获取持仓信息并整合
       const updatedStrategies = await fetchHoldingPositionsData(strategiesList);
-      
+
       // 更新状态和引用
       setStrategies(updatedStrategies);
       lastSuccessfulStrategiesRef.current = updatedStrategies;
@@ -150,14 +160,14 @@ const RealTimeStrategyPage: React.FC = () => {
     try {
       // 先获取策略列表
       const strategiesList = await fetchRealTimeStrategies();
-      
+
       // 然后获取持仓信息并整合
       const updatedStrategies = await fetchHoldingPositionsData(strategiesList);
-      
+
       // 更新状态和引用
       setStrategies(updatedStrategies);
       lastSuccessfulStrategiesRef.current = updatedStrategies;
-      
+
       // 显示成功提示
       const refreshSuccessMessage = document.getElementById('refresh-success-message');
       if (refreshSuccessMessage) {
@@ -175,23 +185,82 @@ const RealTimeStrategyPage: React.FC = () => {
     }
   }, [fetchRealTimeStrategies, fetchHoldingPositionsData]);
 
+  // 页面加载时获取数据
+  useEffect(() => {
+    initialLoadData();
+
+    // 设置定时刷新 - 每60秒刷新一次数据
+    const intervalId = setInterval(() => {
+      refreshData();
+    }, 60000);
+
+    // 清理函数
+    return () => clearInterval(intervalId);
+  }, [initialLoadData, refreshData]);
+
   // 刷新按钮点击处理
   const handleRefresh = () => {
     refreshData();
   };
 
-  // 页面加载时获取数据
-  useEffect(() => {
-    initialLoadData();
-    
-    // 设置定时刷新 - 每60秒刷新一次数据
-    const intervalId = setInterval(() => {
-      refreshData();
-    }, 60000);
-    
-    // 清理函数
-    return () => clearInterval(intervalId);
-  }, [initialLoadData, refreshData]); 
+  // 处理排序
+  const handleSort = (field: SortField) => {
+    // 如果点击的是当前排序字段，则切换排序方向
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 否则设置新的排序字段，默认升序
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // 获取排序图标
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return '⇅';
+    return sortDirection === 'asc' ? '↑' : '↓';
+  };
+
+  // 对数据进行排序
+  const getSortedStrategies = (data: RealTimeStrategy[]) => {
+    return [...data].sort((a, b) => {
+      let aValue: any = a[sortField as keyof RealTimeStrategy];
+      let bValue: any = b[sortField as keyof RealTimeStrategy];
+
+      // 处理可能为undefined的值
+      if (aValue === undefined) aValue = null;
+      if (bValue === undefined) bValue = null;
+
+      // 处理字符串类型的排序
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        // 日期字符串特殊处理
+        if (sortField === 'createTime' || sortField === 'updateTime' || sortField === 'entryTime') {
+          const dateA = aValue ? new Date(aValue).getTime() : 0;
+          const dateB = bValue ? new Date(bValue).getTime() : 0;
+          return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+        }
+
+        // 普通字符串
+        return sortDirection === 'asc'
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+
+      // 处理数字或其他类型
+      if (aValue === null) return sortDirection === 'asc' ? -1 : 1;
+      if (bValue === null) return sortDirection === 'asc' ? 1 : -1;
+
+      // 处理百分比字符串
+      if (sortField === 'profitPercentage' && typeof aValue === 'string' && typeof bValue === 'string') {
+        const numA = parseFloat(aValue.replace('%', ''));
+        const numB = parseFloat(bValue.replace('%', ''));
+        return sortDirection === 'asc' ? numA - numB : numB - numA;
+      }
+
+      // 普通数值比较
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+  };
 
   // 格式化时间
   const formatDateTime = (dateTimeStr: string): string => {
@@ -339,11 +408,14 @@ const RealTimeStrategyPage: React.FC = () => {
     closeConfirmModal();
   };
 
+  // 先对数据进行排序
+  const sortedStrategies = getSortedStrategies(strategies);
+
   // 分页相关计算
-  const totalPages = Math.ceil(strategies.length / pageSize);
+  const totalPages = Math.ceil(sortedStrategies.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const currentPageData = strategies.slice(startIndex, endIndex);
+  const currentPageData = sortedStrategies.slice(startIndex, endIndex);
 
   // 处理页码变化
   const handlePageChange = (page: number) => {
@@ -371,11 +443,11 @@ const RealTimeStrategyPage: React.FC = () => {
             <h2 className="section-title">实盘策略列表</h2>
             <div className="refresh-container">
               {/* 刷新成功提示 */}
-              {/* <div id="refresh-success-message" className="refresh-success-message">
+              <div id="refresh-success-message" className="refresh-success-message">
                 数据已更新
-              </div> */}
-              <button 
-                className="refresh-button" 
+              </div>
+              <button
+                className="refresh-button"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
               >
@@ -394,23 +466,55 @@ const RealTimeStrategyPage: React.FC = () => {
               <table className="strategies-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>策略名称</th>
-                    <th>交易对</th>
-                    <th>时间周期</th>
-                    <th>投资金额</th>
-                    <th>总收益</th>
-                    <th>利润率</th>
-                    <th>总佣金</th>
-                    <th>交易次数</th>
+                    <th onClick={() => handleSort('id')} className="sortable-header">
+                      ID {getSortIcon('id')}
+                    </th>
+                    <th onClick={() => handleSort('strategyName')} className="sortable-header">
+                      策略名称 {getSortIcon('strategyName')}
+                    </th>
+                    <th onClick={() => handleSort('symbol')} className="sortable-header">
+                      交易对 {getSortIcon('symbol')}
+                    </th>
+                    <th onClick={() => handleSort('interval')} className="sortable-header">
+                      时间周期 {getSortIcon('interval')}
+                    </th>
+                    <th onClick={() => handleSort('tradeAmount')} className="sortable-header">
+                      投资金额 {getSortIcon('tradeAmount')}
+                    </th>
+                    <th onClick={() => handleSort('totalProfit')} className="sortable-header">
+                      总收益 {getSortIcon('totalProfit')}
+                    </th>
+                    <th onClick={() => handleSort('totalProfitRate')} className="sortable-header">
+                      利润率 {getSortIcon('totalProfitRate')}
+                    </th>
+                    <th onClick={() => handleSort('totalFees')} className="sortable-header">
+                      总佣金 {getSortIcon('totalFees')}
+                    </th>
+                    <th onClick={() => handleSort('totalTrades')} className="sortable-header">
+                      交易次数 {getSortIcon('totalTrades')}
+                    </th>
                     {/* 持仓信息相关列 */}
-                    <th>持仓状态</th>
-                    <th>预估收益</th>
-                    <th>收益率</th>
-                    <th>持仓时长</th>
-                    <th>创建时间</th>
-                    <th>更新时间</th>
-                    <th>状态</th>
+                    <th className="sortable-header">
+                      持仓状态
+                    </th>
+                    <th onClick={() => handleSort('estimatedProfit')} className="sortable-header">
+                      预估收益 {getSortIcon('estimatedProfit')}
+                    </th>
+                    <th onClick={() => handleSort('profitPercentage')} className="sortable-header">
+                      收益率 {getSortIcon('profitPercentage')}
+                    </th>
+                    <th onClick={() => handleSort('holdingDuration')} className="sortable-header">
+                      持仓时长 {getSortIcon('holdingDuration')}
+                    </th>
+                    <th onClick={() => handleSort('createTime')} className="sortable-header">
+                      创建时间 {getSortIcon('createTime')}
+                    </th>
+                    <th onClick={() => handleSort('updateTime')} className="sortable-header">
+                      更新时间 {getSortIcon('updateTime')}
+                    </th>
+                    <th onClick={() => handleSort('status')} className="sortable-header">
+                      状态 {getSortIcon('status')}
+                    </th>
                     <th>操作</th>
                   </tr>
                 </thead>
@@ -450,7 +554,7 @@ const RealTimeStrategyPage: React.FC = () => {
                       <td>{formatDateTime(strategy.createTime)}</td>
                       <td>{formatDateTime(strategy.updateTime)}</td>
                       <td>
-                      <span 
+                      <span
                           className={`status-badge ${getStatusClass(strategy.status)}`}
                           title={strategy.status === 'ERROR' ? strategy.message || '未知错误' : ''}
                         >
@@ -502,7 +606,7 @@ const RealTimeStrategyPage: React.FC = () => {
               </table>
             </div>
           )}
-          
+
           {/* 分页控制 */}
           {strategies.length > 0 && (
             <div className="pagination-container">
@@ -568,7 +672,7 @@ const RealTimeStrategyPage: React.FC = () => {
         onCancel={closeConfirmModal}
         type="danger"
       />
-      
+
       {/* 添加错误信息对话框 */}
       <ConfirmModal
         isOpen={errorModalOpen}

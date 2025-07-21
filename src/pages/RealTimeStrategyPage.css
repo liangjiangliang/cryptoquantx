@@ -547,3 +547,21 @@
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 } 
+
+/* 可排序表头样式 */
+.sortable-header {
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.sortable-header:hover {
+  background-color: #2a2e39;
+}
+
+.sortable-header::after {
+  margin-left: 5px;
+  font-size: 12px;
+} 
