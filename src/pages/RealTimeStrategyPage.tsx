@@ -7,7 +7,8 @@ import './RealTimeStrategyPage.css';
 // 定义排序字段和排序方向类型
 type SortField = 'id' | 'strategyName' | 'symbol' | 'interval' | 'tradeAmount' | 'totalProfit' |
                 'totalProfitRate' | 'totalFees' | 'totalTrades' | 'estimatedProfit' |
-                'profitPercentage' | 'holdingDuration' | 'createTime' | 'updateTime' | 'status' | 'entryTime';
+                'profitPercentage' | 'holdingDuration' | 'createTime' | 'updateTime' | 'status' | 'entryTime' |
+                'estimatedBalance';
 type SortDirection = 'asc' | 'desc';
 
 interface RealTimeStrategy {
@@ -224,13 +225,20 @@ const RealTimeStrategyPage: React.FC = () => {
   // 对数据进行排序
   const getSortedStrategies = (data: RealTimeStrategy[]) => {
     return [...data].sort((a, b) => {
+      // 特殊处理预估余额字段，因为它是计算得出的
+      if (sortField === 'estimatedBalance') {
+        const aValue = calculateEstimatedBalance(a);
+        const bValue = calculateEstimatedBalance(b);
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
       let aValue: any = a[sortField as keyof RealTimeStrategy];
       let bValue: any = b[sortField as keyof RealTimeStrategy];
-
+      
       // 处理可能为undefined的值
       if (aValue === undefined) aValue = null;
       if (bValue === undefined) bValue = null;
-
+      
       // 处理字符串类型的排序
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         // 日期字符串特殊处理
@@ -239,24 +247,24 @@ const RealTimeStrategyPage: React.FC = () => {
           const dateB = bValue ? new Date(bValue).getTime() : 0;
           return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
         }
-
+        
         // 普通字符串
-        return sortDirection === 'asc'
+        return sortDirection === 'asc' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       }
-
+      
       // 处理数字或其他类型
       if (aValue === null) return sortDirection === 'asc' ? -1 : 1;
       if (bValue === null) return sortDirection === 'asc' ? 1 : -1;
-
+      
       // 处理百分比字符串
       if (sortField === 'profitPercentage' && typeof aValue === 'string' && typeof bValue === 'string') {
         const numA = parseFloat(aValue.replace('%', ''));
         const numB = parseFloat(bValue.replace('%', ''));
         return sortDirection === 'asc' ? numA - numB : numB - numA;
       }
-
+      
       // 普通数值比较
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     });
@@ -408,6 +416,21 @@ const RealTimeStrategyPage: React.FC = () => {
     closeConfirmModal();
   };
 
+  // 计算预估余额
+  const calculateEstimatedBalance = (strategy: RealTimeStrategy): number => {
+    // 初始投资金额
+    const tradeAmount = strategy.tradeAmount || 0;
+    // 总收益
+    const totalProfit = strategy.totalProfit || 0;
+    // 预估收益（如果持仓中）
+    const estimatedProfit = strategy.isHolding && typeof strategy.estimatedProfit === 'number'
+      ? strategy.estimatedProfit
+      : 0;
+
+    // 预估余额 = 投资金额 + 总收益 + 预估收益
+    return tradeAmount + totalProfit + estimatedProfit;
+  };
+
   // 先对数据进行排序
   const sortedStrategies = getSortedStrategies(strategies);
 
@@ -481,6 +504,9 @@ const RealTimeStrategyPage: React.FC = () => {
                     <th onClick={() => handleSort('tradeAmount')} className="sortable-header">
                       投资金额 {getSortIcon('tradeAmount')}
                     </th>
+                    <th onClick={() => handleSort('estimatedBalance')} className="sortable-header">
+                      预估余额 {getSortIcon('estimatedBalance')}
+                    </th>
                     <th onClick={() => handleSort('totalProfit')} className="sortable-header">
                       总收益 {getSortIcon('totalProfit')}
                     </th>
@@ -526,6 +552,9 @@ const RealTimeStrategyPage: React.FC = () => {
                       <td>{strategy.symbol}</td>
                       <td>{strategy.interval}</td>
                       <td>{formatAmount(strategy.tradeAmount)} </td>
+                      <td className={calculateEstimatedBalance(strategy) >= strategy.tradeAmount ? 'positive' : 'negative'}>
+                        {formatAmount(calculateEstimatedBalance(strategy))}
+                      </td>
                       <td className={strategy.totalProfit && strategy.totalProfit >= 0 ? 'positive' : 'negative'}>
                         {formatAmount(strategy.totalProfit)}
                       </td>
