@@ -130,7 +130,7 @@ const BacktestSummaryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(14);
+  const [pageSize, setPageSize] = useState(15);
   const [sortField, setSortField] = useState<SortField>('createTime');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [filteredData, setFilteredData] = useState<BacktestSummary[]>([]);
@@ -313,7 +313,7 @@ const BacktestSummaryPage: React.FC = () => {
       symbol: summary.symbol,
       interval: summary.intervalVal
     });
-    
+
     // 跳转到首页并传递参数
     navigate(`/?${params.toString()}`);
   };
@@ -1238,7 +1238,7 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{summary.ulcerIndex ? summary.ulcerIndex.toFixed(2) : '-'}</td>
                   <td>{summary.painIndex ? summary.painIndex.toFixed(4) : '-'}</td>
                   <td>{summary.burkeRatio ? summary.burkeRatio.toFixed(4) : '-'}</td>
-                
+
                   <td>{summary.cvar ? summary.cvar.toFixed(4) : '-'}</td>
                   <td>{summary.downsideDeviation ? summary.downsideDeviation.toFixed(4) : '-'}</td>
                   <td>{summary.downtrendCapture ? summary.downtrendCapture.toFixed(4) : '-'}</td>
@@ -1247,7 +1247,7 @@ const BacktestSummaryPage: React.FC = () => {
                   <td>{summary.kurtosis ? summary.kurtosis.toFixed(4) : '-'}</td>
                   <td>{summary.maxDrawdownDuration ? summary.maxDrawdownDuration : '-'}</td>
                   <td>{summary.modifiedSharpeRatio ? summary.modifiedSharpeRatio.toFixed(4) : '-'}</td>
-             
+
                   <td>{summary.riskAdjustedReturn ? summary.riskAdjustedReturn.toFixed(4) : '-'}</td>
                   <td>{summary.sterlingRatio ? summary.sterlingRatio.toFixed(4) : '-'}</td>
                   <td>{summary.trackingError ? summary.trackingError.toFixed(4) : '-'}</td>
