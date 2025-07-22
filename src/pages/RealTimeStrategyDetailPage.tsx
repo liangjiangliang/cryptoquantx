@@ -77,7 +77,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
 
   const formatAmount = (amount: number | null | undefined): string => {
     if (amount === null || amount === undefined) return '-';
-    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 8, maximumFractionDigits: 8 });
+    return amount.toLocaleString('zh-CN', { minimumFractionDigits: 12, maximumFractionDigits: 12 });
   };
 
   // 分页相关计算
