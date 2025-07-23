@@ -1368,22 +1368,33 @@ export const updateTrailingProfitPercent = async (percent: number): Promise<{
  */
 export const fetchHoldingPositionsProfits = async (): Promise<{ 
   success: boolean; 
-  data?: Array<{
-    strategyId: number;
-    strategyCode: string;
-    strategyName: string;
-    symbol: string;
-    interval: string;
-    entryPrice: number;
-    entryAmount: number;
-    entryTime: string;
-    currentPrice: number | string;
-    quantity: number | string;
-    currentValue: number | string;
-    estimatedProfit: number | string;
-    profitPercentage: string;
-    holdingDuration: string;
-  }>; 
+  data?: {
+    strategies: Array<{
+      strategyId: number;
+      strategyCode: string;
+      strategyName: string;
+      symbol: string;
+      interval: string;
+      entryPrice: number;
+      entryAmount: number;
+      entryTime: string;
+      currentPrice: number | string;
+      quantity: number | string;
+      currentValue: number | string;
+      estimatedProfit: number | string;
+      profitPercentage: string;
+      holdingDuration: string;
+    }>;
+    statistics: {
+      totalEstimatedProfit: number;
+      totalRealizedProfit: number;
+      totalInvestmentAmount: number;
+      totalProfit: number;
+      totalProfitRate: string;
+      holdingStrategiesCount: number;
+      runningStrategiesCount: number;
+    };
+  }; 
   message?: string 
 }> => {
   try {

@@ -38,6 +38,17 @@ interface RealTimeStrategy {
   isHolding?: boolean; // 标记是否持有仓位
 }
 
+// 添加统计信息接口
+interface StrategyStatistics {
+  totalEstimatedProfit: number;
+  totalRealizedProfit: number;
+  totalInvestmentAmount: number;
+  totalProfit: number;
+  totalProfitRate: string;
+  holdingStrategiesCount: number;
+  runningStrategiesCount: number;
+}
+
 const RealTimeStrategyPage: React.FC = () => {
   const [strategies, setStrategies] = useState<RealTimeStrategy[]>([]);
   // 分离初始加载状态和数据刷新状态
@@ -48,12 +59,16 @@ const RealTimeStrategyPage: React.FC = () => {
   const [operationInProgress, setOperationInProgress] = useState<{[key: string]: boolean}>({});
   const navigate = useNavigate();
 
+  // 添加统计数据状态
+  const [statistics, setStatistics] = useState<StrategyStatistics | null>(null);
+
   // 使用ref来存储最后一次成功获取的数据，用于在刷新失败时保持原有数据
   const lastSuccessfulStrategiesRef = useRef<RealTimeStrategy[]>([]);
+  const lastSuccessfulStatisticsRef = useRef<StrategyStatistics | null>(null);
 
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(26);
+  const [pageSize, setPageSize] = useState(15);
 
   // 添加排序状态
   const [sortField, setSortField] = useState<SortField>('createTime'); // 默认按创建时间排序
@@ -98,11 +113,17 @@ const RealTimeStrategyPage: React.FC = () => {
     try {
       const result = await fetchHoldingPositionsProfits();
       if (result.success && result.data) {
+        // 保存统计信息
+        if (result.data.statistics) {
+          setStatistics(result.data.statistics);
+          lastSuccessfulStatisticsRef.current = result.data.statistics;
+        }
+        
         // 将持仓信息与策略列表整合
-        if (currentStrategies.length > 0 && result.data) {
+        if (currentStrategies.length > 0 && result.data.strategies) {
           const updatedStrategies = currentStrategies.map(strategy => {
             // 查找对应的持仓信息
-            const holdingInfo = result.data?.find(holding => holding.strategyId === strategy.id);
+            const holdingInfo = result.data?.strategies.find(holding => holding.strategyId === strategy.id);
 
             if (holdingInfo) {
               // 如果找到持仓信息，将其整合到策略对象中
@@ -181,6 +202,7 @@ const RealTimeStrategyPage: React.FC = () => {
       console.error('刷新数据失败:', error);
       // 如果刷新失败，保持使用最后一次成功获取的数据
       setStrategies(lastSuccessfulStrategiesRef.current);
+      setStatistics(lastSuccessfulStatisticsRef.current);
     } finally {
       setIsRefreshing(false);
     }
@@ -463,7 +485,7 @@ const RealTimeStrategyPage: React.FC = () => {
         <div className="strategies-container">
           {/* 标题和刷新按钮放在同一行 */}
           <div className="header-row">
-            <h2 className="section-title">实盘策略列表</h2>
+            <h2 className="section-title"></h2>
             <div className="refresh-container">
               {/* 刷新成功提示 */}
               <div id="refresh-success-message" className="refresh-success-message">
@@ -478,6 +500,48 @@ const RealTimeStrategyPage: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* 添加统计信息面板 */}
+          {statistics && (
+            <div className="strategy-statistics-panel">
+              <div className="stat-item">
+                <span className="stat-label">持仓策略数：</span>
+                <span className="stat-value">{statistics.holdingStrategiesCount}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">运行策略数：</span>
+                <span className="stat-value">{statistics.runningStrategiesCount}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">总投资金额：</span>
+                <span className="stat-value">{formatAmount(statistics.totalInvestmentAmount)}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">总已实现收益：</span>
+                <span className={`stat-value ${statistics.totalRealizedProfit >= 0 ? 'positive' : 'negative'}`}>
+                  {formatAmount(statistics.totalRealizedProfit)}
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">预估持仓收益：</span>
+                <span className={`stat-value ${statistics.totalEstimatedProfit >= 0 ? 'positive' : 'negative'}`}>
+                  {formatAmount(statistics.totalEstimatedProfit)}
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">总收益：</span>
+                <span className={`stat-value ${statistics.totalProfit >= 0 ? 'positive' : 'negative'}`}>
+                  {formatAmount(statistics.totalProfit)}
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">总收益率：</span>
+                <span className={`stat-value ${!statistics.totalProfitRate.includes('-') ? 'positive' : 'negative'}`}>
+                  {statistics.totalProfitRate}
+                </span>
+              </div>
+            </div>
+          )}
 
           {strategies.length === 0 ? (
             <div className="empty-state">
@@ -678,7 +742,7 @@ const RealTimeStrategyPage: React.FC = () => {
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
                 >
-                  <option value={5}>5</option>
+                  <option value={pageSize}>{pageSize}</option>
                   <option value={10}>10</option>
                   <option value={20}>20</option>
                   <option value={50}>50</option>
