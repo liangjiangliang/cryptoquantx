@@ -251,15 +251,20 @@ const RealTimeStrategyPage: React.FC = () => {
       if (sortField === 'estimatedBalance') {
         const aValue = calculateEstimatedBalance(a);
         const bValue = calculateEstimatedBalance(b);
+        
+        // 处理空值，确保空值始终排在最后
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+        
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
       
       let aValue: any = a[sortField as keyof RealTimeStrategy];
       let bValue: any = b[sortField as keyof RealTimeStrategy];
       
-      // 处理可能为undefined的值
-      if (aValue === undefined) aValue = null;
-      if (bValue === undefined) bValue = null;
+      // 无论升序还是降序，null/undefined值都排在最后
+      if (aValue === null || aValue === undefined) return 1;
+      if (bValue === null || bValue === undefined) return -1;
       
       // 处理字符串类型的排序
       if (typeof aValue === 'string' && typeof bValue === 'string') {
@@ -275,10 +280,6 @@ const RealTimeStrategyPage: React.FC = () => {
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       }
-      
-      // 处理数字或其他类型
-      if (aValue === null) return sortDirection === 'asc' ? -1 : 1;
-      if (bValue === null) return sortDirection === 'asc' ? 1 : -1;
       
       // 处理百分比字符串
       if (sortField === 'profitPercentage' && typeof aValue === 'string' && typeof bValue === 'string') {
