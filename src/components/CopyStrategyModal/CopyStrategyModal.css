@@ -1,0 +1,434 @@
+.copy-strategy-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.copy-strategy-modal-content {
+  background-color: #1e222d;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  color: #d9d9d9;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.copy-strategy-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #2e3241;
+  background-color: #1e222d;
+}
+
+.copy-strategy-modal-title {
+  margin: 0;
+  color: #d9d9d9;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.copy-strategy-modal-close {
+  background: none;
+  border: none;
+  color: #6c7284;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.copy-strategy-modal-close:hover {
+  color: #d9d9d9;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.copy-strategy-modal-body {
+  padding: 15px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #6c7284;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* 全局输入框样式重置 */
+input[type="text"],
+input[type="number"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+select,
+textarea {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* 余额显示 */
+.balance-indicator {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #6c7284;
+}
+
+.available-balance {
+  color: #4CAF50; /* 绿色 */
+}
+
+.loading-balance {
+  color: #FFA726; /* 橙色 */
+}
+
+.copy-strategy-input {
+  width: 100%;
+  padding: 10px;
+  background-color: #2e3241;
+  border: none !important;
+  border-radius: 4px;
+  color: #d9d9d9;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  /* 移除任何可能导致白色边框的样式 */
+  box-shadow: none !important;
+  outline: none !important;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.copy-strategy-input:focus {
+  outline: none !important;
+  border: 1px solid #3f51b5 !important;
+  box-shadow: none !important;
+}
+
+/* 额外增加选择器特异性 */
+.copy-strategy-modal-content .copy-strategy-input {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* 余额百分比按钮 */
+.balance-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.percentage-btn {
+  flex: 1;
+  padding: 6px 0;
+  background-color: #2e3241;
+  border: 1px solid #3f51b5;
+  border-radius: 4px;
+  color: #d9d9d9;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.percentage-btn:hover {
+  background-color: #3f51b5;
+  color: white;
+}
+
+/* 币种选择样式 - 更新为与PairSelector保持一致 */
+.symbol-selection {
+  border: none;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #1e222d;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.selected-symbol {
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #2e3241;
+}
+
+.selected-symbol span {
+  color: #6c7284;
+  margin-right: 8px;
+}
+
+.selected-symbol strong {
+  color: #d9d9d9;
+  font-weight: 500;
+}
+
+.symbol-search {
+  width: 100%;
+  background-color: #2e3241;
+  border: none;
+  border-radius: 0;
+  padding: 10px 15px;
+  color: #d9d9d9;
+  font-size: 14px;
+  border-bottom: 1px solid #2e3241;
+}
+
+.symbol-search::placeholder {
+  color: #6c7284;
+}
+
+.tickers-container {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #5d6274 #2e3241;
+}
+
+.tickers-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tickers-container::-webkit-scrollbar-track {
+  background: #2e3241;
+}
+
+.tickers-container::-webkit-scrollbar-thumb {
+  background-color: #5d6274;
+  border-radius: 3px;
+}
+
+.tickers-list {
+  padding: 0;
+}
+
+.ticker-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  padding: 12px 15px;
+  cursor: pointer;
+  border-radius: 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid #2e3241;
+  transition: background-color 0.2s ease;
+}
+
+.ticker-item:hover {
+  background-color: #2e3241;
+}
+
+.ticker-item.selected {
+  background-color: rgba(41, 98, 255, 0.1);
+}
+
+.ticker-symbol {
+  font-weight: 500;
+  color: #d9d9d9;
+}
+
+.ticker-change {
+  font-size: 12px;
+  text-align: right;
+}
+
+.ticker-note {
+  font-size: 12px;
+  color: #6c7284;
+  text-align: right;
+}
+
+.positive-change {
+  color: #ff5555;
+}
+
+.negative-change {
+  color: #32a852;
+}
+
+/* 添加币种列表表头 */
+.tickers-list-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  padding: 10px 15px;
+  border-bottom: 1px solid #2e3241;
+  font-size: 12px;
+  color: #6c7284;
+  position: sticky;
+  top: 0;
+  background-color: #1e222d;
+  z-index: 1;
+}
+
+/* 加载更多按钮 */
+.load-more-container {
+  padding: 10px 15px;
+  text-align: center;
+  border-top: 1px solid #2e3241;
+  background-color: #1e222d;
+}
+
+.load-more-button {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #2e3241;
+  border: 1px solid #3a3f4c;
+  border-radius: 3px;
+  color: #d9d9d9;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.load-more-button:hover {
+  background-color: #3f51b5;
+  border-color: #3f51b5;
+  color: white;
+}
+
+.ticker-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  transition: background-color 0.2s;
+}
+
+.ticker-item:hover {
+  background-color: #353a4a;
+}
+
+.ticker-item.selected {
+  background-color: rgba(41, 98, 255, 0.1);
+}
+
+.ticker-symbol {
+  font-weight: 500;
+  color: #d9d9d9;
+}
+
+.ticker-note {
+  font-size: 12px;
+  color: #6c7284;
+}
+
+.ticker-change {
+  font-size: 12px;
+}
+
+.positive-change {
+  color: #ff5555;
+}
+
+.negative-change {
+  color: #32a852;
+}
+
+.copy-strategy-modal-footer {
+  padding: 15px;
+  border-top: 1px solid #2e3241;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.copy-strategy-modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.copy-strategy-modal-btn-cancel {
+  background-color: transparent;
+  color: #6c7284;
+  border: 1px solid #2e3241;
+}
+
+.copy-strategy-modal-btn-cancel:hover {
+  background-color: #2e3241;
+  color: #d9d9d9;
+}
+
+.copy-strategy-modal-btn-confirm {
+  background-color: #2962ff;
+  color: white;
+  font-weight: 500;
+}
+
+.copy-strategy-modal-btn-confirm:hover {
+  background-color: #1e4bd8;
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .copy-strategy-modal-content {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .copy-strategy-modal-header,
+  .copy-strategy-modal-body,
+  .copy-strategy-modal-footer {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .copy-strategy-modal-footer {
+    flex-direction: column;
+  }
+  
+  .copy-strategy-modal-btn {
+    width: 100%;
+  }
+} 
+
+/* 加载状态 */
+.loading-tickers {
+  padding: 15px;
+  text-align: center;
+  color: #6c7284;
+} 

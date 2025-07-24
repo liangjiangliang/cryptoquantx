@@ -1,0 +1,31 @@
+.account-info-page {
+  padding: 20px;
+  height: calc(100vh - 60px); /* 减去顶部导航栏高度 */
+  display: flex;
+  flex-direction: column;
+}
+
+.page-title {
+  color: #d9d9d9;
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.page-content {
+  flex: 1;
+  height: calc(100% - 50px); /* 减去标题高度 */
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  .account-info-page {
+    padding: 15px;
+    height: calc(100vh - 50px);
+  }
+  
+  .page-title {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+} 

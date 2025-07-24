@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { startRealTimeStrategy, stopRealTimeStrategy, deleteRealTimeStrategy, copyRealTimeStrategy, fetchHoldingPositionsProfits } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
+import CopyStrategyModal from '../components/CopyStrategyModal/CopyStrategyModal';
 import './RealTimeStrategyPage.css';
 
 // 定义排序字段和排序方向类型
@@ -79,6 +80,12 @@ const RealTimeStrategyPage: React.FC = () => {
     isOpen: false,
     strategyId: -1,
     strategyName: '',
+  });
+
+  // 添加复制策略模态框状态
+  const [copyModal, setCopyModal] = useState({
+    isOpen: false,
+    strategy: null as RealTimeStrategy | null,
   });
 
   // 获取实盘策略列表
@@ -396,9 +403,31 @@ const RealTimeStrategyPage: React.FC = () => {
 
   // 复制策略
   const handleCopyStrategy = async (strategyId: number) => {
+    // 获取策略详情并打开复制模态框
+    const strategy = strategies.find(s => s.id === strategyId);
+    if (strategy) {
+      setCopyModal({
+        isOpen: true,
+        strategy: strategy
+      });
+    }
+  };
+
+  // 确认复制
+  const handleConfirmCopy = async (interval: string, symbol: string, tradeAmount: number) => {
+    if (!copyModal.strategy) return;
+    
+    const strategyId = copyModal.strategy.id;
     setOperationInProgress({...operationInProgress, [strategyId]: true});
+    
     try {
-      const result = await copyRealTimeStrategy(strategyId);
+      // 调用复制API，传入可选参数
+      const result = await copyRealTimeStrategy(strategyId, {
+        interval,
+        symbol,
+        tradeAmount
+      });
+      
       if (result.success) {
         // 刷新策略列表
         refreshData();
@@ -412,7 +441,14 @@ const RealTimeStrategyPage: React.FC = () => {
       setErrorModalOpen(true);
     } finally {
       setOperationInProgress({...operationInProgress, [strategyId]: false});
+      // 关闭复制模态框
+      setCopyModal({ isOpen: false, strategy: null });
     }
+  };
+
+  // 关闭复制模态框
+  const closeCopyModal = () => {
+    setCopyModal({ isOpen: false, strategy: null });
   };
 
   // 打开确认对话框
@@ -756,6 +792,16 @@ const RealTimeStrategyPage: React.FC = () => {
         onCancel={closeConfirmModal}
         type="danger"
       />
+
+      {/* 添加复制策略模态框 */}
+      {copyModal.strategy && (
+        <CopyStrategyModal
+          isOpen={copyModal.isOpen}
+          onClose={closeCopyModal}
+          onConfirm={handleConfirmCopy}
+          originalStrategy={copyModal.strategy}
+        />
+      )}
 
       {/* 添加错误信息对话框 */}
       <ConfirmModal

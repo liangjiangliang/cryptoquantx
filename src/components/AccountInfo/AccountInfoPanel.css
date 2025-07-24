@@ -1,0 +1,178 @@
+.account-info-panel {
+  background-color: #1e2142;
+  border-radius: 8px;
+  padding: 20px;
+  color: #d9d9d9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.account-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #2a2e56;
+  padding-bottom: 12px;
+}
+
+.account-info-header h2 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #ffffff;
+  margin: 0;
+}
+
+.refresh-button {
+  background-color: #3178c6;
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.refresh-button:hover {
+  background-color: #2969b5;
+}
+
+.balance-section {
+  background-color: #262b55;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.balance-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.balance-amount {
+  font-size: 24px;
+  font-weight: 600;
+  color: #3178c6;
+}
+
+.tickers-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.tickers-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.tickers-controls {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.search-input {
+  flex: 1;
+  background-color: #262b55;
+  border: 1px solid #2d355d;
+  border-radius: 4px;
+  color: white;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3178c6;
+  box-shadow: 0 0 0 2px rgba(49, 120, 198, 0.2);
+}
+
+.tickers-table-container {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #1a1d3b;
+  border-radius: 6px;
+  border: 1px solid #2a2e56;
+}
+
+.tickers-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tickers-table th {
+  position: sticky;
+  top: 0;
+  background-color: #1a1d3b;
+  color: #a0a0a0;
+  font-weight: 500;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2a2e56;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.tickers-table th:hover {
+  color: #ffffff;
+}
+
+.tickers-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #2a2e56;
+}
+
+.tickers-table tr:hover {
+  background-color: rgba(42, 46, 86, 0.3);
+}
+
+.positive-change {
+  color: #4caf50;
+}
+
+.negative-change {
+  color: #f44336;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #a0a0a0;
+}
+
+.error {
+  text-align: center;
+  padding: 20px;
+  color: #f44336;
+  background-color: rgba(244, 67, 54, 0.1);
+  border-radius: 4px;
+}
+
+.load-more {
+  text-align: center;
+  padding: 10px;
+}
+
+.load-more button {
+  background-color: #262b55;
+  border: 1px solid #2a2e56;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.load-more button:hover {
+  background-color: #2d355d;
+} 

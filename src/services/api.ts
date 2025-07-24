@@ -1122,9 +1122,30 @@ export const deleteRealTimeStrategy = async (strategyId: number): Promise<{ succ
 };
 
 // 复制实时策略
-export const copyRealTimeStrategy = async (strategyId: number): Promise<{ success: boolean; message?: string }> => {
+export const copyRealTimeStrategy = async (
+  strategyId: number, 
+  options?: { 
+    interval?: string, 
+    symbol?: string, 
+    tradeAmount?: number 
+  }
+): Promise<{ success: boolean; message?: string }> => {
   try {
-    const url = `/api/real-time-strategy/copy/${strategyId}`;
+    let url = `/api/real-time-strategy/copy/${strategyId}`;
+
+    // 如果提供了选项，添加到URL参数中
+    if (options) {
+      const params = new URLSearchParams();
+      if (options.interval) params.append('interval', options.interval);
+      if (options.symbol) params.append('symbol', options.symbol);
+      if (options.tradeAmount) params.append('tradeAmount', options.tradeAmount.toString());
+
+      // 如果有参数，添加到URL
+      const paramString = params.toString();
+      if (paramString) {
+        url = `${url}?${paramString}`;
+      }
+    }
 
     const response = await fetch(url, {
       method: 'POST',
