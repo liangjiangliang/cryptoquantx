@@ -483,14 +483,46 @@ const RealTimeStrategyPage: React.FC = () => {
         </div>
       ) : (
         <div className="strategies-container">
-          {/* 标题和刷新按钮放在同一行 */}
-          <div className="header-row">
-            <h2 className="section-title"></h2>
-            <div className="refresh-container">
-              {/* 刷新成功提示 */}
-              <div id="refresh-success-message" className="refresh-success-message">
-                数据已更新
+          {/* 标题和刷新按钮+统计指标放在同一行 */}
+          <div className="header-row statistics-header-row" style={{ justifyContent: 'center', gap: 24 }}>
+            {/* 统计信息面板 */}
+            {statistics && (
+              <div className="strategy-statistics-panel" style={{ marginBottom: 0, flex: 1 }}>
+                <div className="stat-item">
+                  <span className="stat-label">持仓策略数：</span>
+                  <span className="stat-value">{statistics.holdingStrategiesCount}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">运行策略数：</span>
+                  <span className="stat-value">{statistics.runningStrategiesCount}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">总投资金额：</span>
+                  <span className="stat-value">{formatAmount(statistics.totalInvestmentAmount)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">总已实现收益：</span>
+                  <span className={`stat-value ${statistics.totalRealizedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalRealizedProfit)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">预估持仓收益：</span>
+                  <span className={`stat-value ${statistics.totalEstimatedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalEstimatedProfit)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">总收益：</span>
+                  <span className={`stat-value ${statistics.totalProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalProfit)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">总收益率：</span>
+                  <span className={`stat-value ${!statistics.totalProfitRate.includes('-') ? 'positive' : 'negative'}`}>{statistics.totalProfitRate}</span>
+                </div>
               </div>
+            )}
+            {/* 刷新按钮 */}
+            <div className="refresh-container" style={{ marginLeft: 24 }}>
+              {/* <div id="refresh-success-message" className="refresh-success-message">
+                
+              </div> */}
               <button
                 className="refresh-button"
                 onClick={handleRefresh}
@@ -500,48 +532,6 @@ const RealTimeStrategyPage: React.FC = () => {
               </button>
             </div>
           </div>
-
-          {/* 添加统计信息面板 */}
-          {statistics && (
-            <div className="strategy-statistics-panel">
-              <div className="stat-item">
-                <span className="stat-label">持仓策略数：</span>
-                <span className="stat-value">{statistics.holdingStrategiesCount}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">运行策略数：</span>
-                <span className="stat-value">{statistics.runningStrategiesCount}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">总投资金额：</span>
-                <span className="stat-value">{formatAmount(statistics.totalInvestmentAmount)}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">总已实现收益：</span>
-                <span className={`stat-value ${statistics.totalRealizedProfit >= 0 ? 'positive' : 'negative'}`}>
-                  {formatAmount(statistics.totalRealizedProfit)}
-                </span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">预估持仓收益：</span>
-                <span className={`stat-value ${statistics.totalEstimatedProfit >= 0 ? 'positive' : 'negative'}`}>
-                  {formatAmount(statistics.totalEstimatedProfit)}
-                </span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">总收益：</span>
-                <span className={`stat-value ${statistics.totalProfit >= 0 ? 'positive' : 'negative'}`}>
-                  {formatAmount(statistics.totalProfit)}
-                </span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">总收益率：</span>
-                <span className={`stat-value ${!statistics.totalProfitRate.includes('-') ? 'positive' : 'negative'}`}>
-                  {statistics.totalProfitRate}
-                </span>
-              </div>
-            </div>
-          )}
 
           {strategies.length === 0 ? (
             <div className="empty-state">
