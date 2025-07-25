@@ -72,8 +72,8 @@ const RealTimeStrategyPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(15);
 
   // 添加排序状态
-  const [sortField, setSortField] = useState<SortField>('createTime'); // 默认按创建时间排序
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc'); // 默认正序排列
+  const [sortField, setSortField] = useState<SortField>('updateTime'); // 默认按更新时间排序
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc'); // 默认倒序排列
 
   // 添加确认对话框状态
   const [confirmModal, setConfirmModal] = useState({

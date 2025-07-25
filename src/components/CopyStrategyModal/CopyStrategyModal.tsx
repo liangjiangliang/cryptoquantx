@@ -151,6 +151,12 @@ const CopyStrategyModal: React.FC<CopyStrategyModalProps> = ({
     }
   };
 
+  // 阻止弹窗内容区域的所有鼠标事件冒泡
+  const handleContentMouseEvents = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+  };
+
   // 提交表单
   const handleSubmit = (e: React.MouseEvent) => {
     e.stopPropagation(); // 阻止事件冒泡
@@ -197,7 +203,13 @@ const CopyStrategyModal: React.FC<CopyStrategyModalProps> = ({
 
   return (
     <div className="copy-strategy-modal-overlay" onClick={handleOverlayClick}>
-      <div className="copy-strategy-modal-content" onClick={(e) => e.stopPropagation()}>
+      <div 
+        className="copy-strategy-modal-content" 
+        onClick={(e) => {
+          e.stopPropagation();
+          e.nativeEvent.stopImmediatePropagation();
+        }}
+      >
         <div className="copy-strategy-modal-header">
           <h3 className="copy-strategy-modal-title">复制策略: {originalStrategy.strategyName}</h3>
           <button 
@@ -212,7 +224,13 @@ const CopyStrategyModal: React.FC<CopyStrategyModalProps> = ({
           </button>
         </div>
         
-        <div className="copy-strategy-modal-body">
+        <div 
+          className="copy-strategy-modal-body"
+          onMouseDown={handleContentMouseEvents}
+          onMouseUp={handleContentMouseEvents}
+          onMouseLeave={handleContentMouseEvents}
+          onMouseEnter={handleContentMouseEvents}
+        >
           {/* 交易金额 */}
           <div className="form-group">
             {/* <label htmlFor="tradeAmount">投资金额(USDT) - 用于执行实盘策略金额</label> */}
@@ -232,6 +250,13 @@ const CopyStrategyModal: React.FC<CopyStrategyModalProps> = ({
               onChange={(e) => setTradeAmount(e.target.value)}
               className="copy-strategy-input"
               onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              onMouseLeave={(e) => e.stopPropagation()}
+              onMouseEnter={(e) => e.stopPropagation()}
+              onSelect={(e) => e.stopPropagation()}
+              onBlur={(e) => e.stopPropagation()}
             />
             {accountBalance !== null && (
               <div className="balance-buttons">
@@ -251,6 +276,9 @@ const CopyStrategyModal: React.FC<CopyStrategyModalProps> = ({
               value={interval}
               onChange={(e) => setInterval(e.target.value)}
               className="copy-strategy-input"
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
             >
               <option value={originalStrategy.interval}>{originalStrategy.interval} (当前)</option>
               {supportedIntervals
@@ -279,6 +307,8 @@ const CopyStrategyModal: React.FC<CopyStrategyModalProps> = ({
                 onChange={handleSearchChange}
                 className="copy-strategy-input symbol-search"
                 onClick={(e) => e.stopPropagation()}
+                onFocus={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
               />
               <div className="tickers-container">
                 {loadingTickers ? (
