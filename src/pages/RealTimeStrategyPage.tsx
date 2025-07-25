@@ -125,7 +125,7 @@ const RealTimeStrategyPage: React.FC = () => {
           setStatistics(result.data.statistics);
           lastSuccessfulStatisticsRef.current = result.data.statistics;
         }
-        
+
         // 将持仓信息与策略列表整合
         if (currentStrategies.length > 0 && result.data.strategies) {
           const updatedStrategies = currentStrategies.map(strategy => {
@@ -258,21 +258,21 @@ const RealTimeStrategyPage: React.FC = () => {
       if (sortField === 'estimatedBalance') {
         const aValue = calculateEstimatedBalance(a);
         const bValue = calculateEstimatedBalance(b);
-        
+
         // 处理空值，确保空值始终排在最后
         if (aValue === null || aValue === undefined) return 1;
         if (bValue === null || bValue === undefined) return -1;
-        
+
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
-      
+
       let aValue: any = a[sortField as keyof RealTimeStrategy];
       let bValue: any = b[sortField as keyof RealTimeStrategy];
-      
+
       // 无论升序还是降序，null/undefined值都排在最后
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
-      
+
       // 处理字符串类型的排序
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         // 日期字符串特殊处理
@@ -281,20 +281,20 @@ const RealTimeStrategyPage: React.FC = () => {
           const dateB = bValue ? new Date(bValue).getTime() : 0;
           return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
         }
-        
+
         // 普通字符串
-        return sortDirection === 'asc' 
+        return sortDirection === 'asc'
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       }
-      
+
       // 处理百分比字符串
       if (sortField === 'profitPercentage' && typeof aValue === 'string' && typeof bValue === 'string') {
         const numA = parseFloat(aValue.replace('%', ''));
         const numB = parseFloat(bValue.replace('%', ''));
         return sortDirection === 'asc' ? numA - numB : numB - numA;
       }
-      
+
       // 普通数值比较
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     });
@@ -416,10 +416,10 @@ const RealTimeStrategyPage: React.FC = () => {
   // 确认复制
   const handleConfirmCopy = async (interval: string, symbol: string, tradeAmount: number) => {
     if (!copyModal.strategy) return;
-    
+
     const strategyId = copyModal.strategy.id;
     setOperationInProgress({...operationInProgress, [strategyId]: true});
-    
+
     try {
       // 调用复制API，传入可选参数
       const result = await copyRealTimeStrategy(strategyId, {
@@ -427,7 +427,7 @@ const RealTimeStrategyPage: React.FC = () => {
         symbol,
         tradeAmount
       });
-      
+
       if (result.success) {
         // 刷新策略列表
         refreshData();
@@ -486,8 +486,8 @@ const RealTimeStrategyPage: React.FC = () => {
       ? strategy.estimatedProfit
       : 0;
 
-    // 预估余额 = 投资金额 + 总收益 + 预估收益
-    return tradeAmount + totalProfit + estimatedProfit;
+    // 预估收益 =  总收益 + 预估收益
+    return   totalProfit + estimatedProfit;
   };
 
   // 先对数据进行排序
@@ -558,7 +558,7 @@ const RealTimeStrategyPage: React.FC = () => {
             {/* 刷新按钮 */}
             <div className="refresh-container" style={{ marginLeft: 24 }}>
               {/* <div id="refresh-success-message" className="refresh-success-message">
-                
+
               </div> */}
               <button
                 className="refresh-button"
@@ -596,10 +596,10 @@ const RealTimeStrategyPage: React.FC = () => {
                       投资金额 {getSortIcon('tradeAmount')}
                     </th>
                     <th onClick={() => handleSort('estimatedBalance')} className="sortable-header">
-                      预估余额 {getSortIcon('estimatedBalance')}
+                      全部预估收益 {getSortIcon('estimatedBalance')}
                     </th>
                     <th onClick={() => handleSort('totalProfit')} className="sortable-header">
-                      总收益 {getSortIcon('totalProfit')}
+                      已完成收益 {getSortIcon('totalProfit')}
                     </th>
                     <th onClick={() => handleSort('totalProfitRate')} className="sortable-header">
                       利润率 {getSortIcon('totalProfitRate')}
@@ -618,7 +618,7 @@ const RealTimeStrategyPage: React.FC = () => {
                       预估收益 {getSortIcon('estimatedProfit')}
                     </th>
                     <th onClick={() => handleSort('profitPercentage')} className="sortable-header">
-                      收益率 {getSortIcon('profitPercentage')}
+                      预估收益率 {getSortIcon('profitPercentage')}
                     </th>
                     <th onClick={() => handleSort('holdingDuration')} className="sortable-header">
                       持仓时长 {getSortIcon('holdingDuration')}

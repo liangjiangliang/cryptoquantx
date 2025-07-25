@@ -264,12 +264,14 @@ const CopyStrategyModal: React.FC<CopyStrategyModalProps> = ({
 
           {/* 币种选择 */}
           <div className="form-group">
-            <label htmlFor="symbol">交易对:</label>
+            <label htmlFor="symbol">当前选择: {symbol || originalStrategy.symbol}</label>
             <div className="symbol-selection">
-              <div className="selected-symbol">
-                <span>当前选择: </span>
-                <strong>{symbol || originalStrategy.symbol}</strong>
-              </div>
+              {/* <div className="selected-symbol current-selection-container">
+                <div className="current-selection-text">
+                  <span>当前选择: </span>
+                  <strong>{symbol || originalStrategy.symbol}</strong>
+                </div>
+              </div> */}
               <input 
                 type="text"
                 placeholder="搜索交易对..."

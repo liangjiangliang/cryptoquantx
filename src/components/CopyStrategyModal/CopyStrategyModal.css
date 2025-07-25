@@ -184,20 +184,28 @@ textarea {
 }
 
 .selected-symbol {
-  padding: 10px 15px;
+  padding: 10px 15px 10px 5px; /* 减少左侧padding */
   display: flex;
   align-items: center;
   border-bottom: 1px solid #2e3241;
+  text-align: left; /* 确保文本左对齐 */
+  justify-content: flex-start; /* 确保flex布局左对齐 */
 }
 
 .selected-symbol span {
   color: #6c7284;
   margin-right: 8px;
+  text-align: left; /* 确保文本左对齐 */
+  margin-left: 0; /* 移除任何左边距 */
+  padding-left: 0; /* 移除任何左内边距 */
 }
 
 .selected-symbol strong {
   color: #d9d9d9;
   font-weight: 500;
+  text-align: left; /* 确保文本左对齐 */
+  margin-left: 0; /* 移除任何左边距 */
+  padding-left: 0; /* 移除任何左内边距 */
 }
 
 .symbol-search {
@@ -431,4 +439,27 @@ textarea {
   padding: 15px;
   text-align: center;
   color: #6c7284;
+} 
+
+.current-selection-container {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0;
+  width: 100%;
+}
+
+.current-selection-text {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px 10px 10px;
+  text-align: left;
+  margin-left: 0;
+  width: 100%;
+}
+
+.current-selection-text span, 
+.current-selection-text strong {
+  text-align: left;
+  margin-left: 0;
+  padding-left: 0;
 } 
