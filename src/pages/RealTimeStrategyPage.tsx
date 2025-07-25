@@ -643,14 +643,14 @@ const RealTimeStrategyPage: React.FC = () => {
                       <td>{strategy.symbol}</td>
                       <td>{strategy.interval}</td>
                       <td>{formatAmount(strategy.tradeAmount)} </td>
-                      <td className={calculateEstimatedBalance(strategy) >= strategy.tradeAmount ? 'positive' : 'negative'}>
+                      <td className={calculateEstimatedBalance(strategy) >= 0 ? 'positive' : 'negative'}>
                         {formatAmount(calculateEstimatedBalance(strategy))}
                       </td>
                       <td className={strategy.totalProfit && strategy.totalProfit >= 0 ? 'positive' : 'negative'}>
                         {formatAmount(strategy.totalProfit)}
                       </td>
                       <td className={strategy.totalProfitRate && strategy.totalProfitRate >= 0 ? 'positive' : 'negative'}>
-                        {strategy.totalProfitRate ? `${(strategy.totalProfitRate * 100).toFixed(2)}%` : '0.00%'}
+                        {strategy.totalProfitRate ? `${(strategy.totalProfitRate * 100).toFixed(4)}%` : '0.00%'}
                       </td>
                       <td>
                         {formatAmount(strategy.totalFees)}
