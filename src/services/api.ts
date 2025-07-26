@@ -194,7 +194,7 @@ const convertApiDataToCandlestickData = (apiData: any[]): CandlestickData[] => {
         const interval = item.intervalVal;
 
         // 根据时间周期，计算开盘时间
-        switch(interval) {
+        switch (interval) {
           case '1m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 1); break;
           case '5m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 5); break;
           case '15m': closeTimeObj.setMinutes(closeTimeObj.getMinutes() - 15); break;
@@ -730,7 +730,7 @@ export const generateStrategy = async (description: string): Promise<{ success: 
 };
 
 // 修改策略
-export const updateStrategy = async (id :number,description: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+export const updateStrategy = async (id: number, description: string): Promise<{ success: boolean; data?: any; message?: string }> => {
   try {
     const url = '/api/backtest/ta4j/update-strategy';
     const formData = new URLSearchParams();
@@ -1123,11 +1123,11 @@ export const deleteRealTimeStrategy = async (strategyId: number): Promise<{ succ
 
 // 复制实时策略
 export const copyRealTimeStrategy = async (
-  strategyId: number, 
-  options?: { 
-    interval?: string, 
-    symbol?: string, 
-    tradeAmount?: number 
+  strategyId: number,
+  options?: {
+    interval?: string,
+    symbol?: string,
+    tradeAmount?: number
   }
 ): Promise<{ success: boolean; message?: string }> => {
   try {
@@ -1169,9 +1169,9 @@ export const copyRealTimeStrategy = async (
     } else {
       // 检查是否为FastJSON序列化错误
       const errorMsg = data.message || '';
-      if (errorMsg.includes('IllegalAccessException') || 
-          errorMsg.includes('FastJSON') || 
-          errorMsg.includes('cannot access')) {
+      if (errorMsg.includes('IllegalAccessException') ||
+        errorMsg.includes('FastJSON') ||
+        errorMsg.includes('cannot access')) {
         return {
           success: false,
           message: '复制策略失败: 该策略包含无法序列化的组件，请联系管理员'
@@ -1186,17 +1186,97 @@ export const copyRealTimeStrategy = async (
     console.error('复制策略失败:', error);
     // 捕获特定的序列化错误
     const errorMsg = error instanceof Error ? error.message : '复制策略请求发生错误';
-    if (errorMsg.includes('IllegalAccessException') || 
-        errorMsg.includes('FastJSON') || 
-        errorMsg.includes('cannot access')) {
-    return {
-      success: false,
+    if (errorMsg.includes('IllegalAccessException') ||
+      errorMsg.includes('FastJSON') ||
+      errorMsg.includes('cannot access')) {
+      return {
+        success: false,
         message: '复制策略失败: 该策略包含无法序列化的组件，请联系管理员'
       };
     }
     return {
       success: false,
       message: errorMsg
+    };
+  }
+};
+
+// 全仓买入（开仓）
+export const buyFullPosition = async (strategyId: number): Promise<{ success: boolean; message?: string }> => {
+  try {
+    // 使用新的execute-trade-signal接口，side为buy
+    const url = `/api/real-time-strategy/execute-trade-signal?strategyId=${strategyId}&side=buy`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('全仓买入API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        message: data.message || data.data || '全仓买入成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '全仓买入失败'
+      };
+    }
+  } catch (error) {
+    console.error('全仓买入失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '全仓买入请求发生错误'
+    };
+  }
+};
+
+// 全仓卖出（平仓）
+export const sellFullPosition = async (strategyId: number): Promise<{ success: boolean; message?: string }> => {
+  try {
+    // 使用新的execute-trade-signal接口，side为sell
+    const url = `/api/real-time-strategy/execute-trade-signal?strategyId=${strategyId}&side=sell`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('全仓卖出API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        message: data.message || data.data || '全仓卖出成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '全仓卖出失败'
+      };
+    }
+  } catch (error) {
+    console.error('全仓卖出失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '全仓卖出请求发生错误'
     };
   }
 };
@@ -1272,23 +1352,23 @@ export const fetchAllTickers = async (filter: string = 'all', limit: number = 20
 };
 
 // 获取回测参数
-export const fetchBacktestParameters = async (): Promise<{ 
-  success: boolean; 
+export const fetchBacktestParameters = async (): Promise<{
+  success: boolean;
   data?: {
     stopLossPercent: number;
     trailingProfitPercent: number;
-  }; 
-  message?: string 
+  };
+  message?: string
 }> => {
   try {
     const response = await fetch('/api/backtest/parameters');
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    
+
     const result = await response.json();
-    
+
     if (result.code === 200) {
       return {
         success: true,
@@ -1319,13 +1399,13 @@ export const updateStopLossPercent = async (percent: number): Promise<{
     const response = await fetch(`/api/backtest/parameters/stop-loss?percent=${percent}`, {
       method: 'GET'
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    
+
     const result = await response.json();
-    
+
     if (result.code === 200) {
       return {
         success: true,
@@ -1356,13 +1436,13 @@ export const updateTrailingProfitPercent = async (percent: number): Promise<{
     const response = await fetch(`/api/backtest/parameters/trailing-profit?percent=${percent}`, {
       method: 'GET'
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    
+
     const result = await response.json();
-    
+
     if (result.code === 200) {
       return {
         success: true,
@@ -1387,8 +1467,8 @@ export const updateTrailingProfitPercent = async (percent: number): Promise<{
  * 获取持仓中的策略预估收益信息
  * 调用后端新增的接口，获取最后交易状态为买入(BUY)的所有正在运行策略的预估收益信息
  */
-export const fetchHoldingPositionsProfits = async (): Promise<{ 
-  success: boolean; 
+export const fetchHoldingPositionsProfits = async (): Promise<{
+  success: boolean;
   data?: {
     strategies: Array<{
       strategyId: number;
@@ -1415,18 +1495,18 @@ export const fetchHoldingPositionsProfits = async (): Promise<{
       holdingStrategiesCount: number;
       runningStrategiesCount: number;
     };
-  }; 
-  message?: string 
+  };
+  message?: string
 }> => {
   try {
     const response = await fetch('/api/real-time-strategy/holding-positions');
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    
+
     const result = await response.json();
-    
+
     if (result.code === 200) {
       return {
         success: true,

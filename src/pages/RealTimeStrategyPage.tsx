@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { startRealTimeStrategy, stopRealTimeStrategy, deleteRealTimeStrategy, copyRealTimeStrategy, fetchHoldingPositionsProfits } from '../services/api';
+import { startRealTimeStrategy, stopRealTimeStrategy, deleteRealTimeStrategy, copyRealTimeStrategy, fetchHoldingPositionsProfits, buyFullPosition, sellFullPosition } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal/ConfirmModal';
 import CopyStrategyModal from '../components/CopyStrategyModal/CopyStrategyModal';
 import './RealTimeStrategyPage.css';
@@ -475,6 +475,48 @@ const RealTimeStrategyPage: React.FC = () => {
     closeConfirmModal();
   };
 
+  // 全仓买入（开仓）
+  const handleBuyFullPosition = async (strategyId: number) => {
+    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    try {
+      const result = await buyFullPosition(strategyId);
+      if (result.success) {
+        // 刷新策略列表
+        refreshData();
+      } else {
+        setError(result.message || '全仓买入失败');
+        setErrorModalOpen(true);
+      }
+    } catch (error) {
+      console.error('全仓买入失败:', error);
+      setError(error instanceof Error ? error.message : '全仓买入失败');
+      setErrorModalOpen(true);
+    } finally {
+      setOperationInProgress({...operationInProgress, [strategyId]: false});
+    }
+  };
+
+  // 全仓卖出（平仓）
+  const handleSellFullPosition = async (strategyId: number) => {
+    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    try {
+      const result = await sellFullPosition(strategyId);
+      if (result.success) {
+        // 刷新策略列表
+        refreshData();
+      } else {
+        setError(result.message || '全仓卖出失败');
+        setErrorModalOpen(true);
+      }
+    } catch (error) {
+      console.error('全仓卖出失败:', error);
+      setError(error instanceof Error ? error.message : '全仓卖出失败');
+      setErrorModalOpen(true);
+    } finally {
+      setOperationInProgress({...operationInProgress, [strategyId]: false});
+    }
+  };
+
   // 计算预估余额
   const calculateEstimatedBalance = (strategy: RealTimeStrategy): number => {
     // 初始投资金额
@@ -719,6 +761,23 @@ const RealTimeStrategyPage: React.FC = () => {
                         >
                           复制
                         </button>
+                        {strategy.isHolding ? (
+                          <button
+                            className="strategy-sell-btn"
+                            onClick={() => handleSellFullPosition(strategy.id)}
+                            disabled={operationInProgress[strategy.id]}
+                          >
+                            {operationInProgress[strategy.id] ? '处理中...' : '平仓'}
+                          </button>
+                        ) : (
+                          <button
+                            className="strategy-buy-btn"
+                            onClick={() => handleBuyFullPosition(strategy.id)}
+                            disabled={operationInProgress[strategy.id]}
+                          >
+                            {operationInProgress[strategy.id] ? '处理中...' : '开仓'}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
