@@ -266,7 +266,7 @@ const FundCenterPage: React.FC = () => {
         position: 'left' as const,
         title: {
           display: true,
-          text: '资金 (¥)',
+          text: '资金',
           color: '#3b82f6',
           font: {
             size: 14,

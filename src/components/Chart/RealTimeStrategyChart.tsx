@@ -482,19 +482,19 @@ const RealTimeStrategyChart = forwardRef<{
         // 买入标记：显示买入价格
         markerText = `${order.side} ${formatPrice(order.price)}`;
       } else {
-        // 卖出标记：显示卖出价格、盈亏金额和利润率
+        // 卖出标记：显示卖出价格、盈亏金额和利润率（成交金额和盈利百分比加粗）
         const profit = order.profit || 0;
         const profitRate = order.profitRate || 0;
         const profitSign = profit >= 0 ? '+' : '';
         const profitRateSign = profitRate >= 0 ? '+' : '';
 
-        markerText = `${order.side} ${formatPrice(order.price)}\n${profitSign}${formatAmount(profit)} (${profitRateSign}${(profitRate * 100).toFixed(2)}%)`;
+        markerText = `${order.side} ${formatPrice(order.price)}\n**${profitSign}${formatAmount(profit)}** (**${profitRateSign}${(profitRate * 100).toFixed(2)}%**)`;
       }
 
       return {
         time: timeForChart,
         position: order.side === 'BUY' ? 'belowBar' as SeriesMarkerPosition : 'aboveBar' as SeriesMarkerPosition,
-        color: order.side === 'BUY' ? '#00aa00' : (order.profit && order.profit >= 0 ? '#ff4444' : '#00aa00'),
+        color: order.side === 'BUY' ? '#87CEEB' : (order.profit && order.profit >= 0 ? '#ff4444' : '#00aa00'),
         shape: order.side === 'BUY' ? 'arrowUp' as SeriesMarkerShape : 'arrowDown' as SeriesMarkerShape,
         text: markerText,
         size: 1,

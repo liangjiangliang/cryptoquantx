@@ -251,6 +251,39 @@ const RealTimeStrategyPage: React.FC = () => {
     return sortDirection === 'asc' ? '↑' : '↓';
   };
 
+  // 将持仓时长字符串转换为分钟数，用于排序
+  const parseDurationToMinutes = (duration: string): number => {
+    if (!duration || duration === '-') return 0;
+    
+    let totalMinutes = 0;
+    
+    // 匹配天数
+    const dayMatch = duration.match(/(\d+)天/);
+    if (dayMatch) {
+      totalMinutes += parseInt(dayMatch[1]) * 24 * 60;
+    }
+    
+    // 匹配小时数
+    const hourMatch = duration.match(/(\d+)小时/);
+    if (hourMatch) {
+      totalMinutes += parseInt(hourMatch[1]) * 60;
+    }
+    
+    // 匹配分钟数
+    const minuteMatch = duration.match(/(\d+)分钟/);
+    if (minuteMatch) {
+      totalMinutes += parseInt(minuteMatch[1]);
+    }
+    
+    // 匹配秒数（转换为分钟的小数部分）
+    const secondMatch = duration.match(/(\d+)秒/);
+    if (secondMatch) {
+      totalMinutes += parseInt(secondMatch[1]) / 60;
+    }
+    
+    return totalMinutes;
+  };
+
   // 对数据进行排序
   const getSortedStrategies = (data: RealTimeStrategy[]) => {
     return [...data].sort((a, b) => {
@@ -272,6 +305,13 @@ const RealTimeStrategyPage: React.FC = () => {
       // 无论升序还是降序，null/undefined值都排在最后
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
+
+      // 特殊处理持仓时长排序
+      if (sortField === 'holdingDuration') {
+        const durationA = parseDurationToMinutes(aValue);
+        const durationB = parseDurationToMinutes(bValue);
+        return sortDirection === 'asc' ? durationA - durationB : durationB - durationA;
+      }
 
       // 处理字符串类型的排序
       if (typeof aValue === 'string' && typeof bValue === 'string') {
