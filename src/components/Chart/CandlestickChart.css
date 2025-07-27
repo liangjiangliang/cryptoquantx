@@ -553,11 +553,12 @@
   color: #d9d9d9;
   border: 1px solid #3a3f52;
   border-radius: 4px;
-  padding: 6px 10px;
+  padding: 0 10px;
   font-size: 14px;
   min-width: 120px;
   cursor: pointer;
   height: 36px;
+  box-sizing: border-box;
 }
 
 .pair-selector:hover,
@@ -601,11 +602,12 @@
   color: #d9d9d9;
   border: 1px solid #3a3f52;
   border-radius: 4px;
-  padding: 6px 10px;
+  padding: 0 10px;
   font-size: 14px;
   width: 130px;
   cursor: pointer;
   height: 36px;
+  box-sizing: border-box;
 }
 
 .date-input:hover {
