@@ -1526,3 +1526,39 @@ export const fetchHoldingPositionsProfits = async (): Promise<{
     };
   }
 };
+
+export const fetchFundData = async (
+  timeRange: 'today' | 'week' | 'month' | 'half-year'
+): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    const apiUrl = `/api/fund-center/${timeRange}`;
+    
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        message: `请求失败: ${errorText}`,
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      data: data.data,
+      message: data.message || '获取资金数据成功',
+    };
+  } catch (error) {
+    console.error('获取资金数据失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '获取资金数据时出错',
+    };
+  }
+};

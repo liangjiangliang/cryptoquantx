@@ -1,0 +1,127 @@
+.fund-center-page {
+  background-color: #1e222d;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 120px);
+}
+
+.fund-center-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #2e3241;
+}
+
+.fund-center-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #d9d9d9;
+  font-weight: 500;
+}
+
+.time-range-selector {
+  display: flex;
+  gap: 10px;
+}
+
+.time-range-selector button {
+  background-color: #2e3241;
+  border: 1px solid #3a3f4c;
+  color: #d9d9d9;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.time-range-selector button:hover {
+  background-color: #3a3f4c;
+  border-color: #4a5169;
+}
+
+.time-range-selector button.active {
+  background-color: #2962ff;
+  border-color: #2962ff;
+  color: white;
+}
+
+.fund-chart-container {
+  flex: 1;
+  height: calc(100vh - 300px);
+  min-height: 400px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #252833;
+  border-radius: 8px;
+  position: relative;
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(30, 34, 45, 0.7);
+  color: #d9d9d9;
+  font-size: 18px;
+  z-index: 10;
+}
+
+.error-message {
+  color: #ff5252;
+  text-align: center;
+  padding: 20px;
+  font-size: 16px;
+}
+
+.no-data-message {
+  color: #8d8d8d;
+  text-align: center;
+  padding: 20px;
+  font-size: 16px;
+}
+
+.fund-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  background-color: #252833;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-item .label {
+  color: #8d8d8d;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.summary-item .value {
+  color: #d9d9d9;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.summary-item .value.positive {
+  color: #32a852;
+}
+
+.summary-item .value.negative {
+  color: #ff5555;
+} 

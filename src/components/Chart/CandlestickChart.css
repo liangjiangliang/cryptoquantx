@@ -2,26 +2,26 @@
   background-color: #1e222d;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 20px;
-  height: 100%;
+  padding: 20px 20px 0px; /* 移除底部内边距 */
+  margin-bottom: 0px; /* 移除底部外边距 */
+  height: calc(100vh - 20px); /* 明确设置高度为视口高度减去很小的边距 */
   display: flex;
   flex-direction: column;
   flex: 1;
   transition: height 0.3s ease, width 0.3s ease;
-  min-height: calc(100vh - 90px); /* 增加最小高度，填充整个页面 */
+  min-height: calc(100vh - 20px); /* 减小最小高度 */
 }
 
 .chart-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
+  padding: 5px 10px; /* 减小内边距 */
   background-color: #1e222d;
   border-bottom: 1px solid #2e3241;
   flex-wrap: nowrap;
-  min-height: 60px;
-  gap: 15px;
+  min-height: 40px; /* 减小最小高度 */
+  gap: 10px; /* 减小间距 */
 }
 
 .chart-title {
@@ -174,10 +174,11 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  height: calc(100vh - 200px); /* 调整高度，更好地填充屏幕 */
+  height: calc(100vh - 80px); /* 进一步减小底部空间 */
   border-radius: 4px;
   overflow: hidden;
   transition: height 0.3s ease;
+  margin-bottom: 0; /* 移除底部边距 */
 }
 
 /* 移除底部填充区域，让图表自然填充空间 */
@@ -194,8 +195,9 @@
   flex: 1;
   overflow: hidden;
   transition: all 0.3s ease;
-  padding-bottom: 0; /* 移除底部填充 */
+  padding: 0; /* 移除所有填充 */
   gap: 0; /* 移除子元素之间的间距 */
+  margin: 0; /* 移除所有外边距 */
 }
 
 .chart-content {
@@ -203,12 +205,14 @@
   width: 100%;
   flex-shrink: 0;
   height: 100%;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .main-chart {
-  min-height: 400px;
+  min-height: 350px; /* 减小最小高度 */
   height: 100%;
-  flex: 4; /* 增加主图所占比例 */
+  flex: 3; /* 减少主图所占比例，让副图占比更大 */
   transition: flex 0.3s ease, height 0.3s ease;
   margin-bottom: 0; /* 去掉底部间距 */
   padding-bottom: 0; /* 确保没有内边距 */
@@ -216,8 +220,8 @@
 
 .sub-chart {
   position: relative;
-  height: 150px;
-  min-height: 150px;
+  height: 200px; /* 增加高度 */
+  min-height: 200px; /* 增加最小高度 */
   margin-top: 0; /* 紧贴主图 */
   margin-bottom: 0; /* 去掉底部间距 */
   padding-top: 0; /* 确保没有内边距 */

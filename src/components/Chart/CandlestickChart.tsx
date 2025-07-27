@@ -1676,7 +1676,7 @@ const CandlestickChart: React.FC = () => {
     }
   };
 
-  // 准备时间序列数据，过滤掉所有无效值
+  // 准备时间序列数据，确保正确处理最新K线
   const prepareTimeSeriesData = (
     values: number[],
     times: (Time)[],
@@ -1686,13 +1686,21 @@ const CandlestickChart: React.FC = () => {
       return [];
     }
 
-    // 确保两个数组长度匹配
-    const length = Math.min(values.length, times.length);
-
+    // 处理可能存在的长度不匹配问题
+    // 确保数据显示到最新的K线
+    const timeLength = times.length;
+    const valueLength = values.length;
+    const offset = Math.max(0, timeLength - valueLength);
+    
     const result = [];
-    for (let i = 0; i < length; i++) {
+    
+    // 先确保数据对齐 - 从最早的数据点开始匹配
+    for (let i = 0; i < valueLength; i++) {
+      const timeIndex = i + offset;
+      if (timeIndex >= timeLength) break;
+      
       const value = values[i];
-      const time = times[i];
+      const time = times[timeIndex];
 
       // 跳过所有无效值
       if (value === undefined || value === null || isNaN(value) || !time) {
@@ -1900,9 +1908,13 @@ const CandlestickChart: React.FC = () => {
 
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
-
-      // 准备数据，过滤掉无效值
+      
+      console.log('RSI数据长度:', rsiData.length, '时间序列长度:', times.length);
+      
+      // 准备数据，确保包含最新K线
       const formattedData = prepareTimeSeriesData(rsiData, times);
+      
+      console.log('RSI格式化数据长度:', formattedData.length);
 
       // 如果没有有效数据，不添加指标
       if (formattedData.length === 0) {
@@ -2205,11 +2217,15 @@ const CandlestickChart: React.FC = () => {
 
       // 创建时间序列
       const times = candlestickData.map(item => item.time as Time);
+      
+      console.log('KDJ数据长度:', k.length, d.length, j.length, '时间序列长度:', times.length);
 
-      // 准备数据，过滤掉无效值
+      // 准备数据，确保包含最新K线
       const kData = prepareTimeSeriesData(k, times);
       const dData = prepareTimeSeriesData(d, times);
       const jData = prepareTimeSeriesData(j, times);
+      
+      console.log('KDJ格式化数据长度:', kData.length, dData.length, jData.length);
 
       // 如果没有有效数据，不添加指标
       if (kData.length === 0 || dData.length === 0 || jData.length === 0) {
@@ -3541,8 +3557,7 @@ const CandlestickChart: React.FC = () => {
             </div>
           )}
 
-          {/* 底部填充区域 - 始终显示 */}
-          <div className={`chart-bottom-padding ${showPanels ? '' : 'panels-hidden'}`}></div>
+          {/* 移除底部填充区域 */}
         </div>
 
         {/* K线详细信息浮层 */}
