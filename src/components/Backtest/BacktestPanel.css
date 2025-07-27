@@ -568,6 +568,7 @@
   top: 100%;
   left: 0;
   width: 100%; /* 充满面板 */
+  min-width: 380px; /* 增加最小宽度 */
   background-color: #2e3241;
   border: 1px solid #3a3f4c;
   border-radius: 4px;
@@ -688,7 +689,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 20px; /* 统一间距 */
+  gap: 16px; /* 增加间距 */
+  flex: 1; /* 增加右侧区域空间占比 */
 }
 
 .pair-item-price {
@@ -704,16 +706,16 @@
 }
 
 .pair-item-change.price-up {
-  color: #4cff50;
+  color: #ff5555; /* 红色, 表示上涨 */
 }
 
 .pair-item-change.price-down {
-  color: #ff4336;
+  color: #32a852; /* 绿色, 表示下跌 */
 }
 
 .pair-item-volume {
   color: #b8b8b8;
-  min-width: 70px;
+  min-width: 80px; /* 增加交易量列宽度 */
   text-align: right;
 }
 
@@ -885,4 +887,66 @@
   margin-bottom: 5px;
   color: #6c7284;
   font-size: 13px;
+}
+
+.pair-list-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid #3a3f4c;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8d8d8d;
+  margin-top: 10px;
+}
+
+.pair-list-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.pair-list-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.header-item {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.header-item:hover {
+  color: #d9d9d9;
+}
+
+.header-item.active {
+  color: #2962ff;
+}
+
+.header-item-symbol {
+  min-width: 90px;
+}
+
+.header-item-price {
+  min-width: 80px;
+  text-align: right;
+}
+
+.header-item-change {
+  min-width: 65px;
+  text-align: right;
+}
+
+.header-item-volume {
+  min-width: 80px; /* 增加交易量标题宽度 */
+  text-align: right;
+}
+
+/* 隐藏旧的排序按钮 */
+.sort-options {
+  display: none;
 }

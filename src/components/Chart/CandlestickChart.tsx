@@ -3225,6 +3225,18 @@ const CandlestickChart: React.FC = () => {
           ? b.priceChangePercent - a.priceChangePercent
           : a.priceChangePercent - b.priceChangePercent;
       });
+    } else if (sortBy === 'price') {
+      sorted.sort((a, b) => {
+        const priceA = a.lastPrice || 0;
+        const priceB = b.lastPrice || 0;
+        return sortDirection === 'desc' ? priceB - priceA : priceA - priceB;
+      });
+    } else if (sortBy === 'symbol') {
+      sorted.sort((a, b) => {
+        return sortDirection === 'desc' 
+          ? b.symbol.localeCompare(a.symbol)
+          : a.symbol.localeCompare(b.symbol);
+      });
     } else {
       // 默认也按交易量排序
       sorted.sort((a, b) => {
@@ -3328,19 +3340,35 @@ const CandlestickChart: React.FC = () => {
                     autoFocus
                   />
 
-                  <div className="sort-options">
-                    <button
-                      className={`sort-button ${sortBy === 'volume' ? 'active' : ''}`}
-                      onClick={() => handleSortChange('volume')}
-                    >
-                      交易量 {sortBy === 'volume' && (sortDirection === 'desc' ? '↓' : '↑')}
-                    </button>
-                    <button
-                      className={`sort-button ${sortBy === 'change' ? 'active' : ''}`}
-                      onClick={() => handleSortChange('change')}
-                    >
-                      涨跌幅 {sortBy === 'change' && (sortDirection === 'desc' ? '↓' : '↑')}
-                    </button>
+                  <div className="pair-list-header">
+                    <div className="pair-list-header-left">
+                      <div 
+                        className={`header-item header-item-symbol ${sortBy === 'symbol' ? 'active' : ''}`}
+                        onClick={() => handleSortChange('symbol')}
+                      >
+                        币种 {sortBy === 'symbol' && (sortDirection === 'desc' ? '↓' : '↑')}
+                      </div>
+                    </div>
+                    <div className="pair-list-header-right">
+                      <div 
+                        className={`header-item header-item-price ${sortBy === 'price' ? 'active' : ''}`}
+                        onClick={() => handleSortChange('price')}
+                      >
+                        价格 {sortBy === 'price' && (sortDirection === 'desc' ? '↓' : '↑')}
+                      </div>
+                      <div 
+                        className={`header-item header-item-change ${sortBy === 'change' ? 'active' : ''}`}
+                        onClick={() => handleSortChange('change')}
+                      >
+                        涨跌幅 {sortBy === 'change' && (sortDirection === 'desc' ? '↓' : '↑')}
+                      </div>
+                      <div 
+                        className={`header-item header-item-volume ${sortBy === 'volume' ? 'active' : ''}`}
+                        onClick={() => handleSortChange('volume')}
+                      >
+                        交易量 {sortBy === 'volume' && (sortDirection === 'desc' ? '↓' : '↑')}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="pair-list-container">
@@ -3354,18 +3382,18 @@ const CandlestickChart: React.FC = () => {
                             className={`pair-item ${ticker.symbol === selectedPair ? 'selected' : ''}`}
                             onClick={() => selectPair(ticker.symbol)}
                           >
-                            <div className="pair-item-symbol">{ticker.symbol}</div>
-                            <div className="pair-item-price-container">
+                            <div className="pair-item-left">
+                              <div className="pair-item-symbol">{ticker.symbol}</div>
+                            </div>
+                            <div className="pair-item-right">
                               <div className="pair-item-price">{ticker.lastPrice > 0 ? ticker.lastPrice.toFixed(2) : '--'}</div>
-                              <div className="pair-item-details">
-                                <div className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
-                                  {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
-                                </div>
-                                <div className="pair-item-volume">
-                                  {(ticker.volume && ticker.volume > 1000000) ? (ticker.volume / 1000000).toFixed(2) + 'M' :
-                                   (ticker.volume && ticker.volume > 1000) ? (ticker.volume / 1000).toFixed(2) + 'K' :
-                                   ticker.volume ? ticker.volume.toFixed(2) : '0'}
-                                </div>
+                              <div className={`pair-item-change ${getPriceChangeClass(ticker.priceChangePercent)}`}>
+                                {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
+                              </div>
+                              <div className="pair-item-volume">
+                                {(ticker.volume && ticker.volume > 1000000) ? (ticker.volume / 1000000).toFixed(2) + 'M' :
+                                (ticker.volume && ticker.volume > 1000) ? (ticker.volume / 1000).toFixed(2) + 'K' :
+                                ticker.volume ? ticker.volume.toFixed(2) : '0'}
                               </div>
                             </div>
                           </div>

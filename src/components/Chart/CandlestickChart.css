@@ -771,7 +771,7 @@
   top: calc(100% + 5px);
   left: 0;
   width: 100%;
-  min-width: 260px;
+  min-width: 440px; /* 进一步增加最小宽度 */
   background-color: #1e222d;
   border: 1px solid #3a3f4c;
   border-radius: 4px;
@@ -835,6 +835,7 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
+  width: 100%;
 }
 
 .pair-item:hover {
@@ -845,26 +846,44 @@
   background-color: rgba(41, 98, 255, 0.1);
 }
 
+.pair-item-left {
+  display: flex;
+  align-items: center;
+}
+
+.pair-item-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px; /* 进一步增加间距 */
+  flex: 1; /* 增加右侧区域空间占比 */
+}
+
 .pair-item-symbol {
   font-weight: 500;
   color: #d9d9d9;
-}
-
-.pair-item-price-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
+  min-width: 90px;
 }
 
 .pair-item-price {
   font-weight: 500;
   color: #d9d9d9;
+  min-width: 80px;
+  text-align: right;
 }
 
 .pair-item-change {
   font-size: 12px;
   font-weight: 500;
+  min-width: 65px;
+  text-align: right;
+}
+
+.pair-item-volume {
+  font-size: 12px;
+  color: #8d8d8d;
+  min-width: 100px; /* 进一步增加交易量列宽度 */
+  text-align: right;
 }
 
 .pair-item-change.price-up {
@@ -902,37 +921,7 @@
 
 /* 修改排序按钮样式 */
 .sort-options {
-  display: flex;
-  gap: 10px;
-  margin: 8px 0;
-  padding: 0 5px;
-  justify-content: space-between;
-}
-
-.sort-button {
-  background-color: #2e3241;
-  color: #d9d9d9;
-  border: 1px solid #3a3f4c;
-  border-radius: 4px;
-  padding: 5px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  flex: 1;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 80px;
-}
-
-.sort-button:hover {
-  background-color: #3a3f4c;
-}
-
-.sort-button.active {
-  background-color: #2962ff;
-  border-color: #2962ff;
+  display: none;
 }
 
 /* 加载更多按钮样式 */
@@ -967,31 +956,7 @@
   text-align: center;
 }
 
-/* 交易量显示样式 */
-.pair-item-volume {
-  font-size: 11px;
-  color: #8d8d8d;
-  margin-top: 2px;
-}
-
-/* 添加成交量和涨跌幅在同一行显示的样式 */
-.pair-item-details {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 2px;
-  font-size: 11px;
-}
-
-.pair-item-change {
-  font-size: 11px;
-}
-
-.pair-item-volume {
-  font-size: 11px;
-  color: #8d8d8d;
-  margin-left: 5px;
-}
+/* 已移除旧样式，使用新的布局样式 */
 
 /* 修改pairs-container样式，支持滚动加载 */
 .pairs-container {
@@ -1040,4 +1005,61 @@
 .quick-time-button.active {
   background-color: #2962ff;
   border-color: #2962ff;
+}
+
+.pair-list-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid #3a3f4c;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8d8d8d;
+  margin-top: 10px;
+}
+
+.pair-list-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.pair-list-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.header-item {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.header-item:hover {
+  color: #d9d9d9;
+}
+
+.header-item.active {
+  color: #2962ff;
+}
+
+.header-item-symbol {
+  min-width: 90px;
+}
+
+.header-item-price {
+  min-width: 80px;
+  text-align: right;
+}
+
+.header-item-change {
+  min-width: 65px;
+  text-align: right;
+}
+
+.header-item-volume {
+  min-width: 100px; /* 增加交易量标题宽度 */
+  text-align: right;
 }

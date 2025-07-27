@@ -19,7 +19,8 @@ import {
   fetchAccountBalance, 
   fetchBacktestParameters, 
   updateStopLossPercent, 
-  updateTrailingProfitPercent 
+  updateTrailingProfitPercent,
+  fetchAllTickers  // 添加fetchAllTickers API导入
 } from '../../services/api';
 import QuickTimeSelector from '../Chart/QuickTimeSelector';
 
@@ -41,6 +42,17 @@ interface StrategiesResponse {
 
 // 每页显示的交易记录数量
 const TRADES_PER_PAGE = 13;
+
+// 添加格式化交易量的函数
+const formatVolume = (volume: number | undefined | null): string => {
+  if (volume === undefined || volume === null) return '0.00';
+  if (volume >= 1000000) {
+    return (volume / 1000000).toFixed(2) + 'M';
+  } else if (volume >= 1000) {
+    return (volume / 1000).toFixed(2) + 'K';
+  }
+  return volume.toFixed(2);
+};
 
 const BacktestPanel: React.FC = () => {
   const dispatch = useDispatch();
@@ -705,27 +717,32 @@ const BacktestPanel: React.FC = () => {
     const loadAllTickers = async () => {
       setIsLoadingTickers(true);
       try {
-        // 使用模拟数据代替API调用
-        const mockTickers = COMMON_PAIRS.map(pair => ({
-          symbol: pair,
-          lastPrice: Math.random() * 10000,
-          priceChangePercent: (Math.random() * 10) - 5,
-          volume: Math.random() * 10000000,
-          quoteVolume: Math.random() * 100000000
-        }));
-        
-        setAllTickers(mockTickers);
-        
-        // 默认按交易量排序
-        const sorted = [...mockTickers].sort((a, b) => {
-          const volumeA = a.quoteVolume || a.volume || 0;
-          const volumeB = b.quoteVolume || b.volume || 0;
-          return sortDirection === 'desc' ? volumeB - volumeA : volumeA - volumeB;
-        });
-        
-        setSortedPairs(sorted);
-        setFilteredPairs(sorted);
-        setDisplayedPairs(sorted.slice(0, displayLimit));
+        // 使用fetchAllTickers API获取实际数据
+        const result = await fetchAllTickers();
+        if (result.success && result.data) {
+          // 格式化数据，确保数值类型正确
+          const formattedTickers = result.data.map((ticker: any) => ({
+            symbol: ticker.symbol,
+            lastPrice: parseFloat(ticker.lastPrice || 0),
+            priceChangePercent: parseFloat(ticker.priceChangePercent || 0),
+            volume: parseFloat(ticker.quoteVolume || ticker.volume || 0) // 优先使用quoteVolume
+          }));
+          
+          setAllTickers(formattedTickers);
+          
+          // 默认按交易量排序
+          const sorted = [...formattedTickers].sort((a, b) => {
+            const volumeA = a.volume || 0;
+            const volumeB = b.volume || 0;
+            return sortDirection === 'desc' ? volumeB - volumeA : volumeA - volumeB;
+          });
+          
+          setSortedPairs(sorted);
+          setFilteredPairs(sorted);
+          setDisplayedPairs(sorted.slice(0, displayLimit));
+        } else {
+          console.error('加载交易对数据失败:', result.message);
+        }
       } catch (error) {
         console.error('加载交易对数据失败:', error);
       } finally {
@@ -747,11 +764,21 @@ const BacktestPanel: React.FC = () => {
     // 应用排序
     const sorted = [...filtered].sort((a, b) => {
       if (sortBy === 'volume') {
-        const volumeA = a.quoteVolume || a.volume || 0;
-        const volumeB = b.quoteVolume || b.volume || 0;
+        const volumeA = parseFloat(a.volume) || 0;
+        const volumeB = parseFloat(b.volume) || 0;
         return sortDirection === 'desc' ? volumeB - volumeA : volumeA - volumeB;
       } else if (sortBy === 'change') {
-        return sortDirection === 'desc' ? b.priceChangePercent - a.priceChangePercent : a.priceChangePercent - b.priceChangePercent;
+        const changeA = parseFloat(a.priceChangePercent) || 0;
+        const changeB = parseFloat(b.priceChangePercent) || 0;
+        return sortDirection === 'desc' ? changeB - changeA : changeA - changeB;
+      } else if (sortBy === 'price') {
+        const priceA = parseFloat(a.lastPrice) || 0;
+        const priceB = parseFloat(b.lastPrice) || 0;
+        return sortDirection === 'desc' ? priceB - priceA : priceA - priceB;
+      } else if (sortBy === 'name') {
+        return sortDirection === 'desc' 
+          ? b.symbol.localeCompare(a.symbol)
+          : a.symbol.localeCompare(b.symbol);
       }
       return 0;
     });
@@ -981,25 +1008,35 @@ const BacktestPanel: React.FC = () => {
                       autoFocus
                     />
 
-                    <div className="sort-options">
-                      <button
-                        className={`sort-button ${sortBy === 'volume' ? 'active' : ''}`}
-                        onClick={() => handleSortChange('volume')}
-                      >
-                        交易量 {sortBy === 'volume' && (sortDirection === 'desc' ? '↓' : '↑')}
-                      </button>
-                      <button
-                        className={`sort-button ${sortBy === 'change' ? 'active' : ''}`}
-                        onClick={() => handleSortChange('change')}
-                      >
-                        涨跌幅 {sortBy === 'change' && (sortDirection === 'desc' ? '↓' : '↑')}
-                      </button>
-                      <button
-                        className={`sort-button ${sortBy === 'name' ? 'active' : ''}`}
-                        onClick={() => handleSortChange('name')}
-                      >
-                        名称 {sortBy === 'name' && (sortDirection === 'desc' ? '↓' : '↑')}
-                      </button>
+                    <div className="pair-list-header">
+                      <div className="pair-list-header-left">
+                        <div 
+                          className={`header-item header-item-symbol ${sortBy === 'name' ? 'active' : ''}`}
+                          onClick={() => handleSortChange('name')}
+                        >
+                          币种 {sortBy === 'name' && (sortDirection === 'desc' ? '↓' : '↑')}
+                        </div>
+                      </div>
+                      <div className="pair-list-header-right">
+                        <div 
+                          className={`header-item header-item-price ${sortBy === 'price' ? 'active' : ''}`}
+                          onClick={() => handleSortChange('price')}
+                        >
+                          价格 {sortBy === 'price' && (sortDirection === 'desc' ? '↓' : '↑')}
+                        </div>
+                        <div 
+                          className={`header-item header-item-change ${sortBy === 'change' ? 'active' : ''}`}
+                          onClick={() => handleSortChange('change')}
+                        >
+                          涨跌幅 {sortBy === 'change' && (sortDirection === 'desc' ? '↓' : '↑')}
+                        </div>
+                        <div 
+                          className={`header-item header-item-volume ${sortBy === 'volume' ? 'active' : ''}`}
+                          onClick={() => handleSortChange('volume')}
+                        >
+                          交易量 {sortBy === 'volume' && (sortDirection === 'desc' ? '↓' : '↑')}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="pair-list-container">
@@ -1020,9 +1057,7 @@ const BacktestPanel: React.FC = () => {
                                   {ticker.priceChangePercent > 0 ? '+' : ''}{ticker.priceChangePercent.toFixed(2)}%
                                 </span>
                                 <span className="pair-item-volume">
-                                  {(ticker.volume && ticker.volume > 1000000) ? (ticker.volume / 1000000).toFixed(2) + 'M' :
-                                  (ticker.volume && ticker.volume > 1000) ? (ticker.volume / 1000).toFixed(2) + 'K' :
-                                  ticker.volume ? ticker.volume.toFixed(2) : '0'}
+                                  {formatVolume(ticker.volume)}
                                 </span>
                               </div>
                             </div>
