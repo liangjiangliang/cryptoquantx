@@ -22,11 +22,11 @@ const GlobalNavbar: React.FC = () => {
         <Link to="/real-time-strategy" className="nav-link backtest-nav-link real-time-strategy-link">
           实盘策略
         </Link>
-        <Link to="/indicator-distribution" className="nav-link backtest-nav-link indicator-distribution-link">
-          指标分布
-        </Link>
         <Link to="/fund-center" className="nav-link backtest-nav-link fund-center-link">
           资金中心
+        </Link>
+        <Link to="/indicator-distribution" className="nav-link backtest-nav-link indicator-distribution-link">
+          指标分布
         </Link>
       </div>
       <div className="navbar-right">

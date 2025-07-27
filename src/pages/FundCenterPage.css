@@ -18,11 +18,45 @@
   border-bottom: 1px solid #2e3241;
 }
 
+.fund-center-title-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .fund-center-header h2 {
   margin: 0;
   font-size: 24px;
   color: #d9d9d9;
   font-weight: 500;
+}
+
+.manual-record-btn {
+  background-color: #10b981;
+  border: none;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.manual-record-btn:hover:not(:disabled) {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.manual-record-btn:disabled {
+  background-color: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .time-range-selector {
@@ -124,4 +158,57 @@
 
 .summary-item .value.negative {
   color: #ff5555;
-} 
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .fund-center-page {
+    margin: 10px;
+    padding: 15px;
+  }
+
+  .fund-center-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .fund-center-title-section {
+    justify-content: space-between;
+  }
+
+  .fund-center-header h2 {
+    font-size: 20px;
+  }
+
+  .manual-record-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .time-range-selector {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .time-range-selector button {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .fund-chart-container {
+    height: calc(100vh - 400px);
+    min-height: 300px;
+  }
+
+  .fund-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    padding: 12px;
+  }
+
+  .summary-item .value {
+    font-size: 20px;
+  }
+}

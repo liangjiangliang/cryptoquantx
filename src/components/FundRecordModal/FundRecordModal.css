@@ -1,0 +1,211 @@
+/* 资金记录模态框样式 */
+.fund-record-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.fund-record-modal-content {
+  background-color: #1e222d;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fund-record-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #2e3241;
+}
+
+.fund-record-modal-title {
+  margin: 0;
+  color: #d9d9d9;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.fund-record-modal-close {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.fund-record-modal-close:hover {
+  color: #d9d9d9;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.fund-record-modal-body {
+  padding: 24px;
+  text-align: center;
+}
+
+.fund-record-success-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #10b981;
+  color: white;
+  font-size: 32px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.fund-record-message {
+  color: #d9d9d9;
+  font-size: 16px;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+.fund-record-details {
+  background-color: #2e3241;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 8px;
+}
+
+.fund-record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #404654;
+}
+
+.fund-record-item:last-child {
+  border-bottom: none;
+}
+
+.fund-record-item .label {
+  color: #a0a0a0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.fund-record-item .value {
+  color: #d9d9d9;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.fund-record-item .value.total-fund {
+  color: #3b82f6;
+  font-size: 16px;
+}
+
+.fund-record-item .value.positive {
+  color: #10b981;
+}
+
+.fund-record-item .value.negative {
+  color: #ef4444;
+}
+
+.fund-record-modal-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.fund-record-modal-btn {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.fund-record-modal-btn-confirm {
+  background-color: #10b981;
+  color: white;
+}
+
+.fund-record-modal-btn-confirm:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .fund-record-modal-content {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .fund-record-modal-header,
+  .fund-record-modal-body,
+  .fund-record-modal-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  
+  .fund-record-success-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 28px;
+  }
+  
+  .fund-record-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .fund-record-item .value {
+    align-self: flex-end;
+  }
+}

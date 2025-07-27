@@ -1082,6 +1082,46 @@ export const stopRealTimeStrategy = async (strategyId: number): Promise<{ succes
   }
 };
 
+// 手动记录资金数据
+export const recordFundDataManually = async (): Promise<{ success: boolean; data?: any; message?: string }> => {
+  try {
+    const url = '/api/fund-center/recordFundDataManually';
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('手动记录资金数据API返回数据:', data);
+
+    if (data.code === 200) {
+      return {
+        success: true,
+        data: data.data,
+        message: data.message || '资金数据记录成功'
+      };
+    } else {
+      return {
+        success: false,
+        message: data.message || '记录资金数据失败'
+      };
+    }
+  } catch (error) {
+    console.error('记录资金数据失败:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : '记录资金数据请求发生错误'
+    };
+  }
+};
+
 // 删除实时策略
 export const deleteRealTimeStrategy = async (strategyId: number): Promise<{ success: boolean; message?: string }> => {
   try {
