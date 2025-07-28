@@ -1537,6 +1537,8 @@ export const fetchHoldingPositionsProfits = async (): Promise<{
       totalHlodingInvestmentAmount: number;
       todayProfit: number;
       todaysingalCount: number;
+      profitByStrategyName: { [key: string]: number };
+      profitByStrategySymbol: { [key: string]: number };
     };
   };
   message?: string

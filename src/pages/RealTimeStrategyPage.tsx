@@ -631,48 +631,44 @@ const RealTimeStrategyPage: React.FC = () => {
             {statistics && (
               <div className="strategy-statistics-panel" style={{ marginBottom: 0, flex: 1 }}>
                 <div className="stat-item">
-                  <span className="stat-label">今日信号数：</span>
-                  <span className="stat-value">{statistics.todaysingalCount}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">持仓策略数：</span>
+                  <span className="stat-label">持仓策略数</span>
                   <span className="stat-value">{statistics.holdingStrategiesCount}</span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-label">运行策略数：</span>
+                  <span className="stat-label">运行策略数</span>
                   <span className="stat-value">{statistics.runningStrategiesCount}</span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-label">今日已完成收益：</span>
-                  <span className={`stat-value ${statistics.todayProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.todayProfit)}</span>
-                </div>
-
-                <div className="stat-item">
-                  <span className="stat-label">预估持仓收益：</span>
-                  <span className={`stat-value ${statistics.totalEstimatedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalEstimatedProfit)}</span>
-                </div>
-
-                <div className="stat-item">
-                  <span className="stat-label">总已实现收益：</span>
-                  <span className={`stat-value ${statistics.totalRealizedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalRealizedProfit)}</span>
-                </div>
-
-
-                <div className="stat-item">
-                  <span className="stat-label">总收益：</span>
-                  <span className={`stat-value ${statistics.totalProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalProfit)}</span>
+                  <span className="stat-label">总投资金额</span>
+                  <span className="stat-value">{formatInvestmentAmount(statistics.totalInvestmentAmount)}</span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-label">总收益率：</span>
-                  <span className={`stat-value ${!statistics.totalProfitRate.includes('-') ? 'positive' : 'negative'}`}>{statistics.totalProfitRate}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">持仓投资金额：</span>
+                  <span className="stat-label">持仓投资金额</span>
                   <span className="stat-value">{formatInvestmentAmount(statistics.totalHlodingInvestmentAmount)}</span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-label">总投资金额：</span>
-                  <span className="stat-value">{formatInvestmentAmount(statistics.totalInvestmentAmount)}</span>
+                  <span className="stat-label">总已实现收益</span>
+                  <span className={`stat-value ${statistics.totalRealizedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalRealizedProfit)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">预估持仓收益</span>
+                  <span className={`stat-value ${statistics.totalEstimatedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalEstimatedProfit)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">今日收益</span>
+                  <span className={`stat-value ${statistics.todayProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.todayProfit)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">总收益</span>
+                  <span className={`stat-value ${statistics.totalProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalProfit)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">总收益率</span>
+                  <span className={`stat-value ${!statistics.totalProfitRate.includes('-') ? 'positive' : 'negative'}`}>{statistics.totalProfitRate}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">今日信号数</span>
+                  <span className="stat-value">{statistics.todaysingalCount}</span>
                 </div>
               </div>
             )}
