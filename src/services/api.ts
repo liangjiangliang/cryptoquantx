@@ -1534,6 +1534,9 @@ export const fetchHoldingPositionsProfits = async (): Promise<{
       totalProfitRate: string;
       holdingStrategiesCount: number;
       runningStrategiesCount: number;
+      totalHlodingInvestmentAmount: number;
+      todayProfit: number;
+      todaysingalCount: number;
     };
   };
   message?: string

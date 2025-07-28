@@ -7,9 +7,9 @@ import './RealTimeStrategyPage.css';
 
 // 定义排序字段和排序方向类型
 type SortField = 'id' | 'strategyName' | 'symbol' | 'interval' | 'tradeAmount' | 'totalProfit' |
-                'totalProfitRate' | 'totalFees' | 'totalTrades' | 'estimatedProfit' |
-                'profitPercentage' | 'holdingDuration' | 'createTime' | 'updateTime' | 'status' | 'entryTime' |
-                'estimatedBalance';
+  'totalProfitRate' | 'totalFees' | 'totalTrades' | 'estimatedProfit' |
+  'profitPercentage' | 'holdingDuration' | 'createTime' | 'updateTime' | 'status' | 'entryTime' |
+  'estimatedBalance';
 type SortDirection = 'asc' | 'desc';
 
 interface RealTimeStrategy {
@@ -48,6 +48,9 @@ interface StrategyStatistics {
   totalProfitRate: string;
   holdingStrategiesCount: number;
   runningStrategiesCount: number;
+  totalHlodingInvestmentAmount: number;
+  todayProfit: number;
+  todaysingalCount: number;
 }
 
 const RealTimeStrategyPage: React.FC = () => {
@@ -57,7 +60,7 @@ const RealTimeStrategyPage: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false); // 刷新状态
   const [error, setError] = useState<string>('');
   const [errorModalOpen, setErrorModalOpen] = useState<boolean>(false);
-  const [operationInProgress, setOperationInProgress] = useState<{[key: string]: boolean}>({});
+  const [operationInProgress, setOperationInProgress] = useState<{ [key: string]: boolean }>({});
   const navigate = useNavigate();
 
   // 添加统计数据状态
@@ -254,33 +257,33 @@ const RealTimeStrategyPage: React.FC = () => {
   // 将持仓时长字符串转换为分钟数，用于排序
   const parseDurationToMinutes = (duration: string): number => {
     if (!duration || duration === '-') return 0;
-    
+
     let totalMinutes = 0;
-    
+
     // 匹配天数
     const dayMatch = duration.match(/(\d+)天/);
     if (dayMatch) {
       totalMinutes += parseInt(dayMatch[1]) * 24 * 60;
     }
-    
+
     // 匹配小时数
     const hourMatch = duration.match(/(\d+)小时/);
     if (hourMatch) {
       totalMinutes += parseInt(hourMatch[1]) * 60;
     }
-    
+
     // 匹配分钟数
     const minuteMatch = duration.match(/(\d+)分钟/);
     if (minuteMatch) {
       totalMinutes += parseInt(minuteMatch[1]);
     }
-    
+
     // 匹配秒数（转换为分钟的小数部分）
     const secondMatch = duration.match(/(\d+)秒/);
     if (secondMatch) {
       totalMinutes += parseInt(secondMatch[1]) / 60;
     }
-    
+
     return totalMinutes;
   };
 
@@ -364,6 +367,26 @@ const RealTimeStrategyPage: React.FC = () => {
     return amount.toLocaleString('zh-CN', { minimumFractionDigits: 8, maximumFractionDigits: 8 });
   };
 
+  // 格式化投资金额，去掉末尾的零
+  const formatInvestmentAmount = (amount: number | null | undefined): string => {
+    if (amount === null || amount === undefined) return '0';
+
+    // 转换为字符串，保留足够的小数位
+    const str = amount.toFixed(8);
+
+    // 去掉末尾的零和小数点
+    const trimmed = str.replace(/\.?0+$/, '');
+
+    // 如果结果为空或只有小数点，返回'0'
+    if (trimmed === '' || trimmed === '.') return '0';
+
+    // 添加千位分隔符
+    const parts = trimmed.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    return parts.join('.');
+  };
+
   // 获取状态样式
   const getStatusClass = (status: string): string => {
     switch (status?.toLowerCase()) {
@@ -380,7 +403,7 @@ const RealTimeStrategyPage: React.FC = () => {
 
   // 启动策略
   const handleStartStrategy = async (strategyId: number) => {
-    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    setOperationInProgress({ ...operationInProgress, [strategyId]: true });
     try {
       const result = await startRealTimeStrategy(strategyId);
       if (result.success) {
@@ -395,13 +418,13 @@ const RealTimeStrategyPage: React.FC = () => {
       setError(error instanceof Error ? error.message : '启动策略失败');
       setErrorModalOpen(true);
     } finally {
-      setOperationInProgress({...operationInProgress, [strategyId]: false});
+      setOperationInProgress({ ...operationInProgress, [strategyId]: false });
     }
   };
 
   // 停止策略
   const handleStopStrategy = async (strategyId: number) => {
-    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    setOperationInProgress({ ...operationInProgress, [strategyId]: true });
     try {
       const result = await stopRealTimeStrategy(strategyId);
       if (result.success) {
@@ -416,13 +439,13 @@ const RealTimeStrategyPage: React.FC = () => {
       setError(error instanceof Error ? error.message : '停止策略失败');
       setErrorModalOpen(true);
     } finally {
-      setOperationInProgress({...operationInProgress, [strategyId]: false});
+      setOperationInProgress({ ...operationInProgress, [strategyId]: false });
     }
   };
 
   // 删除策略
   const handleDeleteStrategy = async (strategyId: number) => {
-    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    setOperationInProgress({ ...operationInProgress, [strategyId]: true });
     try {
       const result = await deleteRealTimeStrategy(strategyId);
       if (result.success) {
@@ -437,7 +460,7 @@ const RealTimeStrategyPage: React.FC = () => {
       setError(error instanceof Error ? error.message : '删除策略失败');
       setErrorModalOpen(true);
     } finally {
-      setOperationInProgress({...operationInProgress, [strategyId]: false});
+      setOperationInProgress({ ...operationInProgress, [strategyId]: false });
     }
   };
 
@@ -458,7 +481,7 @@ const RealTimeStrategyPage: React.FC = () => {
     if (!copyModal.strategy) return;
 
     const strategyId = copyModal.strategy.id;
-    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    setOperationInProgress({ ...operationInProgress, [strategyId]: true });
 
     try {
       // 调用复制API，传入可选参数
@@ -480,7 +503,7 @@ const RealTimeStrategyPage: React.FC = () => {
       setError(error instanceof Error ? error.message : '复制策略失败');
       setErrorModalOpen(true);
     } finally {
-      setOperationInProgress({...operationInProgress, [strategyId]: false});
+      setOperationInProgress({ ...operationInProgress, [strategyId]: false });
       // 关闭复制模态框
       setCopyModal({ isOpen: false, strategy: null });
     }
@@ -517,7 +540,7 @@ const RealTimeStrategyPage: React.FC = () => {
 
   // 全仓买入（开仓）
   const handleBuyFullPosition = async (strategyId: number) => {
-    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    setOperationInProgress({ ...operationInProgress, [strategyId]: true });
     try {
       const result = await buyFullPosition(strategyId);
       if (result.success) {
@@ -532,13 +555,13 @@ const RealTimeStrategyPage: React.FC = () => {
       setError(error instanceof Error ? error.message : '全仓买入失败');
       setErrorModalOpen(true);
     } finally {
-      setOperationInProgress({...operationInProgress, [strategyId]: false});
+      setOperationInProgress({ ...operationInProgress, [strategyId]: false });
     }
   };
 
   // 全仓卖出（平仓）
   const handleSellFullPosition = async (strategyId: number) => {
-    setOperationInProgress({...operationInProgress, [strategyId]: true});
+    setOperationInProgress({ ...operationInProgress, [strategyId]: true });
     try {
       const result = await sellFullPosition(strategyId);
       if (result.success) {
@@ -553,7 +576,7 @@ const RealTimeStrategyPage: React.FC = () => {
       setError(error instanceof Error ? error.message : '全仓卖出失败');
       setErrorModalOpen(true);
     } finally {
-      setOperationInProgress({...operationInProgress, [strategyId]: false});
+      setOperationInProgress({ ...operationInProgress, [strategyId]: false });
     }
   };
 
@@ -569,7 +592,7 @@ const RealTimeStrategyPage: React.FC = () => {
       : 0;
 
     // 预估收益 =  总收益 + 预估收益
-    return   totalProfit + estimatedProfit;
+    return totalProfit + estimatedProfit;
   };
 
   // 先对数据进行排序
@@ -608,6 +631,10 @@ const RealTimeStrategyPage: React.FC = () => {
             {statistics && (
               <div className="strategy-statistics-panel" style={{ marginBottom: 0, flex: 1 }}>
                 <div className="stat-item">
+                  <span className="stat-label">今日信号数：</span>
+                  <span className="stat-value">{statistics.todaysingalCount}</span>
+                </div>
+                <div className="stat-item">
                   <span className="stat-label">持仓策略数：</span>
                   <span className="stat-value">{statistics.holdingStrategiesCount}</span>
                 </div>
@@ -616,17 +643,21 @@ const RealTimeStrategyPage: React.FC = () => {
                   <span className="stat-value">{statistics.runningStrategiesCount}</span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-label">总投资金额：</span>
-                  <span className="stat-value">{formatAmount(statistics.totalInvestmentAmount)}</span>
+                  <span className="stat-label">今日已完成收益：</span>
+                  <span className={`stat-value ${statistics.todayProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.todayProfit)}</span>
                 </div>
-                <div className="stat-item">
-                  <span className="stat-label">总已实现收益：</span>
-                  <span className={`stat-value ${statistics.totalRealizedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalRealizedProfit)}</span>
-                </div>
+
                 <div className="stat-item">
                   <span className="stat-label">预估持仓收益：</span>
                   <span className={`stat-value ${statistics.totalEstimatedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalEstimatedProfit)}</span>
                 </div>
+
+                <div className="stat-item">
+                  <span className="stat-label">总已实现收益：</span>
+                  <span className={`stat-value ${statistics.totalRealizedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalRealizedProfit)}</span>
+                </div>
+
+
                 <div className="stat-item">
                   <span className="stat-label">总收益：</span>
                   <span className={`stat-value ${statistics.totalProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalProfit)}</span>
@@ -634,6 +665,14 @@ const RealTimeStrategyPage: React.FC = () => {
                 <div className="stat-item">
                   <span className="stat-label">总收益率：</span>
                   <span className={`stat-value ${!statistics.totalProfitRate.includes('-') ? 'positive' : 'negative'}`}>{statistics.totalProfitRate}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">持仓投资金额：</span>
+                  <span className="stat-value">{formatInvestmentAmount(statistics.totalHlodingInvestmentAmount)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">总投资金额：</span>
+                  <span className="stat-value">{formatInvestmentAmount(statistics.totalInvestmentAmount)}</span>
                 </div>
               </div>
             )}
@@ -756,7 +795,7 @@ const RealTimeStrategyPage: React.FC = () => {
                       <td>{formatDateTime(strategy.createTime)}</td>
                       <td>{formatDateTime(strategy.updateTime)}</td>
                       <td>
-                      <span
+                        <span
                           className={`status-badge ${getStatusClass(strategy.status)}`}
                           title={strategy.status === 'ERROR' ? strategy.message || '未知错误' : ''}
                         >
