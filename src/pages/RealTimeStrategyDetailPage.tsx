@@ -261,58 +261,46 @@ const RealTimeStrategyDetailPage: React.FC = () => {
         </div>
       ) : strategyInfo && (
         <div className="strategy-info-container">
-          <div className="strategy-info" style={{
-            background: 'linear-gradient(135deg, #2a2e39 0%, #1e222d 100%)',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            marginBottom: '15px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            border: '1px solid #3a3f4c'
-          }}>
-            {/* 基本信息和统计信息都放在一行 */}
-            <div className="info-item-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', fontSize: '13px' }}>
-              <div className="info-item" style={{ display: 'flex', alignItems: 'center', color: '#d9d9d9' }}>
-                <span className="label" style={{ color: '#9ca3af', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>策略名称:</span>
-                <span className="value" style={{ color: '#d9d9d9', fontWeight: 500 }}>{strategyInfo.strategyName || strategyInfo.strategyCode}</span>
-              </div>
-              <div className="info-item" style={{ display: 'flex', alignItems: 'center', color: '#d9d9d9' }}>
-                <span className="label" style={{ color: '#9ca3af', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>交易对:</span>
-                <span className="value" style={{ color: '#d9d9d9', fontWeight: 500 }}>{strategyInfo.symbol}</span>
-              </div>
-              <div className="info-item" style={{ display: 'flex', alignItems: 'center', color: '#d9d9d9' }}>
-                <span className="label" style={{ color: '#9ca3af', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>时间周期:</span>
-                <span className="value" style={{ color: '#d9d9d9', fontWeight: 500 }}>{strategyInfo.interval}</span>
-              </div>
-              <div className="info-item" style={{ display: 'flex', alignItems: 'center', color: '#d9d9d9' }}>
-                <span className="label" style={{ color: '#9ca3af', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>投资金额:</span>
-                <span className="value" style={{ color: '#d9d9d9', fontWeight: 500 }}>{strategyInfo.tradeAmount} USDT</span>
-              </div>
-              <div className="info-item" style={{ display: 'flex', alignItems: 'center', color: '#d9d9d9' }}>
-                <span className="label" style={{ color: '#9ca3af', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>运行时长:</span>
-                <span className="value" style={{ color: '#d9d9d9', fontWeight: 500 }}>
-                  {calculateDuration(strategyInfo.startTime, strategyInfo.endTime)}
-                </span>
-              </div>
-              <div className="info-item" style={{ display: 'flex', alignItems: 'center', color: '#d9d9d9' }}>
-                <span className="label" style={{ color: '#9ca3af', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>总收益:</span>
-                <span className="value" style={{ color: strategyInfo.totalProfit >= 0 ? '#ff4444' : '#00aa00', fontWeight: 600 }}>{formatAmount(strategyInfo.totalProfit)} USDT</span>
-              </div>
-              <div className="info-item" style={{ display: 'flex', alignItems: 'center', color: '#d9d9d9' }}>
-                <span className="label" style={{ color: '#9ca3af', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>收益率:</span>
-                <span className="value" style={{ color: strategyInfo.totalProfitRate >= 0 ? '#ff4444' : '#00aa00', fontWeight: 600 }}>{(strategyInfo.totalProfitRate * 100).toFixed(2)}%</span>
-              </div>
-              <div className="info-item" style={{ display: 'flex', alignItems: 'center', color: '#d9d9d9' }}>
-                <span className="label" style={{ color: '#9ca3af', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>总交易次数:</span>
-                <span className="value" style={{ color: '#d9d9d9', fontWeight: 500 }}>{strategyInfo.totalTrades}</span>
-              </div>
-              <div className="info-item" style={{ display: 'flex', alignItems: 'center', color: '#d9d9d9' }}>
-                <span className="label" style={{ color: '#9ca3af', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>成功交易:</span>
-                <span className="value" style={{ color: '#ff4444', fontWeight: 500 }}>{strategyInfo.successfulTrades}</span>
-              </div>
-              <div className="info-item" style={{ display: 'flex', alignItems: 'center', color: '#d9d9d9' }}>
-                <span className="label" style={{ color: '#9ca3af', marginRight: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>总手续费:</span>
-                <span className="value" style={{ color: '#00aa00', fontWeight: 500 }}>{formatAmount(strategyInfo.totalFees)} USDT</span>
-              </div>
+          <div className="strategy-statistics-panel" style={{ marginBottom: 15 }}>
+            <div className="stat-item">
+              <span className="stat-label">策略名称</span>
+              <span className="stat-value">{strategyInfo.strategyName || strategyInfo.strategyCode}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">交易对</span>
+              <span className="stat-value">{strategyInfo.symbol}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">时间周期</span>
+              <span className="stat-value">{strategyInfo.interval}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">投资金额</span>
+              <span className="stat-value">{strategyInfo.tradeAmount} USDT</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">运行时长</span>
+              <span className="stat-value">{calculateDuration(strategyInfo.startTime, strategyInfo.endTime)}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">总收益</span>
+              <span className={`stat-value ${strategyInfo.totalProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(strategyInfo.totalProfit)} USDT</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">收益率</span>
+              <span className={`stat-value ${strategyInfo.totalProfitRate >= 0 ? 'positive' : 'negative'}`}>{(strategyInfo.totalProfitRate * 100).toFixed(2)}%</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">总交易次数</span>
+              <span className="stat-value">{strategyInfo.totalTrades}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">成功交易</span>
+              <span className="stat-value">{strategyInfo.successfulTrades}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">总手续费</span>
+              <span className="stat-value">{formatAmount(strategyInfo.totalFees)} USDT</span>
             </div>
           </div>
         </div>
