@@ -241,17 +241,6 @@ const FundCenterPage: React.FC = () => {
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
         yAxisID: 'y',
-      },
-      {
-        label: '收益率参考',
-        data: fundData.map(item => (item.totalProfit / item.totalInvestment) * 100),
-        borderColor: 'transparent',
-        backgroundColor: 'transparent',
-        fill: false,
-        pointRadius: 0,
-        pointHoverRadius: 0,
-        yAxisID: 'y1',
-        hidden: true, // 隐藏这条线，只用于Y轴刻度计算
       }
     ]
   };
@@ -356,42 +345,8 @@ const FundCenterPage: React.FC = () => {
       },
       y1: {
         type: 'linear' as const,
-        display: true,
+        display: false,
         position: 'right' as const,
-        title: {
-          display: true,
-          text: '收益率 (%)',
-          color: fundData.length > 0 && fundData[fundData.length - 1].totalProfit >= 0 ? '#10b981' : '#ef4444',
-          font: {
-            size: 14,
-            weight: 'bold'
-          }
-        },
-        grid: {
-          drawOnChartArea: false,
-          drawBorder: false
-        },
-        min: (() => {
-          if (fundData.length === 0) return -5;
-          const profitRates = fundData.map(item => (item.totalProfit / item.totalInvestment) * 100);
-          const minRate = Math.min(...profitRates);
-          return Math.floor(minRate) - 1;
-        })(),
-        max: (() => {
-          if (fundData.length === 0) return 5;
-          const profitRates = fundData.map(item => (item.totalProfit / item.totalInvestment) * 100);
-          const maxRate = Math.max(...profitRates);
-          return Math.ceil(maxRate) + 1;
-        })(),
-        ticks: {
-          color: fundData.length > 0 && fundData[fundData.length - 1].totalProfit >= 0 ? '#10b981' : '#ef4444',
-          font: {
-            size: 11
-          },
-          callback: function (value: any) {
-            return `${value.toFixed(1)}%`;
-          }
-        }
       }
     }
   };

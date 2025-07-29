@@ -672,7 +672,7 @@ const RealTimeStrategyPage: React.FC = () => {
                 <div className="stat-item">
                   <span className="stat-label">总投资金额</span>
                   <span className="stat-value">{formatInvestmentAmount(statistics.totalInvestmentAmount)}</span>
-                </div>                
+                </div>
               </div>
             )}
             {/* 刷新按钮 */}
@@ -794,12 +794,50 @@ const RealTimeStrategyPage: React.FC = () => {
                       <td>{formatDateTime(strategy.createTime)}</td>
                       <td>{formatDateTime(strategy.updateTime)}</td>
                       <td>
-                        <span
-                          className={`status-badge ${getStatusClass(strategy.status)}`}
-                          title={strategy.status === 'ERROR' ? strategy.message || '未知错误' : ''}
+                        <div
+                          className="status-container"
+                          onMouseEnter={(e) => {
+                            if (strategy.status === 'ERROR' && strategy.message) {
+                              const tooltip = e.currentTarget.querySelector('.error-tooltip') as HTMLElement;
+                              if (tooltip) {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const viewportHeight = window.innerHeight;
+                                const viewportWidth = window.innerWidth;
+
+                                // 计算提示框的位置
+                                let left = rect.left + rect.width / 2;
+                                let top = rect.top - 10;
+
+                                // 确保提示框不会超出视口边界
+                                if (left + 200 > viewportWidth) {
+                                  left = viewportWidth - 220;
+                                }
+                                if (left < 20) {
+                                  left = 20;
+                                }
+                                if (top < 20) {
+                                  top = rect.bottom + 10;
+                                }
+
+                                tooltip.style.left = `${left}px`;
+                                tooltip.style.top = `${top}px`;
+                                tooltip.style.transform = top > rect.bottom ? 'translateX(-50%)' : 'translateX(-50%) translateY(-100%)';
+                              }
+                            }
+                          }}
                         >
-                          {strategy.status || 'UNKNOWN'}
-                        </span>
+                          <span
+                            className={`status-badge ${getStatusClass(strategy.status)}`}
+                          >
+                            {strategy.status || 'UNKNOWN'}
+                          </span>
+                          {strategy.status === 'ERROR' && strategy.message && (
+                            <div className="error-tooltip">
+                              <div className="error-title">错误详情</div>
+                              <div className="error-message">{strategy.message}</div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td>
                         <button
