@@ -115,19 +115,19 @@
 }
 
 .ticker-symbol {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
   color: #d9d9d9;
 }
 
 .ticker-price {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 500;
   color: #ffffff;
 }
 
 .ticker-change {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
 }
 
