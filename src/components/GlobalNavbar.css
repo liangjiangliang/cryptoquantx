@@ -76,3 +76,97 @@
 .indicator-distribution-link:hover {
   background-color: #1976D2;
 }
+
+/* 行情组件样式 */
+.market-ticker {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.ticker-loading {
+  color: #a0a0a0;
+  font-size: 12px;
+  padding: 0 15px;
+}
+
+.ticker-list {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 15px;
+}
+
+.ticker-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  padding: 6px 8px;
+  transition: opacity 0.3s ease;
+  height: 32px;
+  box-sizing: border-box;
+  margin-top: 2px;
+}
+
+.ticker-item:hover {
+  opacity: 0.8;
+}
+
+.ticker-symbol {
+  font-size: 18px;
+  font-weight: 600;
+  color: #d9d9d9;
+}
+
+.ticker-price {
+  font-size: 18px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.ticker-change {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.ticker-change.positive {
+  color: #00c853;
+}
+
+.ticker-change.negative {
+  color: #ff5252;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .ticker-list {
+    gap: 12px;
+  }
+  
+  .ticker-item {
+    min-width: 120px;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  
+  .ticker-symbol {
+    font-size: 13px;
+  }
+  
+  .ticker-price {
+    font-size: 13px;
+  }
+  
+  .ticker-change {
+    font-size: 13px;
+    font-weight: 700;
+  }
+}
+
+@media (max-width: 768px) {
+  .market-ticker {
+    display: none;
+  }
+}
