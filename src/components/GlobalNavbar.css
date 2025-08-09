@@ -144,21 +144,21 @@
   .ticker-list {
     gap: 12px;
   }
-  
+
   .ticker-item {
     min-width: 120px;
     padding: 8px 10px;
     gap: 6px;
   }
-  
+
   .ticker-symbol {
     font-size: 13px;
   }
-  
+
   .ticker-price {
     font-size: 13px;
   }
-  
+
   .ticker-change {
     font-size: 13px;
     font-weight: 700;

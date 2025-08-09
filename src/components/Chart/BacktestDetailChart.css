@@ -78,35 +78,70 @@
   z-index: 10;
 }
 
-/* 悬浮框样式 */
+/* K线详细信息浮层 */
+.chart-tooltip {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: rgba(30, 34, 45, 0.9);
+  border: 1px solid #2e3241;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #d9d9d9;
+  font-size: 12px;
+  z-index: 5;
+  width: auto;
+  min-width: 180px;
+  max-width: 280px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
 .tooltip-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 2px;
+  margin: 4px 0;
 }
 
 .tooltip-label {
-  color: #a0a0a0;
-  margin-right: 10px;
+  color: #8e8e8e;
+  margin-right: 12px;
 }
 
 .tooltip-value {
   font-weight: 500;
-  text-align: right;
 }
 
+.tooltip-value.positive {
+  color: #ff5555; /* 红涨 */
+}
+
+.tooltip-value.negative {
+  color: #32a852; /* 绿跌 */
+}
+
+/* 技术指标部分样式 */
 .tooltip-divider {
   height: 1px;
   background-color: #2e3241;
+  margin: 8px 0;
+}
+
+.tooltip-section-title {
+  color: #90caf9;
+  font-weight: 500;
   margin: 4px 0;
+  text-align: center;
+  font-size: 13px;
 }
 
 .positive {
-  color: #26a69a;
+  color: #ff5555; /* 红涨 */
 }
 
 .negative {
-  color: #ef5350;
+  color: #32a852; /* 绿跌 */
 }
 
 /* 指标标签样式 */

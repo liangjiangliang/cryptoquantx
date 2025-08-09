@@ -316,6 +316,13 @@ const RealTimeStrategyPage: React.FC = () => {
         return sortDirection === 'asc' ? durationA - durationB : durationB - durationA;
       }
 
+      // 处理百分比字符串（需要在普通字符串处理之前）
+      if (sortField === 'profitPercentage' && typeof aValue === 'string' && typeof bValue === 'string') {
+        const numA = parseFloat(aValue.replace('%', ''));
+        const numB = parseFloat(bValue.replace('%', ''));
+        return sortDirection === 'asc' ? numA - numB : numB - numA;
+      }
+
       // 处理字符串类型的排序
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         // 日期字符串特殊处理
@@ -329,13 +336,6 @@ const RealTimeStrategyPage: React.FC = () => {
         return sortDirection === 'asc'
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
-      }
-
-      // 处理百分比字符串
-      if (sortField === 'profitPercentage' && typeof aValue === 'string' && typeof bValue === 'string') {
-        const numA = parseFloat(aValue.replace('%', ''));
-        const numB = parseFloat(bValue.replace('%', ''));
-        return sortDirection === 'asc' ? numA - numB : numB - numA;
       }
 
       // 普通数值比较

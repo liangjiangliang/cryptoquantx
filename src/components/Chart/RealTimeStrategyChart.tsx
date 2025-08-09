@@ -69,6 +69,9 @@ const RealTimeStrategyChart = forwardRef<{
   const chart = useRef<IChartApi | null>(null);
   const candleSeries = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeries = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const bollUpperSeries = useRef<ISeriesApi<'Line'> | null>(null);
+  const bollMiddleSeries = useRef<ISeriesApi<'Line'> | null>(null);
+  const bollLowerSeries = useRef<ISeriesApi<'Line'> | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef<boolean>(true);
   const dataLoadedRef = useRef<boolean>(false);
@@ -224,6 +227,28 @@ const RealTimeStrategyChart = forwardRef<{
         },
       });
 
+      // 添加布林带系列（与首页风格一致）
+      bollUpperSeries.current = chart.current.addLineSeries({
+        color: '#f48fb1',
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+
+      bollMiddleSeries.current = chart.current.addLineSeries({
+        color: '#90caf9',
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+
+      bollLowerSeries.current = chart.current.addLineSeries({
+        color: '#80deea',
+        lineWidth: 1,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      });
+
       // 设置十字线移动事件处理
       setupCrosshairMoveHandler();
 
@@ -348,10 +373,10 @@ const RealTimeStrategyChart = forwardRef<{
           }
         }
 
-        const open = typeof candleData.open === 'number' ? formatPrice(candleData.open) : candleData.open;
-        const high = typeof candleData.high === 'number' ? formatPrice(candleData.high) : candleData.high;
-        const low = typeof candleData.low === 'number' ? formatPrice(candleData.low) : candleData.low;
-        const close = typeof candleData.close === 'number' ? formatPrice(candleData.close) : candleData.close;
+        const open = typeof candleData.open === 'number' ? candleData.open.toString() : candleData.open;
+        const high = typeof candleData.high === 'number' ? candleData.high.toString() : candleData.high;
+        const low = typeof candleData.low === 'number' ? candleData.low.toString() : candleData.low;
+        const close = typeof candleData.close === 'number' ? candleData.close.toString() : candleData.close;
         const volume = typeof volumeData === 'number' ? formatVolume(volumeData) : volumeData;
 
         let change = '0.00';
@@ -411,6 +436,46 @@ const RealTimeStrategyChart = forwardRef<{
   const formatAmount = (amount: number | null | undefined): string => {
     if (amount === null || amount === undefined) return '0.00';
     return amount.toFixed(2);
+  };
+
+  // 计算布林带
+  const calculateBollingerBands = (data: any[], period: number = 20, multiplier: number = 2) => {
+    const result = {
+      upper: [] as LineData[],
+      middle: [] as LineData[],
+      lower: [] as LineData[]
+    };
+
+    for (let i = 0; i < data.length; i++) {
+      if (i < period - 1) {
+        // 数据不足，跳过
+        continue;
+      }
+
+      // 计算移动平均线（中轨）
+      let sum = 0;
+      for (let j = i - period + 1; j <= i; j++) {
+        sum += data[j].close;
+      }
+      const sma = sum / period;
+
+      // 计算标准差
+      let variance = 0;
+      for (let j = i - period + 1; j <= i; j++) {
+        variance += Math.pow(data[j].close - sma, 2);
+      }
+      const stdDev = Math.sqrt(variance / period);
+
+      // 计算上轨和下轨
+      const upper = sma + (multiplier * stdDev);
+      const lower = sma - (multiplier * stdDev);
+
+      result.upper.push({ time: data[i].time, value: upper });
+      result.middle.push({ time: data[i].time, value: sma });
+      result.lower.push({ time: data[i].time, value: lower });
+    }
+
+    return result;
   };
 
   // 绘制订单标记
@@ -592,6 +657,14 @@ const RealTimeStrategyChart = forwardRef<{
             volumeSeries.current.setData(volumeData);
           }
 
+          // 计算并设置布林带数据（缓存数据）
+          if (bollUpperSeries.current && bollMiddleSeries.current && bollLowerSeries.current) {
+            const bollData = calculateBollingerBands(convertedData);
+            bollUpperSeries.current.setData(bollData.upper);
+            bollMiddleSeries.current.setData(bollData.middle);
+            bollLowerSeries.current.setData(bollData.lower);
+          }
+
           drawOrderMarkers();
 
           chart.current.timeScale().fitContent();
@@ -669,6 +742,14 @@ const RealTimeStrategyChart = forwardRef<{
 
         if (volumeData.length > 0) {
           volumeSeries.current.setData(volumeData);
+        }
+
+        // 计算并设置布林带数据
+        if (bollUpperSeries.current && bollMiddleSeries.current && bollLowerSeries.current) {
+          const bollData = calculateBollingerBands(convertedData);
+          bollUpperSeries.current.setData(bollData.upper);
+          bollMiddleSeries.current.setData(bollData.middle);
+          bollLowerSeries.current.setData(bollData.lower);
         }
 
         drawOrderMarkers();
@@ -774,29 +855,46 @@ const RealTimeStrategyChart = forwardRef<{
               position: 'absolute',
               pointerEvents: 'none',
               zIndex: 1000,
-              backgroundColor: 'rgba(30, 34, 45, 0.95)',
+              backgroundColor: 'rgba(30, 34, 45, 0.9)',
               border: '1px solid #2e3241',
               borderRadius: '4px',
-              padding: '8px',
+              padding: '8px 12px',
               fontSize: '12px',
               color: '#d9d9d9',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-              backdropFilter: 'blur(4px)',
-              minWidth: '200px'
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+              minWidth: '180px',
+              maxWidth: '280px'
             }}
           >
-            <div style={{ marginBottom: '4px', fontWeight: 'bold', color: '#fff' }}>
-              {hoveredData.time}
+            <div className="tooltip-row">
+              <span className="tooltip-label">时间:</span>
+              <span className="tooltip-value">{hoveredData.time}</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 8px' }}>
-              <div>开盘: <span style={{ color: '#d9d9d9' }}>{hoveredData.open}</span></div>
-              <div>最高: <span style={{ color: '#ff5555' }}>{hoveredData.high}</span></div>
-              <div>最低: <span style={{ color: '#32a852' }}>{hoveredData.low}</span></div>
-              <div>收盘: <span style={{ color: '#d9d9d9' }}>{hoveredData.close}</span></div>
-              <div>成交量: <span style={{ color: '#26a69a' }}>{hoveredData.volume}</span></div>
-              <div>涨跌: <span style={{ color: parseFloat(hoveredData.change) >= 0 ? '#ff5555' : '#32a852' }}>
-                {parseFloat(hoveredData.change) >= 0 ? '+' : ''}{hoveredData.change} ({parseFloat(hoveredData.changePercent) >= 0 ? '+' : ''}{hoveredData.changePercent}%)
-              </span></div>
+            <div className="tooltip-row">
+              <span className="tooltip-label">开盘:</span>
+              <span className="tooltip-value">{hoveredData.open}</span>
+            </div>
+            <div className="tooltip-row">
+              <span className="tooltip-label">最高:</span>
+              <span className="tooltip-value">{hoveredData.high}</span>
+            </div>
+            <div className="tooltip-row">
+              <span className="tooltip-label">最低:</span>
+              <span className="tooltip-value">{hoveredData.low}</span>
+            </div>
+            <div className="tooltip-row">
+              <span className="tooltip-label">收盘:</span>
+              <span className="tooltip-value">{hoveredData.close}</span>
+            </div>
+            <div className="tooltip-row">
+              <span className="tooltip-label">成交量:</span>
+              <span className="tooltip-value">{hoveredData.volume}</span>
+            </div>
+            <div className="tooltip-row">
+              <span className="tooltip-label">涨跌:</span>
+              <span className={`tooltip-value ${parseFloat(hoveredData.change) >= 0 ? 'positive' : 'negative'}`}>
+                {hoveredData.change} ({hoveredData.changePercent}%)
+              </span>
             </div>
           </div>
         )}
