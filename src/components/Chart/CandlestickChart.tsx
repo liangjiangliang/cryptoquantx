@@ -1365,7 +1365,7 @@ const CandlestickChart: React.FC = () => {
     }
   };
 
-  // 监听指标变化
+  // 监听指标变化和K线数据变化
   useEffect(() => {
     try {
       updateIndicators();
@@ -1377,7 +1377,7 @@ const CandlestickChart: React.FC = () => {
     } catch (error) {
       console.error('更新指标错误:', error);
     }
-  }, [mainIndicator, subIndicators, backtestResults]);
+  }, [mainIndicator, subIndicators, backtestResults, candlestickData]);
 
   // 订阅主图表的时间范围变化事件
   useEffect(() => {
@@ -1680,30 +1680,33 @@ const CandlestickChart: React.FC = () => {
   const prepareTimeSeriesData = (
     values: number[],
     times: (Time)[],
-    color?: string
+    color?: string,
+    skipInvalidValues: boolean = true
   ) => {
     if (!values || !times || values.length === 0 || times.length === 0) {
       return [];
     }
 
-    // 处理可能存在的长度不匹配问题
-    // 确保数据显示到最新的K线
-    const timeLength = times.length;
-    const valueLength = values.length;
-    const offset = Math.max(0, timeLength - valueLength);
-    
+    // 确保数据长度一致
+    const minLength = Math.min(values.length, times.length);
     const result = [];
     
-    // 先确保数据对齐 - 从最早的数据点开始匹配
-    for (let i = 0; i < valueLength; i++) {
-      const timeIndex = i + offset;
-      if (timeIndex >= timeLength) break;
-      
+    // 直接按索引对应，确保包含最新的K线数据
+    for (let i = 0; i < minLength; i++) {
       const value = values[i];
-      const time = times[timeIndex];
+      const time = times[i];
 
-      // 跳过所有无效值
-      if (value === undefined || value === null || isNaN(value) || !time) {
+      // 只跳过真正无效的值，保留0值（MACD等指标的有效值）
+      if (value === undefined || value === null || !time) {
+        continue;
+      }
+
+      // 对于NaN值的处理：如果skipInvalidValues为false，则跳过；否则继续处理
+      if (isNaN(value)) {
+        if (skipInvalidValues) {
+          continue;
+        }
+        // 如果不跳过无效值，可以用null或其他值替代，但这里我们还是跳过
         continue;
       }
 
@@ -1842,6 +1845,34 @@ const CandlestickChart: React.FC = () => {
             console.error('设置信号线数据错误:', error);
           }
         }
+
+        // 强制同步副图时间轴与主图，确保完全对齐
+        setTimeout(() => {
+          if (macdChart.current && chart.current) {
+            try {
+              // 获取主图的时间轴范围
+              const mainVisibleRange = chart.current.timeScale().getVisibleLogicalRange();
+              if (mainVisibleRange) {
+                macdChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
+              }
+              
+              // 强制副图显示到最新的数据点
+              macdChart.current.timeScale().fitContent();
+              
+              // 再次设置可见范围，确保与主图完全一致
+              setTimeout(() => {
+                if (chart.current && macdChart.current) {
+                  const updatedRange = chart.current.timeScale().getVisibleLogicalRange();
+                  if (updatedRange) {
+                    macdChart.current.timeScale().setVisibleLogicalRange(updatedRange);
+                  }
+                }
+              }, 10);
+            } catch (error) {
+              // 忽略错误
+            }
+          }
+        }, 50);
 
         if (histogramSeries && histogramData.length > 0) {
           try {
@@ -1997,6 +2028,34 @@ const CandlestickChart: React.FC = () => {
         // 保存引用
         rsiSeries.current.push(rsiLine);
         rsiSeries.current.push(upperLine);
+
+        // 强制同步RSI副图时间轴与主图，确保完全对齐
+        setTimeout(() => {
+          if (rsiChart.current && chart.current) {
+            try {
+              // 获取主图的时间轴范围
+              const mainVisibleRange = chart.current.timeScale().getVisibleLogicalRange();
+              if (mainVisibleRange) {
+                rsiChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
+              }
+              
+              // 强制副图显示到最新的数据点
+              rsiChart.current.timeScale().fitContent();
+              
+              // 再次设置可见范围，确保与主图完全一致
+              setTimeout(() => {
+                if (chart.current && rsiChart.current) {
+                  const updatedRange = chart.current.timeScale().getVisibleLogicalRange();
+                  if (updatedRange) {
+                    rsiChart.current.timeScale().setVisibleLogicalRange(updatedRange);
+                  }
+                }
+              }, 10);
+            } catch (error) {
+              // 忽略错误
+            }
+          }
+        }, 50);
         rsiSeries.current.push(lowerLine);
 
         // 适应视图
@@ -2299,6 +2358,34 @@ const CandlestickChart: React.FC = () => {
         kdjSeries.current.push(kLine);
         kdjSeries.current.push(dLine);
         kdjSeries.current.push(jLine);
+
+        // 强制同步KDJ副图时间轴与主图，确保完全对齐
+        setTimeout(() => {
+          if (kdjChart.current && chart.current) {
+            try {
+              // 获取主图的时间轴范围
+              const mainVisibleRange = chart.current.timeScale().getVisibleLogicalRange();
+              if (mainVisibleRange) {
+                kdjChart.current.timeScale().setVisibleLogicalRange(mainVisibleRange);
+              }
+              
+              // 强制副图显示到最新的数据点
+              kdjChart.current.timeScale().fitContent();
+              
+              // 再次设置可见范围，确保与主图完全一致
+              setTimeout(() => {
+                if (chart.current && kdjChart.current) {
+                  const updatedRange = chart.current.timeScale().getVisibleLogicalRange();
+                  if (updatedRange) {
+                    kdjChart.current.timeScale().setVisibleLogicalRange(updatedRange);
+                  }
+                }
+              }, 10);
+            } catch (error) {
+              // 忽略错误
+            }
+          }
+        }, 50);
 
         // 适应视图
         if (kdjChart.current && kdjChart.current.timeScale()) {

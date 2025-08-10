@@ -242,9 +242,9 @@ const RealTimeStrategyPage: React.FC = () => {
     if (field === sortField) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      // 否则设置新的排序字段，默认升序
+      // 否则设置新的排序字段，默认倒序
       setSortField(field);
-      setSortDirection('asc');
+      setSortDirection('desc');
     }
   };
 

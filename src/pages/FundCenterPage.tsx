@@ -52,6 +52,22 @@ interface ProfitStatistics {
   profitByStrategySymbol: { [key: string]: number };
   totalHlodingInvestmentAmount?: number;
   todayProfit?: number;
+  strategies?: Array<{
+    strategyId: number;
+    strategyCode: string;
+    strategyName: string;
+    symbol: string;
+    interval: string;
+    entryPrice: number;
+    entryAmount: number;
+    entryTime: string;
+    currentPrice: number | string;
+    quantity: number | string;
+    currentValue: number | string;
+    estimatedProfit: number | string;
+    profitPercentage: string;
+    holdingDuration: string;
+  }>;
 }
 
 const FundCenterPage: React.FC = () => {
@@ -71,6 +87,7 @@ const FundCenterPage: React.FC = () => {
   // 排序状态
   const [strategyNameSortOrder, setStrategyNameSortOrder] = useState<'asc' | 'desc'>('desc');
   const [strategySymbolSortOrder, setStrategySymbolSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [symbolInvestmentSortOrder, setSymbolInvestmentSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // 手动记录相关状态
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -93,7 +110,8 @@ const FundCenterPage: React.FC = () => {
           profitByStrategyName: result.data.statistics.profitByStrategyName || {},
           profitByStrategySymbol: result.data.statistics.profitByStrategySymbol || {},
           totalHlodingInvestmentAmount: result.data.statistics.totalHlodingInvestmentAmount,
-          todayProfit: result.data.statistics.todayProfit
+          todayProfit: result.data.statistics.todayProfit,
+          strategies: result.data.strategies || []
         });
       }
     } catch (error) {
@@ -217,9 +235,37 @@ const FundCenterPage: React.FC = () => {
     setStrategySymbolSortOrder(strategySymbolSortOrder === 'desc' ? 'asc' : 'desc');
   };
 
+  const handleSymbolInvestmentSort = () => {
+    setSymbolInvestmentSortOrder(symbolInvestmentSortOrder === 'desc' ? 'asc' : 'desc');
+  };
+
   // 获取排序图标
   const getSortIcon = (sortOrder: 'asc' | 'desc') => {
     return sortOrder === 'desc' ? '↓' : '↑';
+  };
+
+  // 计算每种币种的持仓投资金额统计
+  const getSymbolInvestmentStatistics = (): [string, number][] => {
+    if (!profitStatistics || !profitStatistics.strategies) {
+      return [];
+    }
+
+    const symbolInvestmentMap: { [key: string]: number } = {};
+
+    // 遍历所有策略，按币种累计持仓投资金额
+    profitStatistics.strategies.forEach(strategy => {
+      const symbol = strategy.symbol;
+      const entryAmount = strategy.entryAmount || 0;
+
+      if (symbolInvestmentMap[symbol]) {
+        symbolInvestmentMap[symbol] += entryAmount;
+      } else {
+        symbolInvestmentMap[symbol] = entryAmount;
+      }
+    });
+
+    // 转换为数组格式并返回
+    return Object.entries(symbolInvestmentMap);
   };
 
 
@@ -506,6 +552,40 @@ const FundCenterPage: React.FC = () => {
                           <td>{symbol}</td>
                           <td className={profit >= 0 ? 'profit-positive' : 'profit-negative'}>
                             {formatCurrency(profit)}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 按币种分组的持仓投资金额统计 */}
+            <div className="statistics-table-wrapper">
+              <h3 className="table-title">按币种持仓投资金额统计（前10名）</h3>
+              <div className="table-container">
+                <table className="profit-table">
+                  <thead>
+                    <tr>
+                      <th>交易对</th>
+                      <th
+                        className="sortable-header"
+                        onClick={handleSymbolInvestmentSort}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        持仓投资金额 {getSortIcon(symbolInvestmentSortOrder)}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {getSymbolInvestmentStatistics()
+                      .sort(([, a], [, b]) => symbolInvestmentSortOrder === 'desc' ? b - a : a - b)
+                      .slice(0, tableDisplayCount)
+                      .map(([symbol, investment]) => (
+                        <tr key={symbol}>
+                          <td>{symbol}</td>
+                          <td className="investment-amount">
+                            {formatCurrency(investment)}
                           </td>
                         </tr>
                       ))}

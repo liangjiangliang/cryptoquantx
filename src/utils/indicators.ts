@@ -169,9 +169,9 @@ export const calculateMACD = (
   if (!hasValidData(closePrices)) {
     console.warn('calculateMACD: 无效的输入数据');
     return {
-      macd: Array(closePrices.length).fill(0),
-      signal: Array(closePrices.length).fill(0),
-      histogram: Array(closePrices.length).fill(0)
+      macd: Array(closePrices.length).fill(NaN),
+      signal: Array(closePrices.length).fill(NaN),
+      histogram: Array(closePrices.length).fill(NaN)
     };
   }
 
@@ -180,9 +180,9 @@ export const calculateMACD = (
     if (closePrices.length < 26) {
       console.warn('calculateMACD: 数据点不足，至少需要26个点');
       return {
-        macd: Array(closePrices.length).fill(0),
-        signal: Array(closePrices.length).fill(0),
-        histogram: Array(closePrices.length).fill(0)
+        macd: Array(closePrices.length).fill(NaN),
+        signal: Array(closePrices.length).fill(NaN),
+        histogram: Array(closePrices.length).fill(NaN)
       };
     }
 
@@ -198,9 +198,9 @@ export const calculateMACD = (
     if (validPrices.length < 26) {
       console.warn('calculateMACD: 有效数据点不足');
       return {
-        macd: Array(closePrices.length).fill(0),
-        signal: Array(closePrices.length).fill(0),
-        histogram: Array(closePrices.length).fill(0)
+        macd: Array(closePrices.length).fill(NaN),
+        signal: Array(closePrices.length).fill(NaN),
+        histogram: Array(closePrices.length).fill(NaN)
       };
     }
 
@@ -211,9 +211,9 @@ export const calculateMACD = (
     if (!hasValidData(ema12) || !hasValidData(ema26)) {
       console.warn('calculateMACD: EMA计算结果无效');
       return {
-        macd: Array(closePrices.length).fill(0),
-        signal: Array(closePrices.length).fill(0),
-        histogram: Array(closePrices.length).fill(0)
+        macd: Array(closePrices.length).fill(NaN),
+        signal: Array(closePrices.length).fill(NaN),
+        histogram: Array(closePrices.length).fill(NaN)
       };
     }
 
@@ -221,33 +221,49 @@ export const calculateMACD = (
 
     for (let i = 0; i < closePrices.length; i++) {
       if (i < 25) {
-        // 前26个点没有完整的EMA26值，填充0
-        macdLine.push(0);
+        // 前26个点没有完整的EMA26值，填充NaN而不是0
+        macdLine.push(NaN);
         continue;
       }
 
       if (isNaN(ema12[i]) || isNaN(ema26[i])) {
-        // 若任一EMA值无效，保持前一个MACD值或填充0
-        const prevValue = i > 0 ? macdLine[i - 1] : 0;
-        macdLine.push(isNaN(prevValue) ? 0 : prevValue);
+        // 若任一EMA值无效，填充NaN
+        macdLine.push(NaN);
       } else {
         macdLine.push(ema12[i] - ema26[i]);
       }
     }
 
-    // 过滤无效的MACD值，将NaN替换为0
-    const safeMACD = macdLine.map(v => isNaN(v) ? 0 : v);
+    // 保留NaN值，不要转换为0
+    const safeMACD = macdLine;
 
     // 计算信号线 (9日EMA of MACD)
-    const signalData = calculateEMA(safeMACD, 9);
-
-    // 确保信号线没有NaN值
-    const safeSignal = signalData.map(v => isNaN(v) ? 0 : v);
+    // 只对有效的MACD值计算信号线
+    const signalData: number[] = [];
+    
+    // 前34个点（25个MACD的NaN + 9个信号线的初始周期）填充NaN
+    for (let i = 0; i < 34; i++) {
+      signalData.push(NaN);
+    }
+    
+    // 从第35个点开始计算信号线
+    if (macdLine.length > 34) {
+      // 提取有效的MACD值用于计算信号线
+      const validMACDValues = macdLine.slice(25); // 从第26个点开始的MACD值
+      const signalEMA = calculateEMA(validMACDValues, 9);
+      
+      // 将计算出的信号线值添加到结果中
+      for (let i = 0; i < signalEMA.length; i++) {
+        signalData.push(signalEMA[i]);
+      }
+    }
+    
+    const safeSignal = signalData;
 
     // 计算柱状图
     const histogram = safeMACD.map((value, i) => {
-      if (i >= safeSignal.length) return 0;
-      return (value - safeSignal[i])*2;
+      if (i >= safeSignal.length || isNaN(value) || isNaN(safeSignal[i])) return NaN;
+      return (value - safeSignal[i]) * 2;
     });
 
     return {
@@ -258,9 +274,9 @@ export const calculateMACD = (
   } catch (error) {
     console.error('calculateMACD错误:', error);
     return {
-      macd: Array(closePrices.length).fill(0),
-      signal: Array(closePrices.length).fill(0),
-      histogram: Array(closePrices.length).fill(0)
+      macd: Array(closePrices.length).fill(NaN),
+      signal: Array(closePrices.length).fill(NaN),
+      histogram: Array(closePrices.length).fill(NaN)
     };
   }
 };
