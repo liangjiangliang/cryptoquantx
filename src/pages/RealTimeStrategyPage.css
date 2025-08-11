@@ -677,6 +677,17 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   flex: 1;
   min-width: 0;
+  min-height: 120px; /* 设置最小高度，避免布局跳跃 */
+}
+
+/* 统计数据加载中的占位样式 */
+.statistics-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  color: #888;
+  font-size: 14px;
 }
 
 .stat-item {

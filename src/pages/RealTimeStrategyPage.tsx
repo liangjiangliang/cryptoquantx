@@ -662,59 +662,64 @@ const RealTimeStrategyPage: React.FC = () => {
         <div className="strategies-container">
           {/* 标题和刷新按钮+统计指标放在同一行 */}
           <div className="header-row statistics-header-row" style={{ justifyContent: 'center', gap: 24 }}>
-            {/* 统计信息面板 */}
-            {statistics && (
-              <div className="strategy-statistics-panel" style={{ marginBottom: 0, flex: 1 }}>
-                <div className="stat-item">
-                  <span className="stat-label">今日信号数</span>
-                  <span className="stat-value">{statistics.todaysingalCount}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">持仓策略数</span>
-                  <span className="stat-value">{statistics.holdingStrategiesCount}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">运行策略数</span>
-                  <span className="stat-value">{statistics.runningStrategiesCount}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">今日收益</span>
-                  <span className={`stat-value ${statistics.todayProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.todayProfit)}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">预估持仓收益</span>
-                  <span className={`stat-value ${statistics.totalEstimatedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalEstimatedProfit)}</span>
-                </div>
+            {/* 统计信息面板 - 始终渲染容器，避免布局跳跃 */}
+            <div className="strategy-statistics-panel" style={{ marginBottom: 0, flex: 1 }}>
+              {statistics ? (
+                <>
+                  <div className="stat-item">
+                    <span className="stat-label">今日信号数</span>
+                    <span className="stat-value">{statistics.todaysingalCount}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">持仓策略数</span>
+                    <span className="stat-value">{statistics.holdingStrategiesCount}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">运行策略数</span>
+                    <span className="stat-value">{statistics.runningStrategiesCount}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">今日收益</span>
+                    <span className={`stat-value ${statistics.todayProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.todayProfit)}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">预估持仓收益</span>
+                    <span className={`stat-value ${statistics.totalEstimatedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalEstimatedProfit)}</span>
+                  </div>
 
-                <div className="stat-item">
-                  <span className="stat-label">总已实现收益</span>
-                  <span className={`stat-value ${statistics.totalRealizedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalRealizedProfit)}</span>
-                </div>
+                  <div className="stat-item">
+                    <span className="stat-label">总已实现收益</span>
+                    <span className={`stat-value ${statistics.totalRealizedProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalRealizedProfit)}</span>
+                  </div>
 
-                <div className="stat-item">
-                  <span className="stat-label">总收益</span>
-                  <span className={`stat-value ${statistics.totalProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalProfit)}</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-label">总收益率</span>
-                  <span className={`stat-value ${!statistics.totalProfitRate.includes('-') ? 'positive' : 'negative'}`}>{statistics.totalProfitRate}</span>
-                </div>
+                  <div className="stat-item">
+                    <span className="stat-label">总收益</span>
+                    <span className={`stat-value ${statistics.totalProfit >= 0 ? 'positive' : 'negative'}`}>{formatAmount(statistics.totalProfit)}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">总收益率</span>
+                    <span className={`stat-value ${!statistics.totalProfitRate.includes('-') ? 'positive' : 'negative'}`}>{statistics.totalProfitRate}</span>
+                  </div>
 
-                <div className="stat-item">
-                  <span className="stat-label">持仓投资金额</span>
-                  <span className="stat-value">{formatInvestmentAmount(statistics.totalHlodingInvestmentAmount)}</span>
+                  <div className="stat-item">
+                    <span className="stat-label">持仓投资金额</span>
+                    <span className="stat-value">{formatInvestmentAmount(statistics.totalHlodingInvestmentAmount)}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">总投资金额</span>
+                    <span className="stat-value">{formatInvestmentAmount(statistics.totalInvestmentAmount)}</span>
+                  </div>
+                </>
+              ) : (
+                /* 数据加载中的占位内容，保持布局稳定 */
+                <div className="statistics-loading">
+                  <span>统计数据加载中...</span>
                 </div>
-                <div className="stat-item">
-                  <span className="stat-label">总投资金额</span>
-                  <span className="stat-value">{formatInvestmentAmount(statistics.totalInvestmentAmount)}</span>
-                </div>
-              </div>
-            )}
-            {/* 刷新按钮 */}
+              )}
+            </div>
+            
+            {/* 刷新按钮 - 始终显示在固定位置 */}
             <div className="refresh-container" style={{ marginLeft: 24 }}>
-              {/* <div id="refresh-success-message" className="refresh-success-message">
-
-              </div> */}
               <button
                 className="refresh-button"
                 onClick={handleRefresh}

@@ -5,7 +5,7 @@ import './RealTimeStrategyDetailPage.css';
 
 // 定义排序字段和排序方向类型
 type OrderSortField = 'id' | 'symbol' | 'side' | 'price' | 'executedQty' | 'executedAmount' |
-                     'fee' | 'profit' | 'profitRate' | 'signalPrice' | 'status' | 'createTime';
+                     'fee' | 'profit' | 'profitRate' | 'signalPrice' | 'status' | 'singalTime' | 'createTime';
 type SortDirection = 'asc' | 'desc';
 
 interface RealTimeOrder {
@@ -18,6 +18,7 @@ interface RealTimeOrder {
   status: string;
   createTime: string;
   updateTime: string;
+  singalTime?: string;     // 添加触发时间字段
   profit?: number;
   profitRate?: number;     // 添加利润率字段
   executedAmount?: number;  // 成交金额
@@ -203,7 +204,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
       // 处理字符串类型的排序
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         // 日期字符串特殊处理
-        if (sortField === 'createTime') {
+        if (sortField === 'createTime' || sortField === 'singalTime') {
           const dateA = aValue ? new Date(aValue).getTime() : 0;
           const dateB = bValue ? new Date(bValue).getTime() : 0;
           return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
@@ -364,6 +365,9 @@ const RealTimeStrategyDetailPage: React.FC = () => {
                 <th onClick={() => handleSort('status')} className="sortable-header" style={{ cursor: 'pointer' }}>
                   状态 {getSortIcon('status')}
                 </th>
+                <th onClick={() => handleSort('singalTime')} className="sortable-header" style={{ cursor: 'pointer' }}>
+                  触发时间 {getSortIcon('singalTime')}
+                </th>
                 <th onClick={() => handleSort('createTime')} className="sortable-header" style={{ cursor: 'pointer' }}>
                   成交时间 {getSortIcon('createTime')}
                 </th>
@@ -396,7 +400,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
 
                   {/* <td>{order.feeCurrency || '-'}</td> */}
                   <td>{order.status}</td>
-
+                  <td>{formatDateTime(order.singalTime)}</td>
                   <td>{formatDateTime(order.createTime)}</td>
                   {/* <td>{formatDateTime(order.updateTime)}</td> */}
                 </tr>
