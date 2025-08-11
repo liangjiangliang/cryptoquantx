@@ -69,6 +69,10 @@ const RealTimeStrategyPage: React.FC = () => {
   // 使用ref来存储最后一次成功获取的数据，用于在刷新失败时保持原有数据
   const lastSuccessfulStrategiesRef = useRef<RealTimeStrategy[]>([]);
   const lastSuccessfulStatisticsRef = useRef<StrategyStatistics | null>(null);
+  
+  // 添加API调用状态跟踪，防止重复调用
+  const holdingPositionsApiCallInProgress = useRef<boolean>(false);
+  const strategiesListApiCallInProgress = useRef<boolean>(false);
 
   // 添加分页状态
   const [currentPage, setCurrentPage] = useState(1);
@@ -104,7 +108,11 @@ const RealTimeStrategyPage: React.FC = () => {
       console.log('实盘策略API返回数据:', data);
 
       if (data.code === 200) {
-        return data.data || [];
+        const strategies = data.data || [];
+        console.log('解析后的策略数据:', strategies, '数量:', strategies.length);
+        // 更新成功数据的缓存
+        lastSuccessfulStrategiesRef.current = strategies;
+        return strategies;
       } else {
         setError(data.message || '获取实盘策略失败');
         setErrorModalOpen(true);
@@ -120,6 +128,14 @@ const RealTimeStrategyPage: React.FC = () => {
 
   // 获取持仓策略预估收益信息
   const fetchHoldingPositionsData = useCallback(async (currentStrategies: RealTimeStrategy[]) => {
+    // 防止重复调用
+    if (holdingPositionsApiCallInProgress.current) {
+      console.log('持仓数据API调用正在进行中，跳过重复调用');
+      return currentStrategies;
+    }
+
+    holdingPositionsApiCallInProgress.current = true;
+    
     try {
       const result = await fetchHoldingPositionsProfits();
       if (result.success && result.data) {
@@ -163,25 +179,40 @@ const RealTimeStrategyPage: React.FC = () => {
     } catch (error) {
       console.error('获取持仓策略预估收益异常:', error);
       return currentStrategies;
+    } finally {
+      holdingPositionsApiCallInProgress.current = false;
     }
   }, []);
 
   // 初始加载数据
   const initialLoadData = useCallback(async () => {
+    console.log('开始初始加载数据...');
     setInitialLoading(true);
     try {
       // 先获取策略列表
+      console.log('调用fetchRealTimeStrategies...');
       const strategiesList = await fetchRealTimeStrategies();
+      console.log('获取到的策略列表:', strategiesList, '类型:', typeof strategiesList, '长度:', strategiesList?.length);
 
-      // 然后获取持仓信息并整合
-      const updatedStrategies = await fetchHoldingPositionsData(strategiesList);
+      // 处理获取到的策略列表数据
+      if (strategiesList && strategiesList.length >= 0) {
+        console.log('开始获取持仓信息...');
+        // 然后获取持仓信息并整合
+        const updatedStrategies = await fetchHoldingPositionsData(strategiesList);
+        console.log('整合后的策略数据:', updatedStrategies, '长度:', updatedStrategies?.length);
 
-      // 更新状态和引用
-      setStrategies(updatedStrategies);
-      lastSuccessfulStrategiesRef.current = updatedStrategies;
+        // 更新状态和引用
+        console.log('更新strategies状态...');
+        setStrategies(updatedStrategies);
+        lastSuccessfulStrategiesRef.current = updatedStrategies;
+        console.log('状态更新完成');
+      } else {
+        console.log('策略列表为空或无效:', strategiesList);
+      }
     } catch (error) {
       console.error('初始加载数据失败:', error);
     } finally {
+      console.log('初始加载完成，设置loading为false');
       setInitialLoading(false);
     }
   }, [fetchRealTimeStrategies, fetchHoldingPositionsData]);
@@ -193,21 +224,25 @@ const RealTimeStrategyPage: React.FC = () => {
       // 先获取策略列表
       const strategiesList = await fetchRealTimeStrategies();
 
-      // 然后获取持仓信息并整合
-      const updatedStrategies = await fetchHoldingPositionsData(strategiesList);
+      // 只有当获取到有效数据时才继续处理
+      if (strategiesList !== null) {
+        // 然后获取持仓信息并整合
+        const updatedStrategies = await fetchHoldingPositionsData(strategiesList);
 
-      // 更新状态和引用
-      setStrategies(updatedStrategies);
-      lastSuccessfulStrategiesRef.current = updatedStrategies;
+        // 更新状态和引用
+        setStrategies(updatedStrategies);
+        lastSuccessfulStrategiesRef.current = updatedStrategies;
 
-      // 显示成功提示
-      const refreshSuccessMessage = document.getElementById('refresh-success-message');
-      if (refreshSuccessMessage) {
-        refreshSuccessMessage.style.opacity = '1';
-        setTimeout(() => {
-          refreshSuccessMessage.style.opacity = '0';
-        }, 2000);
+        // 显示成功提示
+        const refreshSuccessMessage = document.getElementById('refresh-success-message');
+        if (refreshSuccessMessage) {
+          refreshSuccessMessage.style.opacity = '1';
+          setTimeout(() => {
+            refreshSuccessMessage.style.opacity = '0';
+          }, 2000);
+        }
       }
+      // 如果返回null，说明是重复调用被跳过，不更新状态
     } catch (error) {
       console.error('刷新数据失败:', error);
       // 如果刷新失败，保持使用最后一次成功获取的数据

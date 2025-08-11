@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 import './GlobalNavbar.css';
@@ -18,11 +18,22 @@ const GlobalNavbar: React.FC = () => {
   const [tickers, setTickers] = useState<TickerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // 添加API调用状态跟踪，防止重复调用
+  const marketDataApiCallInProgress = useRef<boolean>(false);
+
   // 主流币种列表
   const mainCoins = ['BTC-USDT', 'ETH-USDT', 'XRP-USDT', 'SOL-USDT', 'DOGE-USDT', 'SUI-USDT'];
 
   // 获取行情数据
   const fetchMarketData = async () => {
+    // 防止重复调用
+    if (marketDataApiCallInProgress.current) {
+      console.log('行情数据API调用正在进行中，跳过重复调用');
+      return;
+    }
+
+    marketDataApiCallInProgress.current = true;
+
     try {
       const response = await fetch('/api/market/all_tickers?filter=all&limit=2000');
       if (!response.ok) {
@@ -49,6 +60,7 @@ const GlobalNavbar: React.FC = () => {
       console.error('获取行情数据失败:', error);
     } finally {
       setLoading(false);
+      marketDataApiCallInProgress.current = false;
     }
   };
 

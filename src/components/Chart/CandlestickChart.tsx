@@ -227,6 +227,9 @@ const CandlestickChart: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // 添加API调用状态跟踪，防止重复调用
+  const tickersApiCallInProgress = useRef<boolean>(false);
+
   // 添加排序状态
   const [sortBy, setSortBy] = useState<string>('volume'); // 默认按交易量排序
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -3259,6 +3262,14 @@ const CandlestickChart: React.FC = () => {
 
   // 添加获取所有币种行情的函数
   const loadAllTickers = async () => {
+    // 防止重复调用
+    if (tickersApiCallInProgress.current) {
+      console.log('币种行情API调用正在进行中，跳过重复调用');
+      return;
+    }
+
+    tickersApiCallInProgress.current = true;
+
     try {
       setIsLoadingTickers(true);
       const response = await fetchAllTickers('all', 2000);
@@ -3279,6 +3290,7 @@ const CandlestickChart: React.FC = () => {
       console.error('获取所有币种行情时发生错误:', error);
     } finally {
       setIsLoadingTickers(false);
+      tickersApiCallInProgress.current = false;
     }
   };
 
