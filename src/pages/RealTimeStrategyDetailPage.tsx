@@ -5,7 +5,7 @@ import './RealTimeStrategyDetailPage.css';
 
 // 定义排序字段和排序方向类型
 type OrderSortField = 'id' | 'symbol' | 'side' | 'price' | 'executedQty' | 'executedAmount' |
-                     'fee' | 'profit' | 'profitRate' | 'signalPrice' | 'status' | 'singalTime' | 'createTime';
+  'fee' | 'profit' | 'profitRate' | 'signalPrice' | 'status' | 'singalTime' | 'createTime';
 type SortDirection = 'asc' | 'desc';
 
 interface RealTimeOrder {
@@ -18,7 +18,7 @@ interface RealTimeOrder {
   status: string;
   createTime: string;
   updateTime: string;
-  singalTime?: string;     // 添加触发时间字段
+  singalTime?: string | undefined;     // 添加触发时间字段
   profit?: number;
   profitRate?: number;     // 添加利润率字段
   executedAmount?: number;  // 成交金额
@@ -400,7 +400,7 @@ const RealTimeStrategyDetailPage: React.FC = () => {
 
                   {/* <td>{order.feeCurrency || '-'}</td> */}
                   <td>{order.status}</td>
-                  <td>{formatDateTime(order.singalTime)}</td>
+                  <td>{order.singalTime ? formatDateTime(order.singalTime) : '-'}</td>
                   <td>{formatDateTime(order.createTime)}</td>
                   {/* <td>{formatDateTime(order.updateTime)}</td> */}
                 </tr>
